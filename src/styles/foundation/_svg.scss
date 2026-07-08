@@ -1,0 +1,12 @@
+@mixin svg-bg-base($w, $h) {
+    aspect-ratio: #{$w} / #{$h};
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+}
+
+// コンタクト矢印
+@mixin svg-arrow-link($color, $w: 54, $h: 8) {
+    @include svg-bg-base($w, $h);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 #{$w} #{$h}" fill="%23#{$color}"><path d="M49.7432 0.146447C49.9384 -0.0488155 50.2549 -0.0488155 50.4502 0.146447L53.6318 3.32809C53.8271 3.52335 53.8271 3.83986 53.6318 4.03512L50.4502 7.21676C50.2549 7.41202 49.9384 7.41202 49.7432 7.21676C49.5481 7.02148 49.548 6.70493 49.7432 6.50973L52.0713 4.1816H0V3.1816H52.0713L49.7432 0.853478C49.548 0.658277 49.5481 0.341724 49.7432 0.146447Z" /></svg>');
+}

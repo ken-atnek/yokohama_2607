@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 512 512">
+  <!-- Generator: Adobe Illustrator 30.6.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 109)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #f09;
+      }
+    </style>
+  </defs>
+  <rect class="st0" x="341.44" width="170.56" height="170.89"/>
+  <rect class="st0" x="341.44" y="341.77" width="170.56" height="170.23"/>
+  <polygon class="st0" points="170.89 170.89 170.89 0 0 0 0 512 170.89 512 170.89 341.77 341.44 341.77 341.44 170.89 170.89 170.89"/>
+  <polygon class="st0" points="512 341.77 426.72 256.66 512 170.89 512 341.77"/>
+</svg>

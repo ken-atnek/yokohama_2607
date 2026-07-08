@@ -1,0 +1,67 @@
+@use "./svg" as *;
+@use "./colors" as *;
+@use "./typography" as *;
+@use "./settings" as *;
+@use "./breakpoints" as *;
+@use "./interaction" as *;
+
+/* =========================================
+ドロップシャドウ
+----------------------------------------- */
+@mixin drop-shadow {
+    box-shadow: 2px 2px 3px 0 rgb(53 45 32 / 15%);
+}
+@mixin flex-center($direction: row) {
+    display: flex;
+    flex-direction: $direction;
+    align-items: center;
+    justify-content: center;
+}
+@mixin border-gradient {
+    background-image: repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent 159px,
+        #efefef 159px,
+        #efefef 160px
+    );
+    @include sp {
+        background-image: repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent 25vw,
+            #efefef 25vw,
+            #efefefca calc(25vw + 1px)
+        );
+    }
+}
+
+/* =========================================
+LINKボタン
+----------------------------------------- */
+@mixin item-link {
+    position: relative;
+    width: min(100%, 26rem);
+    height: 5rem;
+    background-color: $main-green;
+    border-radius: 0.5rem;
+    padding-left: 1.7rem;
+    display: flex;
+    align-items: center;
+    font-size: inherit;
+    &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        translate: 0 -50%;
+        right: 1.2rem;
+        width: 5.4rem;
+        @include svg-arrow-link("fff");
+    }
+    span {
+        color: $pure-white;
+        font-size: fz(15);
+        font-weight: 500;
+        letter-spacing: 0.1em;
+    }
+}
