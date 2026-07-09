@@ -199,7 +199,6 @@ const BlockPickUp = () => {
         aria-hidden={!isActive}
         tabIndex={isActive ? 0 : -1}
       >
-        <div className={styles.shopName}>{cast.shopName}</div>
         <div className={styles.wrapImage}>
           <Image
             src={cast.castImage}

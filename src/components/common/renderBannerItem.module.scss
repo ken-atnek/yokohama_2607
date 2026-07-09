@@ -1,0 +1,17 @@
+@use "../../styles/foundation" as *;
+/* =======================================
+ * 横浜ダンディーグループ renderBannerItem スタイル
+ * URL: /src/components/common/renderBannerItem.module.scss
+ * Referenced in: /src/components/common/renderBannerItem.tsx
+ * Created: 2026-07-09
+ * Last updated: 2026-07-09
+ * ======================================= */
+
+.itemBan {
+    width: 100%;
+
+    img {
+        width: 100%;
+        object-fit: cover;
+    }
+}

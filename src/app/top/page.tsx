@@ -13,8 +13,9 @@ import GroupLogo from '/public/images/logo/dandy-g-logo.webp';
 import Image from 'next/image';
 import BlockTelop from '@/components/area/BlockTelop';
 import BlockPickUp from '@/components/area/BlockPickUp';
-// import BannerGroup from '@/components/common/BannerGroup';
-// import BlockNewFace from '@/components/area/BlockNewFace';
+import BannerGroup from '@/components/common/BannerGroup';
+import bannerGroupStyles from '@/components/common/BannerGroup.module.scss';
+import BlockNewFace from '@/components/area/BlockNewFace';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import { isRealProduction } from '@/lib/env';
 
@@ -28,8 +29,8 @@ export const generateMetadata = (): Metadata => {
 };
 
 export default function AreaTop() {
-  // 最下層コンポーネントを止めているため、データ取得用の timestamp もいったん未使用
-  // const timestamp = Date.now();
+  // 🔽 タイムスタンプでキャッシュバスティング
+  const timestamp = Date.now();
 
   return (
     <>
@@ -40,15 +41,12 @@ export default function AreaTop() {
           <p>横浜ダンディーグループ</p>
         </section>
         <section className={styles.containerPickUp}>
-          {/* PICK UP: 最下層コンポーネントのため初期構築では停止 */}
           <BlockPickUp />
         </section>
         <section className={styles.containerTelop}>
           <h2>news</h2>
-          {/* TELOP: 最下層コンポーネントのため初期構築では停止 */}
           <BlockTelop />
         </section>
-        {/* SHOP LIST: 最下層コンポーネントのため初期構築では停止 */}
         <ContainerShopList />
         <section className={styles.containerContents}>
           <article className={styles.innerContainerContents}>
@@ -56,41 +54,62 @@ export default function AreaTop() {
               <h2 className={styles.h2Topics}>
                 <span>topics</span>トピックス
               </h2>
-              {/* TOPICS BANNER: 最下層コンポーネントのため初期構築では停止 */}
-              {/* <BannerGroup
-                jsonPath={`/data/area-top/areaTopLeftBanGroup.json?t=${timestamp}`}
-                title="kobe area event"
-                className={styles.boxGroup}
+              <BannerGroup
+                jsonPath={`/db/contents/area/areaTopLeftBanArea.json?t=${timestamp}`}
+                title="Yokohama area event"
+                className={bannerGroupStyles.boxGroup}
               />
               <BannerGroup
-                jsonPath={`/data/area-top/areaTopLeftBanHot.json?t=${timestamp}`}
-                title="kobe hotpoint event"
-                className={styles.boxHot}
+                jsonPath={`/db/contents/area/areaTopLeftBanDandy.json?t=${timestamp}`}
+                title="yokohama dandy event"
+                className={bannerGroupStyles.boxDandy}
               />
               <BannerGroup
-                jsonPath={`/data/area-top/areaTopLeftBanVilla.json?t=${timestamp}`}
-                title="hotpoint villa event"
-                className={styles.boxVilla}
+                jsonPath={`/db/contents/area/areaTopLeftBanMr.json?t=${timestamp}`}
+                title="mr dandy event"
+                className={bannerGroupStyles.boxMr}
               />
               <BannerGroup
-                jsonPath={`/data/area-top/areaTopLeftBanRecruit.json?t=${timestamp}`}
+                jsonPath={`/db/contents/area/areaTopLeftBanClub.json?t=${timestamp}`}
+                title="club dandy event"
+                className={bannerGroupStyles.boxClub}
+              />
+              <BannerGroup
+                jsonPath={`/db/contents/area/areaTopLeftBanRecruit.json?t=${timestamp}`}
                 title="recruit"
-                className={styles.boxRecruit}
-              /> */}
+                className={bannerGroupStyles.boxRecruit}
+              />
+              <div className={styles.boxVanilla}>
+                <iframe src="https://qzin.jp/1021/widget?d=0" seamless></iframe>
+              </div>
             </div>
             <div className={styles.boxMainContents}>
-              {/* MAIN BANNER: 最下層コンポーネントのため初期構築では停止 */}
-              {/* <BannerGroup
-                jsonPath={`/data/area-top/areaTopMainHead.json?t=${timestamp}`}
-                className={styles.wrapMainBanHead}
-              /> */}
+              <BannerGroup
+                jsonPath={`/db/contents/area/areaTopMainHead.json?t=${timestamp}`}
+                className={bannerGroupStyles.wrapMainBanHead}
+              />
               <div className={styles.wrapNewFace}>
                 <h2 className={styles.itemH2}>
                   <span>new face</span>
                   新人情報
                 </h2>
-                {/* NEW FACE: 最下層コンポーネントのため初期構築では停止 */}
-                {/* <BlockNewFace /> */}
+                <BlockNewFace />
+              </div>
+              <div className={styles.wrapBanInformation}>
+                <h2 className={styles.itemH2}>
+                  <span>Information</span>
+                  インフォメーション
+                </h2>
+                <BannerGroup
+                  jsonPath={`/db/contents/area/areaTopMainInformation.json?t=${timestamp}`}
+                  className={bannerGroupStyles.wrapMainBanInformation}
+                />
+              </div>
+              <div className={styles.wrapBanBottom}>
+                <BannerGroup
+                  jsonPath={`/db/contents/area/areaTopMainBottom.json?t=${timestamp}`}
+                  className={bannerGroupStyles.wrapMainBanBottom}
+                />
               </div>
             </div>
           </article>

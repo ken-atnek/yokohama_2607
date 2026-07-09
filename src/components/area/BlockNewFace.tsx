@@ -9,20 +9,72 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from '@/styles/AreaTop.module.scss';
+import { Shops } from '@/data/AreaShopData';
 import type { CastDetail } from '@/types/CastDetails';
 
+type NewFaceCast = Pick<
+  CastDetail,
+  | 'shopId'
+  | 'castId'
+  | 'castName'
+  | 'castImage'
+  | 'age'
+  | 'tall'
+  | 'bust'
+  | 'cup'
+  | 'west'
+  | 'hip'
+  | 'shopName'
+>;
+
+type ShopId = 'club_dandy' | 'dandy' | 'mr_dandy';
+type NewFaceGroups = Record<ShopId, NewFaceCast[]>;
+type ActiveIndices = Record<ShopId, number>;
+
+const SHOP_ORDER: ShopId[] = ['club_dandy', 'dandy', 'mr_dandy'];
+const FADE_INTERVAL_MS = 6000;
+const FADE_STAGGER_MS = 1200;
+const zoomDelayMap: Record<ShopId, string> = {
+  club_dandy: '0ms',
+  dandy: `${FADE_STAGGER_MS}ms`,
+  mr_dandy: `${FADE_STAGGER_MS * 2}ms`,
+};
+const shopNameMap = Object.fromEntries(
+  Shops.map((shop) => [shop.storeId, shop.name])
+) as Record<string, string>;
+const shopColorMap = Object.fromEntries(
+  Shops.map((shop) => [shop.storeId, shop.shopColor ?? 'transparent'])
+) as Record<string, string>;
+
+const createEmptyGroups = (): NewFaceGroups => ({
+  club_dandy: [],
+  dandy: [],
+  mr_dandy: [],
+});
+
+const createInitialIndices = (): ActiveIndices => ({
+  club_dandy: 0,
+  dandy: 0,
+  mr_dandy: 0,
+});
+
+const getRandomIndex = (length: number) => {
+  if (length <= 1) return 0;
+  return Math.floor(Math.random() * length);
+};
+
 const BlockNewFace = () => {
-  // villa 全件
-  const [villaCasts, setVillaCasts] = useState<CastDetail[]>([]);
+  const [newFaceGroups, setNewFaceGroups] = useState<NewFaceGroups>(
+    createEmptyGroups
+  );
+  const [activeIndices, setActiveIndices] = useState<ActiveIndices>(
+    createInitialIndices
+  );
 
-  // PC 左右インデックス
-  const [leftIndex, setLeftIndex] = useState(0);
-  const [rightIndex, setRightIndex] = useState(0);
-
-  // データ取得（villaのみ）
   useEffect(() => {
     let cancelled = false;
 
@@ -30,7 +82,7 @@ const BlockNewFace = () => {
       try {
         const timestamp =
           process.env.NODE_ENV === 'development' ? Date.now() : '';
-        const dataPath = `/data/area-top/areaTopNewFace.json${
+        const dataPath = `/db/contents/area/areaTopNewFace.json${
           timestamp ? `?t=${timestamp}` : ''
         }`;
 
@@ -39,19 +91,28 @@ const BlockNewFace = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data: CastDetail[] = await response.json();
+        const data = (await response.json()) as NewFaceCast[];
         if (cancelled) return;
 
-        const villaAll = data.filter((item) => item.shopId === 'villa');
-        setVillaCasts(villaAll);
+        const grouped = createEmptyGroups();
+        data.forEach((item) => {
+          if (!SHOP_ORDER.includes(item.shopId as ShopId) || !item.castImage) {
+            return;
+          }
 
-        if (villaAll.length > 0) {
-          setLeftIndex(0);
-          setRightIndex(villaAll.length - 1);
-        } else {
-          setLeftIndex(0);
-          setRightIndex(0);
-        }
+          const shopId = item.shopId as ShopId;
+          grouped[shopId].push({
+            ...item,
+            shopName: item.shopName || shopNameMap[shopId] || '',
+          });
+        });
+
+        setNewFaceGroups(grouped);
+        setActiveIndices({
+          club_dandy: getRandomIndex(grouped.club_dandy.length),
+          dandy: getRandomIndex(grouped.dandy.length),
+          mr_dandy: getRandomIndex(grouped.mr_dandy.length),
+        });
       } catch {
         // エラー時は何もしない
       }
@@ -64,47 +125,68 @@ const BlockNewFace = () => {
     };
   }, []);
 
-  // PC 切替インターバル（6秒）
   useEffect(() => {
-    const len = villaCasts.length;
-    if (len === 0) return;
+    const hasAnyRotation = SHOP_ORDER.some(
+      (shopId) => newFaceGroups[shopId].length > 1
+    );
+    if (!hasAnyRotation) {
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setLeftIndex((prev) => (prev + 1) % len);
-      setRightIndex((prev) => (prev - 1 + len) % len);
-    }, 6000);
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const intervals: ReturnType<typeof setInterval>[] = [];
+
+    SHOP_ORDER.forEach((shopId, index) => {
+      const length = newFaceGroups[shopId].length;
+      if (length <= 1) {
+        return;
+      }
+
+      const tick = () => {
+        setActiveIndices((prev) => ({
+          ...prev,
+          [shopId]: (prev[shopId] + 1) % length,
+        }));
+      };
+
+      const delay = index * FADE_STAGGER_MS;
+      const timeout = setTimeout(() => {
+        tick();
+        const interval = setInterval(tick, FADE_INTERVAL_MS);
+        intervals.push(interval);
+      }, delay);
+
+      timeouts.push(timeout);
+    });
 
     return () => {
-      clearInterval(interval);
+      timeouts.forEach((timeout) => clearTimeout(timeout));
+      intervals.forEach((interval) => clearInterval(interval));
     };
-  }, [villaCasts]);
+  }, [newFaceGroups]);
 
-  // PC用カード（フェード対応）
   const renderCard = (
-    cast: CastDetail,
+    cast: NewFaceCast,
     isActive: boolean,
     keySuffix: string
   ) => (
     <Link
-      key={`${cast.castId}-${keySuffix}`}
-      href={`/villa/profile/?id=${cast.castId}`}
+      key={`${cast.shopId}-${cast.castId}-${keySuffix}`}
+      href={`/${cast.shopId}/profile/?id=${cast.castId}`}
       className={`${styles.wrapLink} ${styles.fadeItem} ${
         isActive ? styles.isActive : ''
       }`}
+      style={
+        {
+          '--shop-color': shopColorMap[cast.shopId],
+          '--zoom-delay': zoomDelayMap[cast.shopId as ShopId],
+        } as CSSProperties
+      }
       aria-hidden={!isActive}
       tabIndex={isActive ? 0 : -1}
     >
       <div className={styles.wrapImage}>
-        <Image
-          src={
-            cast.castImage && cast.castImage !== ''
-              ? cast.castImage
-              : `/images/cast/villa/no-image.webp`
-          }
-          alt={cast.castName}
-          width={120}
-          height={160}
-        />
+        <Image src={cast.castImage} alt={cast.castName} width={416} height={612} />
       </div>
       <div className={styles.wrapProfile}>
         <div className={styles.castName}>{cast.castName}</div>
@@ -124,23 +206,24 @@ const BlockNewFace = () => {
 
   return (
     <ul className={styles.blockNewFace}>
-      {/* 左枠（先頭から進む） */}
-      <li className={styles.villa}>
-        <div className={styles.fadeStage}>
-          {villaCasts.map((cast, idx) =>
-            renderCard(cast, idx === leftIndex, 'L')
-          )}
-        </div>
-      </li>
+      {SHOP_ORDER.map((shopId) => {
+        const casts = newFaceGroups[shopId];
+        if (casts.length === 0) {
+          return null;
+        }
 
-      {/* 右枠（最後から戻る） */}
-      <li className={styles.villa}>
-        <div className={styles.fadeStage}>
-          {villaCasts.map((cast, idx) =>
-            renderCard(cast, idx === rightIndex, 'R')
-          )}
-        </div>
-      </li>
+        const activeIndex = activeIndices[shopId] ?? 0;
+
+        return (
+          <li key={shopId}>
+            <div className={styles.fadeStage}>
+              {casts.map((cast, idx) =>
+                renderCard(cast, idx === activeIndex, `${shopId}-${idx}`)
+              )}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 };

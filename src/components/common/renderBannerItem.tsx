@@ -1,19 +1,18 @@
 /* =======================================
- * 共通バナーレンダリングエンジン
- * - バナー表示（画像 / 内部リンク / 外部リンク / モーダル）を status に応じて切替
- * - JSON からの読み込み処理も含め共通化
- *
- * URL: src/lib/renderBannerItem.tsx
- * Used in: BannerGroup.tsx / ShopTopMain.tsx など
+ * 横浜ダンディーグループ renderBannerItem
+ * URL: /src/components/common/renderBannerItem.tsx
+ * Referenced in: /src/components/common/BannerGroup.tsx
  * Created: 2025-08-22
- * Last updated: 2025-08-22
+ * Last updated: 2026-07-09
  * ======================================= */
 'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import styles from '@/styles/ShopCommon.module.scss';
+import styles from './renderBannerItem.module.scss';
 import ExternalLink from '@/components/common/ExternalLink';
 import { ReactNode, useEffect, useState } from 'react';
+
 export type BannerItem = {
   banId: string;
   status: number;
@@ -96,7 +95,6 @@ export const useBannerItems = (
   useEffect(() => {
     const fetchBannerData = async () => {
       try {
-        // キャッシュバスティング用のタイムスタンプを追加
         const timestamp =
           process.env.NODE_ENV === 'development' ? Date.now() : '';
         const dataPath = `${jsonPath}${timestamp ? `?t=${timestamp}` : ''}`;
@@ -108,13 +106,12 @@ export const useBannerItems = (
 
         const data: BannerItem[] = await response.json();
 
-        // statusが1-4のアクティブなアイテムのみフィルタリング
         const activeItems = data.filter(
           (item) => item.status >= 1 && item.status <= 4
         );
         setItems(activeItems);
       } catch {
-        // エラー時の処理（何もしない）
+        // エラー時は非表示のままにする
       }
     };
 

@@ -1,16 +1,14 @@
 /* =======================================
- * バナー表示共通コンポーネント（リスト型）
- * - エリア・店舗・イベント等のJSONデータを読み込み、バナーを表示
- * - renderBannerItem + useBannerItems を使用し構成
- *
- * URL: src/components/common/BannerGroup.tsx
- * Used in: src/app/page.tsx, ShopTopMain.tsx 他
+ * 横浜ダンディーグループ BannerGroup
+ * URL: /src/components/common/BannerGroup.tsx
+ * Referenced in: /src/app/top/page.tsx
  * Created: 2025-08-20
- * Last updated: 2025-08-22
+ * Last updated: 2026-07-09
  * ======================================= */
 'use client';
-import { renderBannerItem, useBannerItems } from '@/lib/renderBannerItem';
-import styles from '@/styles/AreaTop.module.scss';
+
+import { renderBannerItem, useBannerItems } from '@/components/common/renderBannerItem';
+import styles from './BannerGroup.module.scss';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
@@ -33,7 +31,7 @@ const BannerGroup = ({ jsonPath, title, className }: Props) => {
   const modal =
     modalImage && mounted
       ? createPortal(
-          <div className="modal-overlay" onClick={() => setModalImage(null)}>
+          <div className={styles.modalOverlay} onClick={() => setModalImage(null)}>
             <div className={styles.modalContent}>
               <Image
                 src={modalImage}

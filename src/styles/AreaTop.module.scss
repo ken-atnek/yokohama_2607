@@ -373,7 +373,7 @@
                             transform: translateY(-60%);
                             right: calc(100% + 0.2em);
                             width: 0.6em;
-                            @include svg-icon-antenna("ff002f");
+                            @include svg-icon-antenna("ff0099");
                         }
                     }
                 }
@@ -382,76 +382,12 @@
                         display: none;
                     }
                 }
-                .boxBanGroup {
-                    display: flex;
-                    flex-direction: column;
-                    @include sp {
-                        border: solid 1px #00f;
-                    }
-                    ul {
-                        display: grid;
-                        grid-auto-flow: row;
-                        font-size: inherit;
-                        gap: 0.5em 0;
-                        @include sp {
-                            gap: 2vw 0;
-                        }
-                        li {
-                            width: 100%;
-                            img {
-                                width: 100%;
-                            }
-                        }
-                    }
-                    &.boxGroup,
-                    &.boxHot,
-                    &.boxVilla {
-                        --radius: 0.8em;
-                        border-top-left-radius: var(--radius);
-                        border-top-right-radius: var(--radius);
-                        padding: 0.8em 0.5em 0.5em;
-                        gap: 0.5em 0;
-                        @include sp {
-                            --radius: 6vw;
-                            padding-inline: 2vw;
-                            padding-bottom: 4vw;
-                        }
-                        h3 {
-                            color: #000;
-                            text-align: center;
-                            @include bebas-neue;
-                            font-size: fz(28);
-                            @include sp {
-                                font-size: fz(30);
-                            }
-                        }
-                    }
-                    &.boxGroup {
-                        background-color: #e8e8e8;
-                    }
-                    // &.boxHot {
-                    //     background-color: rgba($shop-hot, 0.3);
-                    // }
-                    // &.boxVilla {
-                    //     background-color: rgba($shop-villa, 0.3);
-                    // }
-                    &.boxRecruit {
-                        margin-top: 1em;
-                        gap: 0.8em 0;
-                        @include sp {
-                            padding-inline: 2vw;
-                            margin-top: unset;
-                        }
-                        h3 {
-                            color: #767676;
-                            @include futura-condensed-medium;
-                            font-size: fz(24);
-                            text-transform: uppercase;
-                            border: 1px solid;
-                            text-align: center;
-                            letter-spacing: 0.2em;
-                            padding-block: 0.3em;
-                        }
+                .boxVanilla {
+                    position: relative;
+                    width: 100%;
+                    iframe {
+                        aspect-ratio: 30/40;
+                        width: 100%;
                     }
                 }
             }
@@ -533,18 +469,18 @@
                     .itemH2 {
                         span {
                             &::before {
-                                @include svg-icon-new-face("ff002f");
+                                @include svg-icon-new-face("ff0099");
                             }
                         }
                     }
                     .blockNewFace {
                         position: relative;
                         display: grid;
-                        grid-template-columns: repeat(2, 1fr);
+                        grid-template-columns: repeat(3, 1fr);
                         width: 100%;
-                        gap: 0 1em;
                         font-size: inherit;
                         --boxAspect: 51/75;
+                        margin-top: 1rem;
                         @include sp {
                             gap: 0 2vw;
                         }
@@ -555,19 +491,12 @@
                             color: #010101;
                             font-size: inherit;
                             aspect-ratio: var(--boxAspect);
-                            // &.hot {
-                            //     .wrapProfile {
-                            //         background-color: rgba($shop-hot, 0.7);
-                            //     }
-                            // }
-                            // &.villa {
-                            //     .wrapProfile {
-                            //         background-color: rgba($shop-villa, 0.7);
-                            //     }
-                            // }
+
                             .fadeStage {
                                 position: relative;
                                 font-size: inherit;
+                                width: 100%;
+                                height: 100%;
                             }
                             .fadeItem {
                                 position: absolute;
@@ -585,14 +514,9 @@
                             .wrapLink {
                                 display: flex;
                                 flex-direction: column;
-                                border-radius: 1.5rem;
                                 font-size: inherit;
                                 aspect-ratio: var(--boxAspect);
-                                .shopName {
-                                    font-size: fz(18);
-                                    text-align: center;
-                                    padding-block: 0.5em;
-                                }
+                                overflow: hidden;
                                 .wrapImage {
                                     font-size: inherit;
                                     overflow: hidden;
@@ -602,7 +526,8 @@
                                         object-fit: cover;
                                         animation-name: image-scale;
                                         animation-timing-function: ease;
-                                        animation-duration: 8s;
+                                        animation-duration: 6s;
+                                        animation-delay: var(--zoom-delay, 0ms);
                                         scale: 1;
                                         animation-iteration-count: infinite;
                                     }
@@ -630,12 +555,24 @@
                                     left: 0;
                                     bottom: 0;
                                     color: $base-white;
+                                    z-index: 1;
+                                    &::before {
+                                        content: "";
+                                        position: absolute;
+                                        inset: 0;
+                                        background-color: var(
+                                            --shop-color,
+                                            $base-white
+                                        );
+                                        z-index: -1;
+                                        opacity: 0.6;
+                                    }
                                     @include sp {
                                         gap: 0;
                                         padding-block: 1vw;
                                     }
                                     .castName {
-                                        font-size: fz(21);
+                                        font-size: fz(18);
                                         font-weight: 500;
                                         letter-spacing: 0.08em;
                                         text-align: center;
@@ -650,7 +587,8 @@
                                         gap: 0 0.3em;
                                         span {
                                             @include futura-condensed-medium;
-                                            font-size: fz(20);
+                                            font-size: fz(16);
+                                            letter-spacing: 0.1em;
                                             @include sp {
                                                 font-size: fz(16);
                                             }
@@ -700,6 +638,31 @@
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+                .wrapBanInformation {
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    padding: 2em;
+                    background-color: #171717;
+                    background-image: repeating-linear-gradient(
+                        135deg,
+                        transparent,
+                        transparent 3px,
+                        rgb(52 52 52) 3px,
+                        rgb(52 52 52) 6px
+                    );
+                    @include sp {
+                        padding: 4vw 2vw 6vw;
+                        margin-top: 4vw;
+                    }
+                    .itemH2 {
+                        span {
+                            &::before {
+                                @include svg-icon-new-face("ff0099");
                             }
                         }
                     }
