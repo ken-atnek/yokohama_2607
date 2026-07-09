@@ -1,0 +1,195 @@
+@use "../../styles/foundation" as *;
+/* =======================================
+ * 横浜ダンディーグループ ContainerShopList スタイル
+ * URL: /src/components/common/ContainerShopList.module.scss
+ * Referenced in: /src/components/common/ContainerShopList.tsx, /src/app/top/page.tsx
+ * Created: 2026-07-09
+ * Last updated: 2026-07-09
+ * ======================================= */
+/* =================================
+ * 	店舗リスト
+ * ------------------------------ */
+
+.containerShopList {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: inherit;
+    background: url("/images/common/weave_bg.webp") no-repeat center center /
+        cover;
+    background-color: rgb(54 54 54);
+    background-blend-mode: hard-light;
+    padding: 2em 2vw;
+    color: $base-white;
+    @include sp {
+        background-image: unset;
+        background-color: $bg-black;
+        padding: 4vw 2vw;
+        order: 1;
+    }
+    // &.kbHot {
+    //     margin-bottom: 3em;
+    //     background-color: $shop-hot;
+    //     @include sp {
+    //         margin-bottom: unset;
+    //         background-color: $bg-black;
+    //     }
+    // }
+    // &.kbVilla {
+    //     margin-bottom: 3em;
+    //     background-color: $shop-villa;
+    //     @include sp {
+    //         margin-bottom: unset;
+    //         background-color: $bg-black;
+    //     }
+    // }
+    // &.kbStyle {
+    //     margin-bottom: 3em;
+    //     background-color: $shop-style;
+    //     @include sp {
+    //         margin-bottom: unset;
+    //         background-color: $bg-black;
+    //     }
+    // }
+    .pageTop {
+        display: none;
+        @include sp {
+            @include flex-center;
+            position: absolute;
+            width: 25vw;
+            aspect-ratio: 1;
+            left: 50%;
+            translate: -50%;
+            background-color: $bg-black;
+            border-radius: 50%;
+            font-size: inherit;
+            bottom: calc(100% - 14vw);
+            z-index: -1;
+            span {
+                @include futura-cyrillic-demi;
+                font-size: fz(14);
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                padding-bottom: 7vw;
+            }
+        }
+    }
+    h2 {
+        @include bebas-neue;
+        font-size: fz(68);
+        text-transform: uppercase;
+        @include sp {
+            font-size: fz(40);
+        }
+    }
+    ul {
+        position: relative;
+        max-width: $article-max-width;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        font-size: inherit;
+        justify-content: center;
+        gap: 0 1.4em;
+        margin-top: 2em;
+        grid-template-rows: 1fr auto auto;
+        @include sp {
+            margin-top: 2vw;
+            gap: 0 1vw;
+        }
+        li {
+            position: relative;
+            // width: 50vw;
+            display: grid;
+            grid-template-rows: subgrid;
+            font-size: 1em;
+            grid-row: span 3;
+            .itemLogo {
+                position: relative;
+                width: 100%;
+                background-color: $base-white;
+                display: flex;
+                justify-content: center;
+                padding-block: 1em;
+                font-size: inherit;
+                border: 1px solid transparent;
+                @include sp {
+                    height: 20vw;
+                }
+                &.club_dandy {
+                    img {
+                        width: 70%;
+                    }
+                }
+                &.dandy {
+                    img {
+                        width: 40%;
+                    }
+                }
+                &.mr_dandy {
+                    img {
+                        width: 65%;
+                    }
+                }
+                // &.kbHot {
+                //     svg {
+                //         width: 60%;
+                //         aspect-ratio: 500/176;
+                //         stroke: unset;
+                //         fill: #000;
+                //         @include sp {
+                //             width: 80%;
+                //             fill: $shop-hot;
+                //         }
+                //     }
+                // }
+                // &.kbVilla {
+                //     svg {
+                //         width: 70%;
+                //         aspect-ratio: 500/161;
+                //         stroke: unset;
+                //         fill: #000;
+                //         @include sp {
+                //             width: 85%;
+                //             fill: $shop-villa;
+                //         }
+                //     }
+                // }
+                // &.kbStyle {
+                //     svg {
+                //         width: 75%;
+                //         aspect-ratio: 298/81;
+                //         stroke: unset;
+                //         fill: #000;
+                //         @include sp {
+                //             width: 85%;
+                //             fill: $shop-style;
+                //         }
+                //     }
+                // }
+            }
+            p {
+                font-size: fz(18);
+                text-align: center;
+                letter-spacing: 0.08em;
+                font-weight: 500;
+                margin-top: 0.5em;
+                display: inline-block;
+                @include sp {
+                    font-size: fz(14);
+                }
+            }
+            .itemTel {
+                font-size: fz(20);
+                text-align: center;
+                font-weight: 500;
+                letter-spacing: 0.04em;
+                margin-top: 0.2em;
+                @include sp {
+                    margin-top: unset;
+                    font-size: fz(16);
+                }
+            }
+        }
+    }
+}

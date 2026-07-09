@@ -25,6 +25,18 @@ export type Shop = {
 
 export const Shops = [
   {
+    storeId: 'club_dandy',
+    name: 'クラブ ダンディー',
+    nameEn: 'club dandy',
+    logo: LogoClub,
+    post: '〒231-0057',
+    address: '神奈川県横浜市中区曙町2丁目25番地 中山ビル 1階',
+    phone: '045-243-2468',
+    url: '/club_dandy/top/',
+    shopColor: '#00CC33',
+    mapUrl: 'https://maps.app.goo.gl/uWVi9wRDDHJgjhRd6',
+  },
+  {
     storeId: 'dandy',
     name: '横浜 ダンディー',
     nameEn: 'yokohama dandy',
@@ -47,17 +59,5 @@ export const Shops = [
     url: '/mr_dandy/top/',
     shopColor: '#FF9900',
     mapUrl: 'https://maps.app.goo.gl/RNUGBDKCy786HKpb9',
-  },
-  {
-    storeId: 'club_dandy',
-    name: 'クラブ ダンディー',
-    nameEn: 'club dandy',
-    logo: LogoClub,
-    post: '〒231-0057',
-    address: '神奈川県横浜市中区曙町2丁目25番地 中山ビル 1階',
-    phone: '045-243-2468',
-    url: '/club_dandy/top/',
-    shopColor: '#00CC33',
-    mapUrl: 'https://maps.app.goo.gl/uWVi9wRDDHJgjhRd6',
   },
 ];

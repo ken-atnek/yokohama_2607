@@ -13,6 +13,11 @@
     font-family: var(--font-futura-condensed-medium), "Futura", sans-serif;
 }
 
+@mixin bebas-neue {
+    font-family: var(--font-bebas-neue), "Bebas Neue", sans-serif;
+    font-weight: 400;
+}
+
 @mixin noto-sans-jp {
     font-family: var(--font-noto-sans-jp), "Noto Sans JP", sans-serif;
     font-weight: 400;

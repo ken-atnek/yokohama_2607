@@ -1,0 +1,135 @@
+@use "../../styles/foundation" as *;
+/* =======================================
+ * 横浜ダンディーグループ Footer スタイル
+ * URL: /src/components/common/Footer.module.scss
+ * Referenced in: /src/components/common/Footer.tsx
+ * Created: 2026-07-09
+ * Last updated: 2026-07-09
+ * ======================================= */
+
+.containerFooter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    --base-color: #000;
+    padding-inline: 2vw;
+    @include sp {
+        display: contents;
+    }
+    .listArea {
+        position: relative;
+        font-size: inherit;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 100%;
+        max-width: $article-max-width;
+        color: var(--base-color);
+        @include sp {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1vw;
+            padding-bottom: 2vw;
+            padding-inline: 2vw;
+            background-color: $bg-black;
+            order: 1;
+        }
+        .itemLink {
+            position: relative;
+            font-size: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            border-left: solid 1px;
+            padding: 1em 0 2em;
+            margin-bottom: 1em;
+            &:last-child {
+                border-right: solid 1px;
+                @include sp {
+                    border: unset;
+                }
+            }
+            .nameEn {
+                @include bebas-neue;
+                font-size: fz(32);
+                text-transform: uppercase;
+                @include sp {
+                    font-size: fz(28);
+                    line-height: 1em;
+                }
+            }
+            .nameJp {
+                font-size: fz(18);
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                position: relative;
+                &::after {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    translate: -50%;
+                    top: calc(100% + 0.3em);
+                    width: 0.6em;
+                    aspect-ratio: 1;
+                    border-bottom: 3px solid;
+                    border-right: 3px solid;
+                    rotate: 45deg;
+                    border-color: var(--base-color);
+                    @include move03;
+                    @include sp {
+                        left: unset;
+                        top: 50%;
+                        translate: 0 -50%;
+                        right: 3vw;
+                        rotate: -45deg;
+                    }
+                }
+                @include sp {
+                    position: static;
+                    font-size: fz(16);
+                }
+            }
+            @include hover {
+                .nameJp {
+                    &::after {
+                        translate: -50% 0.3em;
+                    }
+                }
+            }
+            @include sp {
+                background-color: var(--shop-color);
+                border: unset;
+                margin-bottom: unset;
+                padding: 4vw 0;
+                &:nth-of-type(3) {
+                    order: -1;
+                    grid-column: span 2;
+                }
+            }
+        }
+    }
+    .copyRight {
+        position: relative;
+        color: $base-white;
+        font-size: fz(12);
+        letter-spacing: 0.08em;
+        width: 100%;
+        text-align: center;
+        padding: 0.5em 0;
+        display: inline-block;
+        @include sp {
+            font-size: 1rem;
+            order: 1;
+        }
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 100vw;
+            translate: -50%;
+            height: 100%;
+            background-color: $bg-black;
+            z-index: -1;
+        }
+    }
+}

@@ -37,7 +37,7 @@ const ReciprocalLink = () => {
   const [error, setError] = useState<string | null>(null);
 
   const getDataPath = useCallback(() => {
-    let basePath = '/db/contents/group/ReciprocalLink.json';
+    let basePath = '/db/contents/area/ReciprocalLink.json';
 
     if (pathname.startsWith('/dandy')) {
       basePath = '/db/contents/dandy/ReciprocalLink.json';
@@ -63,10 +63,10 @@ const ReciprocalLink = () => {
           // 404エラーの場合はデフォルトファイルを試行
           if (
             response.status === 404 &&
-            !dataPath.startsWith('/db/contents/group/ReciprocalLink.json')
+            !dataPath.startsWith('/db/contents/area/ReciprocalLink.json')
           ) {
             const fallbackResponse = await fetch(
-              '/db/contents/group/ReciprocalLink.json'
+              '/db/contents/area/ReciprocalLink.json'
             );
             if (!fallbackResponse.ok) {
               throw new Error(

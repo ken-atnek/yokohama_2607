@@ -7,7 +7,7 @@
  * ======================================= */
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-import { Noto_Sans_JP } from 'next/font/google';
+import { Bebas_Neue, Noto_Sans_JP } from 'next/font/google';
 import { isRealProduction, metadataBase } from '@/lib/env';
 import '@/styles/globals.scss';
 
@@ -26,6 +26,13 @@ const futuraCyrillicBook = localFont({
 const futuraCyrillicDemi = localFont({
   src: '../../public/fonts/FuturaCyrillicDemi.woff2',
   variable: '--font-futura-cyrillic-demi',
+  display: 'swap',
+});
+
+const bebasNeue = Bebas_Neue({
+  subsets: ['latin'],
+  variable: '--font-bebas-neue',
+  weight: '400',
   display: 'swap',
 });
 
@@ -91,7 +98,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${futuraCondensedMedium.variable} ${futuraCyrillicBook.variable} ${futuraCyrillicDemi.variable} ${notoSansJp.variable}`}
+      className={`${futuraCondensedMedium.variable} ${futuraCyrillicBook.variable} ${futuraCyrillicDemi.variable} ${bebasNeue.variable} ${notoSansJp.variable}`}
     >
       <body>{children}</body>
     </html>
