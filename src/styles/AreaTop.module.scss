@@ -161,7 +161,7 @@
             overflow: hidden;
             img {
                 width: 100%;
-                aspect-ratio: 51/75;
+                // aspect-ratio: 51/75;
                 object-fit: cover;
                 animation-name: image-scale;
                 animation-timing-function: ease;
@@ -180,7 +180,7 @@
             width: 100%;
             gap: 0 2px;
             font-size: inherit;
-            --boxAspect: 416/690;
+            --boxAspect: 416/660;
             li {
                 position: relative;
                 width: 100%;
@@ -587,8 +587,8 @@
                                         gap: 0 0.3em;
                                         span {
                                             @include futura-condensed-medium;
-                                            font-size: fz(16);
-                                            letter-spacing: 0.1em;
+                                            font-size: min(1.5vw, 1.6rem);
+                                            letter-spacing: 0.04em;
                                             @include sp {
                                                 font-size: fz(16);
                                             }
@@ -640,6 +640,23 @@
                                 }
                             }
                         }
+                    }
+                }
+                .wrapRanking {
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    padding-top: 2rem;
+                    gap: 1rem 0;
+                    @include sp {
+                        padding: 4vw 2vw 6vw;
+                        margin-top: 4vw;
+                    }
+                    h2 {
+                        font-size: fz(18);
+                        font-weight: 600;
+                        color: $font-black;
+                        border-radius: unset;
                     }
                 }
                 .wrapBanInformation {

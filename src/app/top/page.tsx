@@ -16,6 +16,7 @@ import BlockPickUp from '@/components/area/BlockPickUp';
 import BannerGroup from '@/components/common/BannerGroup';
 import bannerGroupStyles from '@/components/common/BannerGroup.module.scss';
 import BlockNewFace from '@/components/area/BlockNewFace';
+import CastRanking from '@/components/common/CastRanking';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import { isRealProduction } from '@/lib/env';
 
@@ -94,6 +95,14 @@ export default function AreaTop() {
                   新人情報
                 </h2>
                 <BlockNewFace />
+              </div>
+              <div className={styles.wrapRanking}>
+                <h2 className={styles.itemH2}>6月度指名ランキング</h2>
+                <CastRanking
+                  jsonPath="/db/contents/area/areaMainRanking.json"
+                  showShopName={true}
+                  rankIconType="area"
+                />
               </div>
               <div className={styles.wrapBanInformation}>
                 <h2 className={styles.itemH2}>

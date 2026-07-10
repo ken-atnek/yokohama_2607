@@ -1,0 +1,431 @@
+@use "../../styles/foundation/" as *;
+/* =======================================
+ * 横浜ダンディーグループ 共通ランキング本体 スタイル
+ * URL: /src/components/common/CastRanking.module.scss
+ * Referenced in: /src/components/common/CastRanking.tsx
+ * Created: 2026-07-09
+ * Last updated: 2026-07-09
+ * ======================================= */
+
+.containerRanking {
+    display: flex;
+    flex-direction: column;
+    gap: 1em 0;
+    font-size: inherit;
+    .rankingNav {
+        display: grid;
+        gap: 2px;
+        &.len2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        &.len3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .navButton {
+            border: none;
+            background-color: #f0f0f0;
+            color: $base-black;
+            padding: 0.9em 1em;
+            font-size: fz(14);
+            font-weight: 700;
+            cursor: pointer;
+            @include move03;
+            span {
+                display: block;
+            }
+            &.isActive {
+                background-color: #111;
+                color: $base-white;
+            }
+        }
+    }
+    .rankingGroups {
+        display: flex;
+        flex-direction: column;
+        font-size: inherit;
+        --border-color: #d8d8d8;
+        border-top: 1px solid var(--border-color);
+        border-left: 1px solid var(--border-color);
+        // border-right: 1px solid #d8d8d8;
+        .groupList {
+            display: grid;
+            border-bottom: 1px solid var(--border-color);
+            .cardLink {
+                position: relative;
+                display: flex;
+                width: 100%;
+                color: $font-black;
+                padding: 1em;
+                font-size: inherit;
+                gap: 0 1em;
+                container-type: inline-size;
+                .rankIcon {
+                    position: absolute;
+                    &.hasRankIcon {
+                        z-index: 1;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background-repeat: no-repeat;
+                        background-position: center;
+                        background-size: contain;
+                        background-image: var(--rank-icon-image);
+                    }
+                    &.noRankIcon {
+                        background-image: none;
+                    }
+                    span {
+                        display: inline-block;
+                        @include futura-condensed-medium;
+                        padding-bottom: 0.1em;
+                        font-weight: 700;
+                    }
+                }
+                .wrapPhoto {
+                    position: relative;
+                    width: 100%;
+                    .photoFrame {
+                        position: relative;
+                        width: 100%;
+                        // overflow: hidden;
+                        img {
+                            width: 100%;
+                            aspect-ratio: 270/397;
+                            object-fit: cover;
+                        }
+                    }
+                    // grade0 : なし
+                    // grade1 : シルバー
+                    // grade2 : ゴールド
+                    // grade3 : VIP
+                    // grade4 : グランド VIP
+                    // grade5 : プレミアム
+                    // grade6 : ダイヤモンド
+                    // grade7 : ロイヤルクイーン
+                    .gradeLabel {
+                        position: absolute;
+                        right: 0;
+                        bottom: 0;
+                        z-index: 1;
+                        min-width: 6em;
+                        padding: 0.2em 0.7em;
+                        color: $base-white;
+                        // font-size: fz(12);
+                        font-weight: 700;
+                        text-align: right;
+                        @include futura-condensed-medium;
+                        text-transform: uppercase;
+                        background-image: repeating-linear-gradient(
+                            to left,
+                            rgb(var(--grade-color), 1),
+                            rgb(var(--grade-color), 1) 42%,
+                            rgb(var(--grade-color), 0)
+                        );
+                    }
+                    &:not(.grade0) {
+                        .photoFrame {
+                            background: url(/images/common/grade-frame.webp)
+                                no-repeat center center/cover;
+                            background-blend-mode: hard-light;
+                            background-color: rgb(var(--grade-color));
+                        }
+                    }
+                    // grade1 : シルバー
+                    &.grade1 {
+                        --grade-color: 99, 99, 99;
+                    }
+                    // grade2 : ゴールド
+                    &.grade2 {
+                        --grade-color: 255, 215, 0;
+                        .gradeLabel {
+                            color: $font-black;
+                        }
+                    }
+                    // grade3 : VIP
+                    &.grade3 {
+                        --grade-color: 0, 181, 70;
+                    }
+                    // grade4 : グランド VIP
+                    &.grade4 {
+                        --grade-color: 209, 29, 30;
+                    }
+                    // grade5 : プレミアム
+                    &.grade5 {
+                        --grade-color: 29, 29, 209;
+                    }
+                    // grade6 : ダイヤモンド
+                    &.grade6 {
+                        --grade-color: 209, 29, 209;
+                    }
+                    // grade7 : ロイヤルクイーン
+                    &.grade7 {
+                        --grade-color: 2, 38, 109;
+                    }
+                }
+                .textProfile {
+                    display: flex;
+                    flex-direction: column;
+                    font-size: inherit;
+                    .shopName {
+                        @include futura-condensed-medium;
+                        font-size: fz(20);
+                        letter-spacing: 0.02em;
+                    }
+                    .castName {
+                        font-size: fz(18);
+                        font-weight: 700;
+                        margin-top: 0.3em;
+                        margin-bottom: 0.2em;
+                    }
+                    .sizeHead {
+                        display: flex;
+                        flex-wrap: wrap;
+                        font-weight: 700;
+                        font-size: inherit;
+                        gap: 0 0.89em;
+                        .age {
+                            @include futura-condensed-medium;
+                            font-size: fz(18);
+                        }
+                        .cup {
+                            @include futura-condensed-medium;
+                            font-size: fz(18);
+                        }
+                    }
+                    .size {
+                        display: flex;
+                        flex-wrap: wrap;
+                        @include futura-condensed-medium;
+                        font-size: fz(18);
+                        gap: 0 0.3em;
+                    }
+                }
+            }
+        }
+    }
+    // 20枠
+    .display20 {
+        .groupList {
+            &:first-of-type {
+                grid-template-columns: 55% 1fr;
+                grid-template-rows: repeat(2, 1fr);
+                .cardLink {
+                    &:nth-of-type(1) {
+                        border-right: 1px solid var(--border-color);
+                        grid-row: span 2;
+                        background-color: #fed9eb;
+                        .rankIcon {
+                            top: -2cqw;
+                            right: -2cqw;
+                            width: 52cqw;
+                            aspect-ratio: 224/170;
+                            span {
+                                font-size: 9cqw;
+                            }
+                        }
+                        .wrapPhoto {
+                            width: 62cqw;
+                            &:not(.grade0) {
+                                .photoFrame {
+                                    img {
+                                        clip-path: inset(2cqw);
+                                    }
+                                }
+                            }
+                            .gradeLabel {
+                                font-size: min(6cqw, 2.6rem);
+                            }
+                        }
+                        .textProfile {
+                            padding-top: 36cqw;
+                        }
+                    }
+                    &:nth-of-type(2),
+                    &:nth-of-type(3) {
+                        .rankIcon {
+                            top: 0;
+                            right: 0;
+                            width: 38cqw;
+                            aspect-ratio: 1;
+                            span {
+                                font-size: 6cqw;
+                            }
+                        }
+                        .wrapPhoto {
+                            width: 35cqw;
+                            &:not(.grade0) {
+                                .photoFrame {
+                                    img {
+                                        clip-path: inset(1.4cqw);
+                                    }
+                                }
+                            }
+                            .gradeLabel {
+                                font-size: min(4.6cqw, 2.4rem);
+                            }
+                        }
+                        .textProfile {
+                            justify-content: flex-end;
+                        }
+                    }
+                    &:nth-of-type(2) {
+                        border-bottom: 1px solid var(--border-color);
+                        background-color: #f7fa92;
+                    }
+                    &:nth-of-type(3) {
+                        background-color: #dcebfa;
+                    }
+                }
+            }
+            &:nth-of-type(2) {
+                grid-template-columns: repeat(2, 1fr);
+                .cardLink {
+                    .rankIcon {
+                        top: 2cqw;
+                        right: 2cqw;
+                        width: 28cqw;
+                        aspect-ratio: 1;
+                        span {
+                            font-size: 5cqw;
+                        }
+                    }
+                    .wrapPhoto {
+                        width: 30cqw;
+                        &:not(.grade0) {
+                            .photoFrame {
+                                img {
+                                    clip-path: inset(1.2cqw);
+                                }
+                            }
+                        }
+                        .gradeLabel {
+                            font-size: min(4.2cqw, 1.6rem);
+                        }
+                    }
+                    .textProfile {
+                        justify-content: flex-end;
+                    }
+                    &:nth-of-type(1) {
+                        border-bottom: 1px solid var(--border-color);
+                        border-right: 1px solid var(--border-color);
+                    }
+                    &:nth-of-type(2) {
+                        border-bottom: 1px solid var(--border-color);
+                    }
+                    &:nth-of-type(3) {
+                        border-right: 1px solid var(--border-color);
+                    }
+                }
+            }
+            &:nth-of-type(3) {
+                grid-template-columns: repeat(3, 1fr);
+                .cardLink {
+                    gap: 0 1cqw;
+                    .rankIcon {
+                        top: 0;
+                        right: 2cqw;
+                        width: 30cqw;
+                        aspect-ratio: 1;
+                        span {
+                            font-size: 6cqw;
+                        }
+                    }
+                    .wrapPhoto {
+                        width: 45cqw;
+                        &:not(.grade0) {
+                            .photoFrame {
+                                img {
+                                    clip-path: inset(1.6cqw);
+                                }
+                            }
+                        }
+                        .gradeLabel {
+                            font-size: min(7cqw, 1.8rem);
+                        }
+                    }
+                    .textProfile {
+                        justify-content: flex-end;
+                        .shopName {
+                            font-size: min(6.6cqw, 2rem);
+                        }
+                        .castName {
+                            font-size: min(7.6cqw, 1.8rem);
+                        }
+                        .sizeHead {
+                            .age {
+                                font-size: min(7.6cqw, 1.8rem);
+                            }
+                            .cup {
+                                font-size: min(8cqw, 1.8rem);
+                            }
+                        }
+                        .size {
+                            font-size: min(7cqw, 1.8rem);
+                        }
+                    }
+                    &:nth-of-type(1) {
+                        border-right: 1px solid var(--border-color);
+                    }
+                    &:nth-of-type(2) {
+                        border-right: 1px solid var(--border-color);
+                    }
+                }
+            }
+            &:nth-of-type(4) {
+                grid-template-columns: repeat(5, 1fr);
+                .cardLink {
+                    flex-direction: column-reverse;
+                    padding: 0.5em;
+                    .rankIcon {
+                        top: 4cqw;
+                        left: 3cqw;
+                        width: 28cqw;
+                        aspect-ratio: 1;
+                        span {
+                            font-size: 12cqw;
+                        }
+                    }
+                    .wrapPhoto {
+                        width: 60cqw;
+                        align-self: center;
+                        margin-top: 0.5em;
+                        &:not(.grade0) {
+                            .photoFrame {
+                                img {
+                                    clip-path: inset(1.84cqw);
+                                }
+                            }
+                        }
+                        .gradeLabel {
+                            font-size: min(8cqw, 1.7rem);
+                        }
+                    }
+                    .textProfile {
+                        .shopName {
+                            align-self: flex-end;
+                            font-size: min(10cqw, 2rem);
+                        }
+                        .castName {
+                            font-size: min(9cqw, 1.8rem);
+                            align-self: center;
+                        }
+                        .size {
+                            font-size: min(12cqw, 1.8rem);
+                        }
+                    }
+                    &:not(:nth-of-type(5), :nth-of-type(10)) {
+                        border-right: 1px solid var(--border-color);
+                    }
+                    &:nth-of-type(-n + 5) {
+                        border-bottom: 1px solid var(--border-color);
+                    }
+                }
+            }
+        }
+    }
+}
+
+.itemError {
+    color: #d60000;
+    font-size: fz(14);
+}

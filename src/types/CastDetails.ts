@@ -10,7 +10,7 @@ export type QAItem = {
 
 export type CastDetail = {
   rankID?: string;
-  rank?: string;
+  rank?: number;
   castId: string;
   castName: string;
   castNameEn: string;
@@ -19,7 +19,8 @@ export type CastDetail = {
   moviePosterImage?: string;
   castImageSquare?: string;
   profileImages: string[];
-  age: number;
+  age: number | null;
+  ageText?: string;
   tall: number;
   bust: number;
   cup: string;
