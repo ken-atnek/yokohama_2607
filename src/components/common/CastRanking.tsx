@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import clsx from 'clsx';
 import Image from 'next/image';
@@ -42,6 +42,11 @@ type RankingTab = {
   title: string;
   displayCount?: number;
   layoutGroups?: number[];
+  accordion?: {
+    enabled?: boolean;
+    initialVisibleGroupCount?: number;
+    insertAfterGroup?: number;
+  };
   casts: RankingCast[];
 };
 
@@ -57,6 +62,8 @@ const shopColorMap = Object.fromEntries(
 const shopNameEnMap = Object.fromEntries(
   Shops.map((shop) => [shop.storeId, shop.nameEn])
 ) as Record<string, string>;
+const ACCORDION_BUTTON_LABEL_OPEN = 'キャストランキング一覧';
+const ACCORDION_BUTTON_LABEL_CLOSE = 'キャストランキングを閉じる';
 
 const getAgeLabel = (cast: RankingCast) => {
   if (cast.ageText) return cast.ageText;
@@ -115,6 +122,8 @@ export default function CastRanking({
   const [rankingData, setRankingData] = useState<RankingTab[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isError, setIsError] = useState(false);
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const rankingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const path = `${jsonPath}?t=${Date.now()}`;
@@ -131,6 +140,10 @@ export default function CastRanking({
       .catch(() => setIsError(true));
   }, [jsonPath]);
 
+  useEffect(() => {
+    setIsAccordionOpen(false);
+  }, [selectedIndex, jsonPath]);
+
   if (isError) {
     return (
       <p className={styles.itemError}>ランキングの読み込みに失敗しました。</p>
@@ -144,11 +157,43 @@ export default function CastRanking({
   const selectedRanking = rankingData[selectedIndex] ?? rankingData[0];
   const displayCount =
     selectedRanking.displayCount ?? selectedRanking.casts.length;
+  const accordionSettings = selectedRanking.accordion;
   const groupedCasts = splitRankingGroups(
     selectedRanking.casts,
     displayCount,
     selectedRanking.layoutGroups
   );
+  const initialVisibleGroupCount =
+    accordionSettings?.initialVisibleGroupCount ?? 0;
+  const isAccordionEnabled =
+    accordionSettings?.enabled === true &&
+    initialVisibleGroupCount > 0 &&
+    initialVisibleGroupCount < groupedCasts.length;
+  const collapsedLastGroupIndex = Math.min(
+    Math.max(1, accordionSettings?.insertAfterGroup ?? initialVisibleGroupCount),
+    initialVisibleGroupCount
+  );
+  const buttonGroupIndex = isAccordionOpen
+    ? groupedCasts.length
+    : collapsedLastGroupIndex;
+  const accordionInsertAfterGroup = Math.min(
+    Math.max(
+      1,
+      buttonGroupIndex
+    ),
+    groupedCasts.length
+  );
+
+  const handleAccordionToggle = () => {
+    if (isAccordionOpen) {
+      rankingRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+
+    setIsAccordionOpen((prev) => !prev);
+  };
 
   const renderCard = (cast: RankingCast, key: string) => {
     const grade = CastGradeMap[cast.gradeId];
@@ -221,7 +266,7 @@ export default function CastRanking({
   };
 
   return (
-    <div className={styles.containerRanking}>
+    <div ref={rankingRef} className={styles.containerRanking}>
       {rankingData.length > 1 ? (
         <nav
           className={clsx(
@@ -245,18 +290,52 @@ export default function CastRanking({
         </nav>
       ) : null}
       <div
-        className={clsx(styles.rankingGroups, styles[`display${displayCount}`])}
+        className={clsx(
+          styles.rankingGroups,
+          styles[`display${displayCount}`],
+          isAccordionEnabled && styles.hasAccordion,
+          isAccordionOpen && styles.isAccordionOpen
+        )}
       >
         {groupedCasts.map((group, index) => {
+          const isHiddenGroup =
+            isAccordionEnabled &&
+            !isAccordionOpen &&
+            index + 1 > initialVisibleGroupCount;
+
           return (
-            <section key={`group-${index}`} className={styles.groupList}>
-              {group.map((cast) =>
-                renderCard(
-                  cast,
-                  `${cast.shopID}-${cast.castId}-${cast.rankID ?? cast.rank}`
-                )
-              )}
-            </section>
+            <Fragment key={`group-${index}`}>
+              <div
+                className={clsx(
+                  styles.groupAccordion,
+                  isHiddenGroup && styles.isCollapsedGroup
+                )}
+                aria-hidden={isHiddenGroup}
+              >
+                <section className={styles.groupList}>
+                  {group.map((cast) =>
+                    renderCard(
+                      cast,
+                      `${cast.shopID}-${cast.castId}-${cast.rankID ?? cast.rank}`
+                    )
+                  )}
+                </section>
+              </div>
+              {isAccordionEnabled && index + 1 === accordionInsertAfterGroup ? (
+                <button
+                  type="button"
+                  className={styles.accordionButton}
+                  aria-expanded={isAccordionOpen}
+                  onClick={handleAccordionToggle}
+                >
+                  <span className={styles.accordionLabel}>
+                    {isAccordionOpen
+                      ? ACCORDION_BUTTON_LABEL_CLOSE
+                      : ACCORDION_BUTTON_LABEL_OPEN}
+                  </span>
+                </button>
+              ) : null}
+            </Fragment>
           );
         })}
       </div>

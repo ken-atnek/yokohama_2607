@@ -10,7 +10,7 @@
 .containerRanking {
     display: flex;
     flex-direction: column;
-    gap: 1em 0;
+    // gap: 1em 0;
     font-size: inherit;
     .rankingNav {
         display: grid;
@@ -44,11 +44,27 @@
         flex-direction: column;
         font-size: inherit;
         --border-color: #d8d8d8;
-        border-top: 1px solid var(--border-color);
-        border-left: 1px solid var(--border-color);
-        // border-right: 1px solid #d8d8d8;
+        .groupAccordion {
+            display: grid;
+            grid-template-rows: 1fr;
+            transition:
+                grid-template-rows 0.45s ease,
+                opacity 0.3s ease,
+                transform 0.3s ease;
+            opacity: 1;
+            transform: translateY(0);
+            font-size: inherit;
+            &.isCollapsedGroup {
+                grid-template-rows: 0fr;
+                opacity: 0;
+                transform: translateY(-8px);
+                pointer-events: none;
+            }
+        }
         .groupList {
             display: grid;
+            overflow: hidden;
+            padding-top: 1rem;
             border-bottom: 1px solid var(--border-color);
             .cardLink {
                 position: relative;
@@ -202,222 +218,292 @@
                 }
             }
         }
+        .accordionButton {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            border: 0;
+            padding: 1em;
+            background-color: #000;
+            color: $base-white;
+            font-size: inherit;
+            cursor: pointer;
+            border-radius: 0 0 2rem 2rem;
+            .accordionLabel {
+                position: relative;
+                font-size: fz(18);
+                font-weight: 700;
+                transition: 0.3s ease-out;
+                &::before,
+                &::after {
+                    content: "";
+                    transition: transform 0.3s ease;
+                    top: 50%;
+                    translate: 0 -50%;
+                    width: 0.8em;
+                    @include svg-icon-arrow-down("fff");
+                }
+                &::before {
+                    position: absolute;
+                    left: calc(100% + 1.4em);
+                }
+                &::after {
+                    position: absolute;
+                    right: calc(100% + 1.4em);
+                }
+            }
+            &[aria-expanded="true"] {
+                .accordionLabel {
+                    &::before,
+                    &::after {
+                        scale: 1 -1;
+                    }
+                }
+            }
+        }
+
+        &.isAccordionOpen {
+            .accordionButton {
+                transform: translateY(0);
+            }
+            .accordionButton {
+                &::before,
+                &::after {
+                    transform: translateY(-1px);
+                }
+            }
+        }
     }
     // 20枠
     .display20 {
-        .groupList {
+        .groupAccordion {
             &:first-of-type {
-                grid-template-columns: 55% 1fr;
-                grid-template-rows: repeat(2, 1fr);
-                .cardLink {
-                    &:nth-of-type(1) {
-                        border-right: 1px solid var(--border-color);
-                        grid-row: span 2;
-                        background-color: #fed9eb;
+                .groupList {
+                    grid-template-columns: 55% 1fr;
+                    grid-template-rows: repeat(2, 1fr);
+                    .cardLink {
+                        &:nth-of-type(1) {
+                            border-right: 1px solid var(--border-color);
+                            grid-row: span 2;
+                            background-color: #fed9eb;
+                            .rankIcon {
+                                top: -2cqw;
+                                right: -2cqw;
+                                width: 52cqw;
+                                aspect-ratio: 224/170;
+                                span {
+                                    font-size: 9cqw;
+                                }
+                            }
+                            .wrapPhoto {
+                                width: 62cqw;
+                                &:not(.grade0) {
+                                    .photoFrame {
+                                        img {
+                                            clip-path: inset(2cqw);
+                                        }
+                                    }
+                                }
+                                .gradeLabel {
+                                    font-size: min(6cqw, 2.6rem);
+                                }
+                            }
+                            .textProfile {
+                                padding-top: 36cqw;
+                            }
+                        }
+                        &:nth-of-type(2),
+                        &:nth-of-type(3) {
+                            .rankIcon {
+                                top: 0;
+                                right: 0;
+                                width: 38cqw;
+                                aspect-ratio: 1;
+                                span {
+                                    font-size: 6cqw;
+                                }
+                            }
+                            .wrapPhoto {
+                                width: 35cqw;
+                                &:not(.grade0) {
+                                    .photoFrame {
+                                        img {
+                                            clip-path: inset(1.4cqw);
+                                        }
+                                    }
+                                }
+                                .gradeLabel {
+                                    font-size: min(4.6cqw, 2.4rem);
+                                }
+                            }
+                            .textProfile {
+                                justify-content: flex-end;
+                            }
+                        }
+                        &:nth-of-type(2) {
+                            border-bottom: 1px solid var(--border-color);
+                            background-color: #f7fa92;
+                        }
+                        &:nth-of-type(3) {
+                            background-color: #dcebfa;
+                        }
+                    }
+                }
+            }
+            &:nth-of-type(2) {
+                border-left: 1px solid var(--border-color);
+                .groupList {
+                    grid-template-columns: repeat(2, 1fr);
+                    .cardLink {
                         .rankIcon {
-                            top: -2cqw;
-                            right: -2cqw;
-                            width: 52cqw;
-                            aspect-ratio: 224/170;
+                            top: 2cqw;
+                            right: 2cqw;
+                            width: 28cqw;
+                            aspect-ratio: 1;
                             span {
-                                font-size: 9cqw;
+                                font-size: 5cqw;
                             }
                         }
                         .wrapPhoto {
-                            width: 62cqw;
+                            width: 30cqw;
                             &:not(.grade0) {
                                 .photoFrame {
                                     img {
-                                        clip-path: inset(2cqw);
+                                        clip-path: inset(1.2cqw);
                                     }
                                 }
                             }
                             .gradeLabel {
-                                font-size: min(6cqw, 2.6rem);
+                                font-size: min(4.2cqw, 1.6rem);
                             }
                         }
                         .textProfile {
-                            padding-top: 36cqw;
+                            justify-content: flex-end;
+                        }
+                        &:nth-of-type(1) {
+                            border-bottom: 1px solid var(--border-color);
+                            border-right: 1px solid var(--border-color);
+                        }
+                        &:nth-of-type(2) {
+                            border-bottom: 1px solid var(--border-color);
+                        }
+                        &:nth-of-type(3) {
+                            border-right: 1px solid var(--border-color);
                         }
                     }
-                    &:nth-of-type(2),
-                    &:nth-of-type(3) {
+                }
+            }
+            &:nth-of-type(3) {
+                border-left: 1px solid var(--border-color);
+
+                .groupList {
+                    grid-template-columns: repeat(3, 1fr);
+                    .cardLink {
+                        gap: 0 1cqw;
                         .rankIcon {
                             top: 0;
-                            right: 0;
-                            width: 38cqw;
+                            right: 2cqw;
+                            width: 30cqw;
                             aspect-ratio: 1;
                             span {
                                 font-size: 6cqw;
                             }
                         }
                         .wrapPhoto {
-                            width: 35cqw;
+                            width: 45cqw;
                             &:not(.grade0) {
                                 .photoFrame {
                                     img {
-                                        clip-path: inset(1.4cqw);
+                                        clip-path: inset(1.6cqw);
                                     }
                                 }
                             }
                             .gradeLabel {
-                                font-size: min(4.6cqw, 2.4rem);
+                                font-size: min(7cqw, 1.8rem);
                             }
                         }
                         .textProfile {
                             justify-content: flex-end;
-                        }
-                    }
-                    &:nth-of-type(2) {
-                        border-bottom: 1px solid var(--border-color);
-                        background-color: #f7fa92;
-                    }
-                    &:nth-of-type(3) {
-                        background-color: #dcebfa;
-                    }
-                }
-            }
-            &:nth-of-type(2) {
-                grid-template-columns: repeat(2, 1fr);
-                .cardLink {
-                    .rankIcon {
-                        top: 2cqw;
-                        right: 2cqw;
-                        width: 28cqw;
-                        aspect-ratio: 1;
-                        span {
-                            font-size: 5cqw;
-                        }
-                    }
-                    .wrapPhoto {
-                        width: 30cqw;
-                        &:not(.grade0) {
-                            .photoFrame {
-                                img {
-                                    clip-path: inset(1.2cqw);
-                                }
+                            .shopName {
+                                font-size: min(6.6cqw, 2rem);
                             }
-                        }
-                        .gradeLabel {
-                            font-size: min(4.2cqw, 1.6rem);
-                        }
-                    }
-                    .textProfile {
-                        justify-content: flex-end;
-                    }
-                    &:nth-of-type(1) {
-                        border-bottom: 1px solid var(--border-color);
-                        border-right: 1px solid var(--border-color);
-                    }
-                    &:nth-of-type(2) {
-                        border-bottom: 1px solid var(--border-color);
-                    }
-                    &:nth-of-type(3) {
-                        border-right: 1px solid var(--border-color);
-                    }
-                }
-            }
-            &:nth-of-type(3) {
-                grid-template-columns: repeat(3, 1fr);
-                .cardLink {
-                    gap: 0 1cqw;
-                    .rankIcon {
-                        top: 0;
-                        right: 2cqw;
-                        width: 30cqw;
-                        aspect-ratio: 1;
-                        span {
-                            font-size: 6cqw;
-                        }
-                    }
-                    .wrapPhoto {
-                        width: 45cqw;
-                        &:not(.grade0) {
-                            .photoFrame {
-                                img {
-                                    clip-path: inset(1.6cqw);
-                                }
-                            }
-                        }
-                        .gradeLabel {
-                            font-size: min(7cqw, 1.8rem);
-                        }
-                    }
-                    .textProfile {
-                        justify-content: flex-end;
-                        .shopName {
-                            font-size: min(6.6cqw, 2rem);
-                        }
-                        .castName {
-                            font-size: min(7.6cqw, 1.8rem);
-                        }
-                        .sizeHead {
-                            .age {
+                            .castName {
                                 font-size: min(7.6cqw, 1.8rem);
                             }
-                            .cup {
-                                font-size: min(8cqw, 1.8rem);
+                            .sizeHead {
+                                .age {
+                                    font-size: min(7.6cqw, 1.8rem);
+                                }
+                                .cup {
+                                    font-size: min(8cqw, 1.8rem);
+                                }
+                            }
+                            .size {
+                                font-size: min(7cqw, 1.8rem);
                             }
                         }
-                        .size {
-                            font-size: min(7cqw, 1.8rem);
+                        &:nth-of-type(1) {
+                            border-right: 1px solid var(--border-color);
                         }
-                    }
-                    &:nth-of-type(1) {
-                        border-right: 1px solid var(--border-color);
-                    }
-                    &:nth-of-type(2) {
-                        border-right: 1px solid var(--border-color);
+                        &:nth-of-type(2) {
+                            border-right: 1px solid var(--border-color);
+                        }
                     }
                 }
             }
             &:nth-of-type(4) {
-                grid-template-columns: repeat(5, 1fr);
-                .cardLink {
-                    flex-direction: column-reverse;
-                    padding: 0.5em;
-                    .rankIcon {
-                        top: 4cqw;
-                        left: 3cqw;
-                        width: 28cqw;
-                        aspect-ratio: 1;
-                        span {
-                            font-size: 12cqw;
-                        }
-                    }
-                    .wrapPhoto {
-                        width: 60cqw;
-                        align-self: center;
-                        margin-top: 0.5em;
-                        &:not(.grade0) {
-                            .photoFrame {
-                                img {
-                                    clip-path: inset(1.84cqw);
-                                }
+                border-left: 1px solid var(--border-color);
+
+                .groupList {
+                    grid-template-columns: repeat(5, 1fr);
+                    .cardLink {
+                        flex-direction: column-reverse;
+                        padding: 0.5em;
+                        .rankIcon {
+                            top: 4cqw;
+                            left: 3cqw;
+                            width: 28cqw;
+                            aspect-ratio: 1;
+                            span {
+                                font-size: 12cqw;
                             }
                         }
-                        .gradeLabel {
-                            font-size: min(8cqw, 1.7rem);
-                        }
-                    }
-                    .textProfile {
-                        .shopName {
-                            align-self: flex-end;
-                            font-size: min(10cqw, 2rem);
-                        }
-                        .castName {
-                            font-size: min(9cqw, 1.8rem);
+                        .wrapPhoto {
+                            width: 60cqw;
                             align-self: center;
+                            margin-top: 0.5em;
+                            &:not(.grade0) {
+                                .photoFrame {
+                                    img {
+                                        clip-path: inset(1.84cqw);
+                                    }
+                                }
+                            }
+                            .gradeLabel {
+                                font-size: min(8cqw, 1.7rem);
+                            }
                         }
-                        .size {
-                            font-size: min(12cqw, 1.8rem);
+                        .textProfile {
+                            .shopName {
+                                align-self: flex-end;
+                                font-size: min(10cqw, 2rem);
+                            }
+                            .castName {
+                                font-size: min(9cqw, 1.8rem);
+                                align-self: center;
+                            }
+                            .size {
+                                font-size: min(12cqw, 1.8rem);
+                            }
                         }
-                    }
-                    &:not(:nth-of-type(5), :nth-of-type(10)) {
-                        border-right: 1px solid var(--border-color);
-                    }
-                    &:nth-of-type(-n + 5) {
-                        border-bottom: 1px solid var(--border-color);
+                        &:not(:nth-of-type(5), :nth-of-type(10)) {
+                            border-right: 1px solid var(--border-color);
+                        }
+                        &:nth-of-type(-n + 5) {
+                            border-bottom: 1px solid var(--border-color);
+                        }
                     }
                 }
             }

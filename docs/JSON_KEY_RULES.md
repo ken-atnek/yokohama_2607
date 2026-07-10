@@ -82,6 +82,10 @@
   - 例: `"rank": 1`
 - 表示件数はタブ単位で `displayCount` を持たせてよい
   - 例: エリアTOPは `20`、店舗TOPは `10`
+- アコーディオンを使う場合は `accordion` を持たせてよい
+  - `enabled`: 設置有無
+  - `initialVisibleGroupCount`: 初期表示する `section` 数
+  - `insertAfterGroup`: 何個目の `layoutGroups` の後にボタンを置くか
 - レイアウトの区切り位置は `layoutGroups` の配列で管理してよい
   - 例: `[3, 2, 2, 3, 5, 5]`
   - この場合は `3件 → 2件 → 2件 → 3件 → 5件 → 5件` の順で区切る
