@@ -119,6 +119,29 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ```
 
+### scripts運用（推奨）
+
+`package.json` の scripts は次を基準にする。
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "build:demo": "cross-env NEXT_PUBLIC_IS_REAL_PROD=false NEXT_PUBLIC_METADATA_BASE=https://demo-yokohama.dandy-g.jp/ next build && rimraf out/db",
+    "build:prod": "cross-env NEXT_PUBLIC_IS_REAL_PROD=true NEXT_PUBLIC_METADATA_BASE=https://www.dandy-g.jp/ next build && rimraf out/db",
+    "start": "next start",
+    "lint": "eslint .",
+    "lint:style": "stylelint \"src/**/*.scss\"",
+    "lint:style:fix": "stylelint \"src/**/*.scss\" --fix"
+  }
+}
+```
+
+- `build:demo` はデモURL `https://demo-yokohama.dandy-g.jp/` を使用する
+- `build:prod` は本番URL `https://www.dandy-g.jp/` を使用する
+- `out/db` は build 後に削除する
+
 ### next.config.ts（開発運用の推奨設定）
 
 ローカルネットワーク確認や他プロジェクトとの設定統一のため、以下を基準とする。

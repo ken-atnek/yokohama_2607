@@ -1,0 +1,895 @@
+@use "../styles/foundation" as *;
+/* =======================================
+ * 横浜ダンディーグループ エリアTOP スタイル
+ * URL: /src/styles/AreaTop.module.scss
+ * Referenced in: /src/app/top/page.tsx, /src/components/area/*.tsx
+ * Created: 2026-07-09
+ * Last updated: 2026-07-09
+ * ======================================= */
+
+/* =================================
+ * 共通
+ * ------------------------------ */
+.areaTop {
+    display: flex;
+    flex-direction: column;
+    color: $base-white;
+    h1 {
+        background-color: #2e2e2e;
+        text-align: center;
+        font-size: fz(12);
+        letter-spacing: 0.08em;
+        padding-block: 0.5em;
+        @include sp {
+            font-size: 1rem;
+            order: -2;
+        }
+    }
+    .containerHeadTitle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 0.8em;
+        padding-bottom: 1em;
+        background-color: #000;
+        gap: 0.8em 0;
+        @include sp {
+            order: -2;
+        }
+        img {
+            width: 90%;
+            max-width: 65rem;
+        }
+        p {
+            font-size: fz(20);
+            letter-spacing: 0.12em;
+            font-weight: 500;
+            @include sp {
+                font-size: fz(20);
+            }
+        }
+    }
+    .containerPickUp {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #2e2e2e;
+        padding: 2em 2vw;
+        @include sp {
+            order: -1;
+        }
+        .shopName {
+            font-size: fz(18);
+            text-align: center;
+            padding-block: 0.5em;
+            color: $pure-white;
+            @include sp {
+                font-size: 4vw;
+            }
+        }
+        .wrapProfile {
+            position: absolute;
+            bottom: 0.5rem;
+            left: 0;
+            font-size: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-block: 0.5em;
+            gap: 0.3em 0;
+            color: $pure-white;
+            width: 100%;
+            z-index: 1;
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-color: var(--shop-color, $base-white);
+                z-index: -1;
+                opacity: 0.6;
+            }
+            .castName {
+                font-size: fz(18);
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-align: center;
+                @include sp {
+                    font-size: 5vw;
+                }
+            }
+            .castSize {
+                font-size: inherit;
+                display: flex;
+                align-items: center;
+                gap: 0 0.3em;
+                span {
+                    @include futura-condensed-medium;
+                    letter-spacing: 0.04em;
+                    font-size: fz(20);
+                    @include sp {
+                        font-size: 4.4vw;
+                    }
+                    &.age {
+                        &::before {
+                            content: "age.";
+                        }
+                    }
+                    &.tall {
+                        &::before {
+                            content: "T.";
+                        }
+                    }
+                    &.bust {
+                        &::before {
+                            content: "B.";
+                        }
+                        i {
+                            font-size: inherit;
+                            text-transform: uppercase;
+                            margin-left: 0.1em;
+                            &::before,
+                            &::after {
+                                display: inline-block;
+                                translate: 0 -0.08em;
+                            }
+                            &::before {
+                                content: "[";
+                                margin-right: 0.1em;
+                            }
+                            &::after {
+                                content: "]";
+                                margin-left: 0.1em;
+                            }
+                        }
+                    }
+                    &.west {
+                        &::before {
+                            content: "W.";
+                        }
+                    }
+                    &.hip {
+                        &::before {
+                            content: "H.";
+                        }
+                    }
+                }
+            }
+        }
+        .wrapImage {
+            font-size: inherit;
+            width: 100%;
+            overflow: hidden;
+            img {
+                width: 100%;
+                aspect-ratio: 51/75;
+                object-fit: cover;
+                animation-name: image-scale;
+                animation-timing-function: ease;
+                animation-duration: 6s;
+                animation-delay: var(--zoom-delay, 0ms);
+                animation-iteration-count: infinite;
+                animation-direction: alternate;
+                transform-origin: center center;
+            }
+        }
+        .blockPickUp {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            max-width: $article-max-width;
+            width: 100%;
+            gap: 0 2px;
+            font-size: inherit;
+            --boxAspect: 416/690;
+            li {
+                position: relative;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                font-size: inherit;
+                aspect-ratio: var(--boxAspect);
+                .fadeStage {
+                    position: relative;
+                    font-size: inherit;
+                    width: 100%;
+                    height: 100%;
+                }
+                .fadeItem {
+                    position: absolute;
+                    inset: 0;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 1.2s ease;
+                    z-index: 0;
+                }
+                .isActive {
+                    opacity: 1;
+                    pointer-events: auto;
+                    z-index: 1;
+                }
+                .wrapLink {
+                    width: 100%;
+                    min-height: 100%;
+                    background-color: var(--shop-color, $base-white);
+                    display: flex;
+                    flex-direction: column;
+                    border-radius: 0.8rem;
+                    font-size: inherit;
+                    padding-bottom: 1rem;
+                    overflow: hidden;
+                }
+            }
+            &.pcVersion {
+                @include sp {
+                    display: none;
+                }
+            }
+        }
+        .mobileBlockPickUp {
+            display: none;
+            @include sp {
+                display: block;
+                width: 100%;
+                font-size: inherit;
+                .castSplide {
+                    width: 100%;
+                    font-size: inherit;
+                    :global(.splide__track) {
+                        overflow: visible;
+                    }
+                    :global(.splide__pagination) {
+                        position: static;
+                        margin-top: 4vw;
+                    }
+                    .fadeItem {
+                        position: static;
+                        opacity: 1;
+                        pointer-events: auto;
+                    }
+                    .wrapLink {
+                        display: flex;
+                        flex-direction: column;
+                        font-size: inherit;
+                        background-color: var(--shop-color, $base-white);
+                        border-radius: 4vw;
+                        overflow: hidden;
+                    }
+                }
+            }
+        }
+        @keyframes image-scale {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.06);
+            }
+        }
+    }
+    .containerTelop {
+        position: relative;
+        padding: 0.5em 2vw;
+        background-image: linear-gradient(
+            rgb(90 90 90),
+            rgb(63 62 62) 10%,
+            rgb(46 46 46)
+        );
+        display: flex;
+        align-items: center;
+        gap: 0 0.5em;
+        @include sp {
+            order: -1;
+        }
+        h2 {
+            @include bebas-neue;
+            font-size: fz(24);
+        }
+        .blockTelop {
+            background-color: #000;
+            font-size: 1em;
+            padding: 0.5em 1em;
+            display: flex;
+            flex-grow: 1;
+            align-items: center;
+            color: $base-white;
+            border-radius: 0.5em;
+            overflow: hidden;
+            p {
+                font-size: fz(14);
+                letter-spacing: 0.04em;
+                padding-left: 90%;
+                white-space: nowrap;
+                animation-name: marquee;
+                animation-timing-function: linear;
+                animation-duration: 20s;
+                animation-iteration-count: infinite;
+                @include sp {
+                    animation-duration: 10s;
+
+                    // display: -webkit-box;
+                    // -webkit-box-orient: vertical;
+                    // -webkit-line-clamp: 1;
+                    // /* 表示したい行数 */
+                    // overflow: hidden;
+                    // text-overflow: ellipsis;
+                }
+            }
+            @keyframes marquee {
+                0% {
+                    transform: translate(0%);
+                }
+                99%,
+                100% {
+                    transform: translate(-100%);
+                }
+            }
+        }
+    }
+    .containerContents {
+        display: flex;
+        justify-content: center;
+        padding: 0 2vw;
+        @include sp {
+            display: contents;
+        }
+        .innerContainerContents {
+            max-width: $article-max-width;
+            display: grid;
+            grid-template-columns: 25% 1fr;
+            gap: 0 1em;
+            box-shadow: 0.5rem -3rem 3rem rgb(1 1 1 / 10%);
+            padding-top: 1em;
+            padding-bottom: 3em;
+            @include sp {
+                display: contents;
+            }
+            .boxLeftBan {
+                font-size: inherit;
+                display: flex;
+                flex-direction: column;
+                gap: 1em 0;
+                h2 {
+                    position: relative;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: fz(14);
+                    padding: 0.7em 0.5em 0.6em 2.6em;
+                    background-color: #000;
+                    border-radius: 0.5em;
+                    font-weight: 500;
+                    letter-spacing: 0.08em;
+                    @include sp {
+                        padding: 2vw;
+                    }
+                    span {
+                        position: relative;
+                        @include bebas-neue;
+                        font-size: 2em;
+                        &::before {
+                            content: "";
+                            position: absolute;
+                            top: 50%;
+                            transform: translateY(-60%);
+                            right: calc(100% + 0.2em);
+                            width: 0.6em;
+                            @include svg-icon-antenna("ff0099");
+                        }
+                    }
+                }
+                .h2Topics {
+                    @include sp {
+                        display: none;
+                    }
+                }
+                .boxVanilla {
+                    position: relative;
+                    width: 100%;
+                    iframe {
+                        aspect-ratio: 30/40;
+                        width: 100%;
+                    }
+                }
+            }
+            .boxMainContents {
+                font-size: inherit;
+                display: flex;
+                flex-direction: column;
+                gap: 1em 0;
+                width: 100%;
+                @include sp {
+                    display: contents;
+                }
+                .itemH2 {
+                    position: relative;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: fz(14);
+                    border-radius: 0.5em;
+                    font-weight: 500;
+                    letter-spacing: 0.08em;
+                    span {
+                        position: relative;
+                        @include bebas-neue;
+                        font-size: 2em;
+                        padding-left: 1em;
+                        &::before {
+                            content: "";
+                            position: absolute;
+                            top: 50%;
+                            translate: 0 -50%;
+                            left: 0;
+                            width: 0.8em;
+                        }
+                    }
+                }
+                .wrapMainBanHead {
+                    font-size: inherit;
+                    position: relative;
+                    width: 100%;
+                    @include sp {
+                        order: -1;
+                        padding: 4vw 2vw;
+                    }
+                    ul {
+                        width: 100%;
+                        font-size: inherit;
+                        display: grid;
+                        grid-auto-flow: row;
+                        gap: 0.8em 0;
+                        @include sp {
+                            gap: 2vw 0;
+                        }
+                        li {
+                            width: 100%;
+                            img {
+                                width: 100%;
+                            }
+                        }
+                    }
+                }
+                .wrapNewFace {
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    padding: 2em;
+                    background-color: #171717;
+                    background-image: repeating-linear-gradient(
+                        135deg,
+                        transparent,
+                        transparent 3px,
+                        rgb(52 52 52) 3px,
+                        rgb(52 52 52) 6px
+                    );
+                    @include sp {
+                        padding: 4vw 2vw 6vw;
+                        margin-top: 4vw;
+                    }
+                    .itemH2 {
+                        span {
+                            &::before {
+                                @include svg-icon-new-face("ff0099");
+                            }
+                        }
+                    }
+                    .blockNewFace {
+                        position: relative;
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        width: 100%;
+                        font-size: inherit;
+                        --boxAspect: 51/75;
+                        margin-top: 1rem;
+                        @include sp {
+                            gap: 0 2vw;
+                        }
+                        li {
+                            width: 100%;
+                            display: flex;
+                            flex-direction: column;
+                            color: #010101;
+                            font-size: inherit;
+                            aspect-ratio: var(--boxAspect);
+
+                            .fadeStage {
+                                position: relative;
+                                font-size: inherit;
+                                width: 100%;
+                                height: 100%;
+                            }
+                            .fadeItem {
+                                position: absolute;
+                                inset: 0;
+                                opacity: 0;
+                                pointer-events: none;
+                                transition: opacity 1.4s ease;
+                                z-index: 0;
+                            }
+                            .isActive {
+                                opacity: 1;
+                                pointer-events: auto;
+                                z-index: 1;
+                            }
+                            .wrapLink {
+                                display: flex;
+                                flex-direction: column;
+                                font-size: inherit;
+                                aspect-ratio: var(--boxAspect);
+                                overflow: hidden;
+                                .wrapImage {
+                                    font-size: inherit;
+                                    overflow: hidden;
+                                    img {
+                                        width: 100%;
+                                        aspect-ratio: 51/75;
+                                        object-fit: cover;
+                                        animation-name: image-scale;
+                                        animation-timing-function: ease;
+                                        animation-duration: 6s;
+                                        animation-delay: var(--zoom-delay, 0ms);
+                                        scale: 1;
+                                        animation-iteration-count: infinite;
+                                    }
+                                    @keyframes image-scale {
+                                        0% {
+                                            scale: 1;
+                                        }
+                                        // 60% {
+                                        //     scale: 1.4;
+                                        // }
+                                        100% {
+                                            scale: 1.2;
+                                        }
+                                    }
+                                }
+                                .wrapProfile {
+                                    font-size: inherit;
+                                    width: 100%;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    padding-block: 0.5em;
+                                    gap: 0.3em 0;
+                                    position: absolute;
+                                    left: 0;
+                                    bottom: 0;
+                                    color: $base-white;
+                                    z-index: 1;
+                                    &::before {
+                                        content: "";
+                                        position: absolute;
+                                        inset: 0;
+                                        background-color: var(
+                                            --shop-color,
+                                            $base-white
+                                        );
+                                        z-index: -1;
+                                        opacity: 0.6;
+                                    }
+                                    @include sp {
+                                        gap: 0;
+                                        padding-block: 1vw;
+                                    }
+                                    .castName {
+                                        font-size: fz(18);
+                                        font-weight: 500;
+                                        letter-spacing: 0.08em;
+                                        text-align: center;
+                                        @include sp {
+                                            font-size: fz(14);
+                                        }
+                                    }
+                                    .castSize {
+                                        font-size: inherit;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 0 0.3em;
+                                        span {
+                                            @include futura-condensed-medium;
+                                            font-size: fz(16);
+                                            letter-spacing: 0.1em;
+                                            @include sp {
+                                                font-size: fz(16);
+                                            }
+                                            &.age {
+                                                &::before {
+                                                    content: "AGE.";
+                                                }
+                                            }
+                                            &.tall {
+                                                &::before {
+                                                    content: "T.";
+                                                }
+                                            }
+                                            &.bust {
+                                                &::before {
+                                                    content: "B.";
+                                                }
+                                                i {
+                                                    font-size: inherit;
+                                                    text-transform: uppercase;
+                                                    margin-left: 0.1em;
+                                                    &::before,
+                                                    &::after {
+                                                        display: inline-block;
+                                                        translate: 0 -0.08em;
+                                                    }
+                                                    &::before {
+                                                        content: "[";
+                                                        margin-right: 0.1em;
+                                                    }
+                                                    &::after {
+                                                        content: "]";
+                                                        margin-left: 0.1em;
+                                                    }
+                                                }
+                                            }
+                                            &.west {
+                                                &::before {
+                                                    content: "W.";
+                                                }
+                                            }
+                                            &.hip {
+                                                &::before {
+                                                    content: "H.";
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .wrapBanInformation {
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    padding: 2em;
+                    background-color: #171717;
+                    background-image: repeating-linear-gradient(
+                        135deg,
+                        transparent,
+                        transparent 3px,
+                        rgb(52 52 52) 3px,
+                        rgb(52 52 52) 6px
+                    );
+                    @include sp {
+                        padding: 4vw 2vw 6vw;
+                        margin-top: 4vw;
+                    }
+                    .itemH2 {
+                        span {
+                            &::before {
+                                @include svg-icon-new-face("ff0099");
+                            }
+                        }
+                    }
+                }
+                .wrapRealTime {
+                    position: relative;
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    @include sp {
+                        padding-bottom: 10vw;
+                    }
+                    .itemH2 {
+                        width: 100%;
+                        padding: 0.8em 1em 0.5em 2em;
+                        border-top-right-radius: unset;
+                        border-top-left-radius: 2rem;
+                        border-bottom-left-radius: unset;
+                        border-bottom-right-radius: unset;
+                        background-image: linear-gradient(
+                            to right,
+                            rgba(#6d022f, 1),
+                            rgba(#98003f, 1)
+                        );
+                        span {
+                            &::before {
+                                @include svg-icon-new-face("ff002f");
+                            }
+                        }
+                        @include sp {
+                            padding: 4vw 2vw 2vw;
+                            border-top-left-radius: unset;
+                        }
+                    }
+                    .contentsRealtime {
+                        position: relative;
+                        font-size: inherit;
+                        background-color: #f8f8f8;
+                        padding: 1em;
+                        @include sp {
+                            padding: 4vw 2vw;
+                        }
+                        .listRealTime {
+                            position: relative;
+                            font-size: inherit;
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 2em 0.7em;
+                            @media (width <= 1242px) {
+                                grid-template-columns: repeat(3, 1fr);
+                            }
+                            @include sp {
+                                grid-template-columns: repeat(2, 1fr);
+                                gap: 8vw 2vw;
+                            }
+                            li {
+                                position: relative;
+                                font-size: inherit;
+                                display: flex;
+                                flex-direction: column;
+                                background-color: #fff;
+                                box-shadow: 0 4px 4px rgba(#000, 0.25);
+                                color: $font-black;
+                                .realTImeDetail {
+                                    position: relative;
+                                    font-size: fz(14);
+                                    color: $base-white;
+                                    text-align: center;
+                                    padding-block: 0.4em;
+                                    letter-spacing: 0.04em;
+                                    background-color: var(--shopColor);
+                                    &.statusNa {
+                                        background-color: #eaeaea;
+                                        color: var(--shopColor);
+                                        &::before {
+                                            content: "";
+                                            position: absolute;
+                                            left: 0;
+                                            top: 0;
+                                            width: 0.5rem;
+                                            height: 100%;
+                                            background-color: var(--shopColor);
+                                        }
+                                    }
+                                }
+                                .wrapTodayTime {
+                                    font-size: inherit;
+                                    display: flex;
+                                    justify-content: center;
+                                    padding-block: 0.3em;
+                                    span {
+                                        display: flex;
+                                        font-size: fz(16);
+                                        @include futura-cyrillic-book;
+                                        align-items: center;
+                                        letter-spacing: 0.12em;
+                                        &:nth-of-type(2) {
+                                            &::before {
+                                                display: inline-block;
+                                                content: "";
+                                                width: 0.4em;
+                                                aspect-ratio: 0.85;
+                                                background-color: $font-black;
+                                                margin-inline: 0.56em;
+                                                clip-path: polygon(
+                                                    0 0,
+                                                    100% 50%,
+                                                    0 100%
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                                a {
+                                    position: relative;
+                                    font-size: inherit;
+                                    display: flex;
+                                    flex-direction: column;
+                                    .wrapPhoto {
+                                        @include cast-wrap-photo;
+                                        aspect-ratio: 3/4;
+                                        .gradeLabel {
+                                            font-size: fz(16);
+                                        }
+                                        &:not(.grade9) {
+                                            img {
+                                                clip-path: inset(0.5em);
+                                            }
+                                        }
+                                        img {
+                                            object-fit: cover;
+                                        }
+                                    }
+                                }
+                                .castProfile {
+                                    font-size: inherit;
+                                    display: flex;
+                                    flex-direction: column;
+                                    justify-content: space-between;
+                                    padding: 0.5em;
+                                    gap: 0.5em 0;
+                                    .wrapName {
+                                        font-size: inherit;
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                        .castName {
+                                            font-size: fz(18);
+                                            letter-spacing: 0.12em;
+                                        }
+                                        .shopName {
+                                            color: var(--shopColor);
+                                            font-size: fz(18);
+                                            letter-spacing: 0.12em;
+                                            @include futura-cyrillic-demi;
+                                        }
+                                    }
+                                    .castSize {
+                                        font-size: inherit;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 0 0.1em;
+                                        justify-content: center;
+                                        span {
+                                            @include futura-cyrillic-book;
+                                            font-size: fz(14);
+                                            &.age {
+                                                &::before {
+                                                    content: "Age.";
+                                                }
+                                            }
+                                            &.tall {
+                                                &::before {
+                                                    content: "T.";
+                                                }
+                                            }
+                                            &.bust {
+                                                &::before {
+                                                    content: "B.";
+                                                }
+                                                i {
+                                                    font-size: inherit;
+                                                    text-transform: uppercase;
+                                                    margin-left: 0.05em;
+                                                    &::before,
+                                                    &::after {
+                                                        display: inline-block;
+                                                        translate: 0 -0.08em;
+                                                    }
+                                                    &::before {
+                                                        content: "[";
+                                                        margin-right: 0.1em;
+                                                    }
+                                                    &::after {
+                                                        content: "]";
+                                                        margin-left: 0.05em;
+                                                    }
+                                                }
+                                            }
+                                            &.west {
+                                                &::before {
+                                                    content: "W.";
+                                                }
+                                            }
+                                            &.hip {
+                                                &::before {
+                                                    content: "H.";
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                &.hot {
+                                    --shopColor: #3da4fc;
+                                }
+                                &.villa {
+                                    --shopColor: #da3dfc;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+.areaFooter {
+    --base-color: #000;
+}

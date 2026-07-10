@@ -1,0 +1,128 @@
+@use "../../styles/foundation" as *;
+/* =======================================
+ * 横浜ダンディーグループ BannerGroup スタイル
+ * URL: /src/components/common/BannerGroup.module.scss
+ * Referenced in: /src/components/common/BannerGroup.tsx, /src/app/top/page.tsx
+ * Created: 2026-07-09
+ * Last updated: 2026-07-09
+ * ======================================= */
+
+.boxBanGroup {
+    display: flex;
+    flex-direction: column;
+    --radius: 0.8em;
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+    padding: 0.8em 0.5em 0.5em;
+    gap: 0.5em 0;
+    @include sp {
+        --radius: 6vw;
+        padding-inline: 2vw;
+        padding-bottom: 4vw;
+    }
+    h3 {
+        color: #fff;
+        text-align: center;
+        @include bebas-neue;
+        font-size: fz(28);
+        @include sp {
+            font-size: fz(30);
+        }
+    }
+    @include sp {
+        border: solid 1px #00f;
+    }
+    ul {
+        display: grid;
+        grid-auto-flow: row;
+        font-size: inherit;
+        gap: 0.5em 0;
+        @include sp {
+            gap: 2vw 0;
+        }
+        li {
+            width: 100%;
+            img {
+                width: 100%;
+            }
+        }
+    }
+
+    &.boxGroup {
+        background-color: #e8e8e8;
+        h3 {
+            color: $pure-black;
+        }
+    }
+    &.boxDandy {
+        background-color: #e776ad;
+    }
+    &.boxMr {
+        background-color: #ff9900;
+    }
+    &.boxClub {
+        background-color: #00cc33;
+    }
+
+    &.boxRecruit {
+        margin-top: 1em;
+        gap: 0.8em 0;
+
+        @include sp {
+            padding-inline: 2vw;
+            margin-top: unset;
+        }
+
+        h3 {
+            color: #767676;
+            @include futura-condensed-medium;
+            font-size: fz(24);
+            text-transform: uppercase;
+            border: 1px solid;
+            text-align: center;
+            letter-spacing: 0.2em;
+            padding-block: 0.3em;
+        }
+    }
+    &.wrapMainBanHead {
+        border-radius: unset;
+        padding: 0;
+    }
+    &.wrapMainBanInformation {
+        border-radius: unset;
+        padding: 0;
+        margin-top: 1rem;
+    }
+    &.wrapMainBanBottom {
+        border-radius: unset;
+        padding: 0;
+        ul {
+            gap: 0;
+        }
+    }
+}
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modalContent {
+}
+
+.boxGroup {
+}
+
+.boxHot {
+}
+
+.boxVilla {
+}
+
+.boxRecruit {
+}

@@ -20,9 +20,9 @@
 
 ```txt
 /                    （グループTOP）
-/yokohama-dandy/     （横浜ダンディ）
-/mr-dandy/           （ミスターダンディ）
-/club-dandy/         （クラブダンディ）
+/dandy/     （横浜ダンディ）
+/mr_dandy/           （ミスターダンディ）
+/club_dandy/         （クラブダンディ）
 ```
 
 ---
@@ -40,7 +40,7 @@
 - `/{shop}/system/`
   - システム
 
-※ `{shop}` は `yokohama-dandy` / `mr-dandy` / `club-dandy`
+※ `{shop}` は `dandy` / `mr_dandy` / `club_dandy`
 
 ---
 
@@ -89,6 +89,54 @@
   - お知らせ系ページ
   - 旧 `/topics/` と `/news/` は統合前提で運用
   - 将来的な再分離は可能な構成で管理
+
+---
+
+
+## `public/db` 構成方針（確定）
+
+- 公開データ置き場は `public/db/` とする（`src/data/` の TS モジュール群と名前が紛らわしいため `data` は使わない）
+- `db` 直下は用途別（種別ファースト）に分ける
+  - `cast/`: キャストデータ用（現状は空、今後追加）
+  - `contents/`: キャスト以外の全データ。神戸案件の `public/data` と同じく「グループ用」と「店舗用」でフォルダを分ける
+- `contents/` 配下のフォルダ名は、URLスラッグと対応する英字命名にする
+- グループTOP用の共通データは `contents/group` にまとめる
+
+想定構成:
+
+```txt
+public/
+└─ db/
+   ├─ cast/
+   └─ contents/
+      ├─ group/
+      ├─ dandy/
+      ├─ mr_dandy/
+      └─ club_dandy/
+```
+
+命名ルール:
+
+- グループTOP用: `contents/group`
+- 店舗用: URLスラッグと同じ
+  - `contents/dandy`
+  - `contents/mr_dandy`
+  - `contents/club_dandy`
+- JSONファイル名は、神戸案件に近い命名を基本維持してよい
+
+パス分岐例:
+
+```ts
+if (pathname.startsWith('/dandy')) {
+  basePath = '/db/contents/dandy/ReciprocalLink.json';
+} else if (pathname.startsWith('/mr_dandy')) {
+  basePath = '/db/contents/mr_dandy/ReciprocalLink.json';
+} else if (pathname.startsWith('/club_dandy')) {
+  basePath = '/db/contents/club_dandy/ReciprocalLink.json';
+} else {
+  basePath = '/db/contents/group/ReciprocalLink.json';
+}
+```
 
 ---
 

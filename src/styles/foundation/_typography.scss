@@ -1,0 +1,32 @@
+/* =================================
+ * フォント設定
+ * ------------------------------ */
+@mixin futura-cyrillic-book {
+    font-family: var(--font-futura-cyrillic-book), "Futura", sans-serif;
+}
+
+@mixin futura-cyrillic-demi {
+    font-family: var(--font-futura-cyrillic-demi), "Futura", sans-serif;
+}
+
+@mixin futura-condensed-medium {
+    font-family: var(--font-futura-condensed-medium), "Futura", sans-serif;
+}
+
+@mixin bebas-neue {
+    font-family: var(--font-bebas-neue), "Bebas Neue", sans-serif;
+    font-weight: 400;
+}
+
+@mixin noto-sans-jp {
+    font-family: var(--font-noto-sans-jp), "Noto Sans JP", sans-serif;
+    font-weight: 400;
+}
+
+@mixin Serif {
+    font-family:
+        "Zen Old Mincho", "游明朝体", "Yu Mincho", YuMincho, "ヒラギノ明朝Pro",
+        "Hiragino Mincho Pro", "MS P明朝", "MS PMincho", serif;
+    font-weight: 400;
+    font-style: normal;
+}

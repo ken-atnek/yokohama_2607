@@ -40,10 +40,7 @@ yarn-error.log*
 next-env.d.ts
 
 # generated / imported runtime data
-public/data/
-public/cast/
-public/images/
-public/movie/
+public/db/
 cp_log/
 env.download
 env.production

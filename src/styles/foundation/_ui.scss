@@ -1,0 +1,127 @@
+@use "./svg" as *;
+@use "./colors" as *;
+@use "./typography" as *;
+@use "./settings" as *;
+@use "./breakpoints" as *;
+@use "./interaction" as *;
+/* =======================================
+ * 横浜ダンディーグループ UIユーティリティ スタイル
+ * URL: /src/styles/foundation/_ui.scss
+ * Referenced in: /src/styles/foundation/_index.scss
+ * Created: 2026-07-08
+ * Last updated: 2026-07-09
+ * ======================================= */
+
+/* =================================
+ * 	中央寄せ
+ * ------------------------------ */
+@mixin flex-center($direction: row) {
+    display: flex;
+    flex-direction: $direction;
+    align-items: center;
+    justify-content: center;
+}
+/* =================================
+ * アニメーション他
+ * ------------------------------ */
+@mixin move03 {
+    transition: 0.3s ease-out;
+}
+
+/* =================================
+ * 	キャストランク
+ * ------------------------------ */
+@mixin cast-wrap-photo {
+    position: relative;
+    font-size: inherit;
+    --grade-color: 0, 0, 0;
+    .gradeLabel {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+
+        // font-size: fz(16);
+        color: #fff;
+        display: flex;
+        min-width: 7em;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0.3em 0.5em;
+        background-image: repeating-linear-gradient(
+            to left,
+            rgb(var(--grade-color), 1),
+            rgb(var(--grade-color), 1) 42%,
+            rgb(var(--grade-color), 0)
+        );
+    }
+    .gradeFrame {
+        position: absolute;
+        font-size: 1em;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("/images/common/grade-frame.webp") no-repeat center
+            center / cover;
+        background-blend-mode: hard-light;
+        background-color: rgb(var(--grade-color));
+    }
+
+    // &:not(.grade9) {
+    //     img {
+    //         clip-path: inset(0.5em);
+    //     }
+    // }
+
+    /* =========================================================
+ 1: { label: 'DIAMOND', className: 'grade1' }
+ 2: { label: 'PREMIUM', className: 'grade2' }
+ 3: { label: 'GRAND VIP', className: 'grade3' }
+ 4: { label: '筆頭 VIP', className: 'grade4' }
+ 5: { label: 'VIP', className: 'grade5' }
+ 6: { label: 'GOLD', className: 'grade6' }
+ 7: { label: 'SILVER', className: 'grade7' }
+ 8: { label: 'BRONZE', className: 'grade8' }
+ 9: { label: 'NORMAL', className: 'grade9' }
+  * --------------------------------------------------------- */
+    &.grade1 {
+        --grade-color: 158, 44, 229;
+    }
+    &.grade2 {
+        --grade-color: 42, 63, 182;
+    }
+    &.grade3 {
+        --grade-color: 201, 14, 14;
+    }
+    &.grade4 {
+        --grade-color: 228, 11, 105;
+    }
+    &.grade5 {
+        --grade-color: 101, 205, 162;
+    }
+    &.grade6 {
+        --grade-color: 210, 167, 74;
+        .gradeFrame {
+            background-image: unset;
+        }
+    }
+    &.grade7 {
+        --grade-color: 99, 99, 99;
+        .gradeFrame {
+            background-image: unset;
+        }
+    }
+    &.grade8 {
+        --grade-color: 214, 135, 98;
+        .gradeFrame {
+            background-image: unset;
+        }
+    }
+    &.grade9 {
+        --grade-color: 102, 195, 224;
+        .gradeFrame {
+            background-image: unset;
+        }
+    }
+}
