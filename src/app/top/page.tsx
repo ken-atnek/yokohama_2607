@@ -58,27 +58,27 @@ export default function AreaTop() {
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanArea.json?t=${timestamp}`}
                 title="Yokohama area event"
-                className={bannerGroupStyles.boxGroup}
+                className={bannerGroupStyles.boxAreaGroup}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanDandy.json?t=${timestamp}`}
                 title="yokohama dandy event"
-                className={bannerGroupStyles.boxDandy}
+                className={bannerGroupStyles.boxAreaDandy}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanMr.json?t=${timestamp}`}
                 title="mr dandy event"
-                className={bannerGroupStyles.boxMr}
+                className={bannerGroupStyles.boxAreaMr}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanClub.json?t=${timestamp}`}
                 title="club dandy event"
-                className={bannerGroupStyles.boxClub}
+                className={bannerGroupStyles.boxAreaClub}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanRecruit.json?t=${timestamp}`}
                 title="recruit"
-                className={bannerGroupStyles.boxRecruit}
+                className={bannerGroupStyles.boxAreaRecruit}
               />
               <div className={styles.boxVanilla}>
                 <iframe src="https://qzin.jp/1021/widget?d=0" seamless></iframe>

@@ -1,0 +1,71 @@
+/* =================================
+ * アクセスマップ
+ * ------------------------------ */
+@use "../../../styles/foundation" as *;
+.blockAccess {
+    position: relative;
+    font-size: inherit;
+    display: flex;
+    flex-direction: column;
+    margin-top: 4em;
+    width: 100%;
+    @include sp {
+        margin-top: 4vw;
+    }
+    .wrapText {
+        font-size: inherit;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 1em;
+        margin-top: 3em;
+        gap: 0 1em;
+        @include sp {
+            display: grid;
+            gap: 1vw 4vw;
+            margin-top: 4vw;
+        }
+        address {
+            font-size: fz(16);
+            @include sp {
+                grid-column: span 2;
+            }
+        }
+        a {
+            font-size: fz(16);
+            @include sp {
+                text-align: right;
+            }
+        }
+        p {
+            font-size: fz(16);
+            span {
+                margin-right: 0.5em;
+            }
+        }
+    }
+    .wrapMap {
+        position: relative;
+        width: 100%;
+        iframe {
+            aspect-ratio: 2;
+            @include sp {
+                aspect-ratio: 1/3;
+            }
+        }
+    }
+    &.topPage {
+        margin-top: 3em;
+        @include sp {
+            order: 1;
+            margin-top: 2vw;
+        }
+        h2 {
+            display: none;
+        }
+        .wrapText {
+            margin-bottom: 1em;
+            margin-top: 0;
+        }
+    }
+}

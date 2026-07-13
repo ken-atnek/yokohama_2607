@@ -170,8 +170,13 @@ $entrance-max-width: 96rem;
             flex-direction: column;
             align-items: center;
             gap: 1em 0;
+            padding: 0.8em 1.2em;
+            border-radius: 1.2rem;
+            min-width: 14em;
             @include sp {
                 width: 40vw;
+                min-width: unset;
+                padding-inline: 0.8em;
             }
             svg {
                 fill: $pure-white;
@@ -191,14 +196,26 @@ $entrance-max-width: 96rem;
                     width: fit-content;
                 }
             }
-            &.kbHot {
-                svg {
-                    // @include svg-hot;
+
+            &.boxAnnounceDandy {
+                img {
+                    font-size: inherit;
+                    width: 12em;
+                    filter: brightness(100);
                 }
             }
-            &.kbVilla {
-                svg {
-                    // @include svg-villa;
+            &.boxAnnounceMrDandy {
+                img {
+                    font-size: inherit;
+                    width: 12em;
+                    filter: brightness(100);
+                }
+            }
+            &.boxAnnounceClubDandy {
+                img {
+                    font-size: inherit;
+                    width: 12em;
+                    filter: brightness(100);
                 }
             }
         }
@@ -251,11 +268,16 @@ $entrance-max-width: 96rem;
             align-self: center;
             display: grid;
             grid-template-rows: 1fr auto;
-            grid-template-columns: repeat(3, 1fr);
             margin: 3em 0;
             justify-content: center;
             font-size: inherit;
             gap: 0 1em;
+            &.listAreaShopArea {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            &.listAreaShopShop {
+                grid-template-columns: repeat(2, 1fr);
+            }
             @include sp {
                 padding-inline: 4vw;
                 display: grid;
@@ -297,6 +319,7 @@ $entrance-max-width: 96rem;
                         width: 85%;
                         aspect-ratio: 500/161;
                         stroke: unset;
+
                         // fill: $shop-villa;
                     }
                 }
@@ -549,7 +572,7 @@ $entrance-max-width: 96rem;
             padding-left: 2em;
             padding-block: 2vw;
         }
-        p {
+        .copyRightText {
             position: relative;
             font-size: fz(12);
             letter-spacing: 0.08em;

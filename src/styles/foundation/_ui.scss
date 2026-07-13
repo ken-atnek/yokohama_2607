@@ -125,3 +125,197 @@
         }
     }
 }
+
+/* =================================
+ * 	店舗 TOP コンテンツタイトル
+ * ------------------------------ */
+@mixin contents-title($contents-color) {
+    position: absolute;
+    top: 4em;
+    left: 0;
+    font-size: 1em;
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 0.06em;
+        left: 0;
+        background-image: linear-gradient(
+            90deg,
+            rgba($contents-color, 0),
+            rgba($contents-color, 1) 20%,
+            rgba($contents-color, 1) 80%,
+            rgba($contents-color, 0) 99%
+        );
+    }
+    &::before {
+        top: -0.1em;
+    }
+    &::after {
+        bottom: -0.3em;
+    }
+    @include sp {
+        top: 7vw;
+    }
+    h2 {
+        position: relative;
+        font-size: fz(24);
+        padding: 0 4em 0 9.5em;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        line-height: 0.8em;
+        gap: 0.2em 0;
+        letter-spacing: 0.12em;
+        @include sp {
+            font-size: FZ(21);
+            padding: 0 2em 0 9em;
+        }
+        span {
+            position: relative;
+            display: flex;
+            font-size: 1em;
+            @include futura-cyrillic-demi;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            align-items: center;
+            gap: 0 0.3em;
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                background: url("/images/common/flare.webp") no-repeat center
+                    center / contain;
+                mix-blend-mode: screen;
+            }
+            &::before {
+                top: -1em;
+                right: 2em;
+                width: 2em;
+                height: 2em;
+                opacity: 1;
+            }
+            &::after {
+                top: -3em;
+                right: -4em;
+                width: 4em;
+                height: 4em;
+                opacity: 0.8;
+            }
+        }
+        &::before,
+        &::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 0.12em;
+            left: 0;
+            background-image: linear-gradient(
+                90deg,
+                rgba($contents-color, 0),
+                rgba($contents-color, 1) 20%,
+                rgba($contents-color, 1) 80%,
+                rgba($contents-color, 0) 99%
+            );
+            @include sp {
+                height: 0.1em;
+            }
+        }
+        &::before {
+            top: -0.3em;
+        }
+        &::after {
+            bottom: -0.45em;
+        }
+    }
+}
+
+/* =================================
+ * 	店舗 TOP オブジェクトタイトル
+ * ------------------------------ */
+@mixin object-title {
+    position: absolute;
+    top: 0;
+    left: -1rem;
+    width: min(25vw, 27rem);
+    aspect-ratio: 1.77/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    font-size: 1em;
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("/images/common/h2-bg.webp") no-repeat center center /
+            cover;
+        z-index: -1;
+    }
+    @include sp {
+        width: 45vw;
+        transform: translateY(-1px);
+    }
+    .wrapText {
+        position: relative;
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: center;
+        transform: rotate(-17deg);
+        margin-right: 2em;
+        margin-top: 1em;
+        font-size: 1em;
+        color: $font-black;
+        &::before,
+        &::after {
+            content: "";
+            position: absolute;
+            background: url("/images/common/flare.webp") no-repeat center
+                center / contain;
+            mix-blend-mode: overlay;
+        }
+        &::before {
+            top: -4rem;
+            right: -2rem;
+            width: 5rem;
+            height: 5rem;
+        }
+        &::after {
+            bottom: -2rem;
+            left: -5rem;
+            width: 7rem;
+            height: 7rem;
+        }
+        @include sp {
+            margin-right: 5vw;
+        }
+        .shopName {
+            // @include Reenie;
+            font-size: FZ(24);
+            text-transform: capitalize;
+            letter-spacing: -0.03em;
+            @include sp {
+                font-size: 4vw;
+            }
+        }
+        .title {
+            @include futura-cyrillic-demi;
+            font-size: FZ(21);
+            text-transform: uppercase;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 0.9em;
+            @include sp {
+                font-size: 3vw;
+            }
+            i {
+                line-height: 0.8em;
+            }
+        }
+    }
+}

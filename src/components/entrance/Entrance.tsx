@@ -22,6 +22,13 @@ import GroupLogo from '/public/images/logo/dg.webp';
 
 type EntranceScope = 'group' | 'dandy' | 'mr_dandy' | 'club_dandy';
 
+const announceScopeClassMap: Record<EntranceScope, string> = {
+  group: 'boxAnnounceGroup',
+  dandy: 'boxAnnounceDandy',
+  mr_dandy: 'boxAnnounceMrDandy',
+  club_dandy: 'boxAnnounceClubDandy',
+};
+
 export default function Entrance({
   scope,
   backPath,
@@ -35,6 +42,7 @@ export default function Entrance({
   const currentShop = Shops.find((shop) => shop.storeId === scope);
   const announceLogo = currentShop?.logo ?? GroupLogo;
   const announceAlt = currentShop?.name ?? '横浜ダンディーグループ';
+  const announceScopeClass = announceScopeClassMap[scope];
 
   return (
     <div className={styles.containerEntrance}>
@@ -53,7 +61,9 @@ export default function Entrance({
         >
           yes
         </button>
-        <div className={clsx(styles.boxAnnounce)}>
+        <div
+          className={clsx(styles.boxAnnounce, styles[announceScopeClass])}
+        >
           <Image src={announceLogo} alt={announceAlt} width={180} height={72} />
           <p>あなたは18歳以上ですか？</p>
         </div>
@@ -68,7 +78,7 @@ export default function Entrance({
 
       <section className={styles.blockAreaShop}>
         <h2 className={styles.itemH3}>yokohama shop list</h2>
-        <EntranceAreaShopList excludeStoreId={excludeStoreId} />
+        <EntranceAreaShopList scope={scope} excludeStoreId={excludeStoreId} />
       </section>
 
       <section className={styles.blockReciprocalLink}>
@@ -81,7 +91,7 @@ export default function Entrance({
       </section>
 
       <div className={styles.copyRight}>
-        <p>
+        <p className={styles.copyRightText}>
           当サイトはアダルトな内容を含んでいます。
           <br className="sp" />
           18歳未満の方の閲覧は堅くご遠慮願います。

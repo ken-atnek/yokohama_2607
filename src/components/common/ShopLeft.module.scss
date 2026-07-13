@@ -1,0 +1,222 @@
+/* =================================
+ * 	店舗 LEFT
+ * ------------------------------ */
+@use "../../styles/foundation/" as *;
+
+/* =================================
+ * ShopLeft
+ * ------------------------------ */
+/* stylelint-disable custom-property-pattern */
+.containerShopLeft {
+    display: flex;
+    flex-direction: column;
+    padding-inline: 1em;
+
+    // background-color: #fff;
+    @include sp {
+        display: contents;
+    }
+    .boxHead {
+        font-size: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        padding: 3em 1em 1em;
+        @include sp {
+            display: none;
+        }
+        .shopLogoWrap {
+            position: relative;
+            font-size: inherit;
+            img {
+                width: 100%;
+                height: auto;
+            }
+        }
+        .innerShopInfo {
+            position: relative;
+            font-size: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding-right: 3em;
+            &::after {
+                content: "";
+                position: absolute;
+                right: 0;
+                top: 55%;
+                translate: 0 -50%;
+                width: 2em;
+                background: url("/images/logo/mascot.webp") no-repeat center
+                    center/contain;
+                aspect-ratio: 56/165;
+            }
+            .sidebarH2 {
+                font-size: fz(34);
+                @include bebas-neue;
+                color: var(--baseColor);
+                margin-top: 2rem;
+            }
+            .itemTel {
+                @include futura-cyrillic-demi;
+                font-size: fz(24);
+                letter-spacing: 0.04em;
+                margin-top: 0.1em;
+            }
+        }
+    }
+    .boxPhotoDiary {
+        width: 100%;
+        position: relative;
+        font-size: inherit;
+        padding-top: 8em;
+        padding-bottom: 1em;
+        @include sp {
+            padding: 24vw 2vw 4vw;
+        }
+        .wrapTitle {
+            display: none;
+            @include sp {
+                display: block;
+            }
+        }
+        .titleObject {
+            display: none;
+            @include sp {
+                @include object-title;
+            }
+        }
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            aspect-ratio: 524/246;
+            z-index: +1;
+            @include sp {
+                display: none;
+            }
+        }
+        .wrapContents {
+            font-size: inherit;
+            iframe {
+                width: 100%;
+                aspect-ratio: 1/1.5;
+            }
+        }
+    }
+    .titleContents {
+        border-top: 1px solid #d7d7d7;
+        margin-top: 2rem;
+        display: flex;
+        font-size: inherit;
+        align-items: flex-end;
+        padding-top: 2rem;
+        padding-inline: 1em;
+        gap: 0 0.5em;
+        span {
+            @include bebas-neue;
+            font-size: fz(40);
+            text-transform: uppercase;
+            line-height: 1em;
+            display: inline-block;
+            translate: 0 0.15em;
+        }
+    }
+    .shopNameHeading,
+    .titleContentsHeading {
+        font-size: fz(16);
+        font-weight: 600;
+        letter-spacing: 0.08em;
+    }
+    .boxBanTop,
+    .boxBanBottom {
+        font-size: inherit;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em 0;
+        @include sp {
+            order: 1;
+            padding-inline: 2vw;
+            margin-top: 2vw;
+        }
+        ul {
+            position: relative;
+            width: 100%;
+            display: grid;
+            grid-auto-flow: row;
+            gap: 0.5em 0;
+            @include sp {
+                gap: 2vw 0;
+            }
+        }
+    }
+    .boxBanBottom {
+        margin-top: 1em;
+        @include sp {
+            order: 1;
+            margin-top: 2vw;
+        }
+    }
+    .bottomIframe01,
+    .bottomIframe02 {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    .bottomIframeFrame {
+        width: 100%;
+        border: 0;
+    }
+    .bottomIframe01 {
+        .bottomIframeFrame {
+            min-height: 15rem;
+        }
+    }
+    .bottomIframe02 {
+        .bottomIframeFrame {
+            min-height: 28.75rem;
+        }
+    }
+    &.dandy {
+        background-color: rgba(#e776ad, 0.1);
+        .shopLogoWrap {
+            width: 90%;
+            align-self: center;
+            margin-bottom: 1em;
+            @include sp {
+                width: 40vw;
+                margin-bottom: unset;
+            }
+        }
+        .boxPhotoDiary {
+            &::before {
+                background: url("/images/common/photo-diary-dandy.webp")
+                    no-repeat center center / contain;
+            }
+            .wrapTitle {
+                @include contents-title(#000000);
+            }
+            .titleObject {
+                &::before {
+                    filter: brightness(105%) hue-rotate(206deg) saturate(142%)
+                        drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+                }
+            }
+        }
+        .bottomDandyVanilla01 {
+            margin-top: 2rem;
+            iframe {
+                width: 100%;
+                aspect-ratio: 1/1.3;
+            }
+        }
+        .bottomDandyVanilla02 {
+            margin-top: 2rem;
+            iframe {
+                width: 100%;
+                aspect-ratio: 1/1.6;
+            }
+        }
+    }
+}

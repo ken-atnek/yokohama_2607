@@ -40,7 +40,12 @@ yarn-error.log*
 next-env.d.ts
 
 # generated / imported runtime data
-public/db/
+public/db/*
+!public/db/contents/
+public/db/contents/*
+!public/db/contents/dandy/
+public/db/contents/dandy/*
+!public/db/contents/dandy/*.json
 cp_log/
 env.download
 env.production

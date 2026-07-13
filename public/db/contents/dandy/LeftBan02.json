@@ -1,0 +1,20 @@
+[
+  {
+    "banId": "001",
+    "status": 3,
+    "banTitle": "\u4f1a\u54e1\u9650\u5b9a \u5199\u30e1\u65e5\u8a18",
+    "banImage": "/db/images/_dummy/ban02.webp",
+    "url": "https://www.cityheaven.net/hyogo/A2802/A280201/koube_hp_part3/diarylist/?limit=y",
+    "linkTarget": true,
+    "popUpImage": ""
+  },
+  {
+    "banId": "002",
+    "status": 3,
+    "banTitle": "\u65b0\u4eba\u60c5\u5831",
+    "banImage": "/db/images/_dummy/ban01.jpg",
+    "url": "https://www.hpg-kobe.jp/villa/pickup.html",
+    "linkTarget": false,
+    "popUpImage": ""
+  }
+]
