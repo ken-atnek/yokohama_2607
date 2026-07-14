@@ -8,16 +8,26 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import clsx from 'clsx';
 import styles from '@/components/entrance/Entrance.module.scss';
 import { Shops } from '@/data/AreaShopData';
 
 export default function EntranceAreaShopList({
+  scope,
   excludeStoreId,
 }: {
+  scope: 'group' | 'dandy' | 'mr_dandy' | 'club_dandy';
   excludeStoreId?: string;
 }) {
+  const isGroupEntrance = scope === 'group';
+
   return (
-    <ul className={styles.listAreaShop}>
+    <ul
+      className={clsx(
+        styles.listAreaShop,
+        isGroupEntrance ? styles.listAreaShopArea : styles.listAreaShopShop
+      )}
+    >
       {Shops.filter((shop) => shop.storeId !== excludeStoreId).map((shop) => (
         <li
           key={shop.storeId}

@@ -16,6 +16,7 @@ import BlockPickUp from '@/components/area/BlockPickUp';
 import BannerGroup from '@/components/common/BannerGroup';
 import bannerGroupStyles from '@/components/common/BannerGroup.module.scss';
 import BlockNewFace from '@/components/area/BlockNewFace';
+import CastRanking from '@/components/common/CastRanking';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import { isRealProduction } from '@/lib/env';
 
@@ -57,27 +58,27 @@ export default function AreaTop() {
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanArea.json?t=${timestamp}`}
                 title="Yokohama area event"
-                className={bannerGroupStyles.boxGroup}
+                className={bannerGroupStyles.boxAreaGroup}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanDandy.json?t=${timestamp}`}
                 title="yokohama dandy event"
-                className={bannerGroupStyles.boxDandy}
+                className={bannerGroupStyles.boxAreaDandy}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanMr.json?t=${timestamp}`}
                 title="mr dandy event"
-                className={bannerGroupStyles.boxMr}
+                className={bannerGroupStyles.boxAreaMr}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanClub.json?t=${timestamp}`}
                 title="club dandy event"
-                className={bannerGroupStyles.boxClub}
+                className={bannerGroupStyles.boxAreaClub}
               />
               <BannerGroup
                 jsonPath={`/db/contents/area/areaTopLeftBanRecruit.json?t=${timestamp}`}
                 title="recruit"
-                className={bannerGroupStyles.boxRecruit}
+                className={bannerGroupStyles.boxAreaRecruit}
               />
               <div className={styles.boxVanilla}>
                 <iframe src="https://qzin.jp/1021/widget?d=0" seamless></iframe>
@@ -94,6 +95,14 @@ export default function AreaTop() {
                   新人情報
                 </h2>
                 <BlockNewFace />
+              </div>
+              <div className={styles.wrapRanking}>
+                <h2 className={styles.itemH2}>6月度指名ランキング</h2>
+                <CastRanking
+                  jsonPath="/db/contents/area/areaMainRanking.json"
+                  showShopName={true}
+                  rankIconType="area"
+                />
               </div>
               <div className={styles.wrapBanInformation}>
                 <h2 className={styles.itemH2}>

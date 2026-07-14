@@ -11,6 +11,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ExternalLink from '@/components/common/ExternalLink';
 import clsx from 'clsx';
+import ScrollLink from '@/components/common/ScrollLink';
 
 type ContainerShopListProps = {
   activeStoreClass?: string;
@@ -25,9 +26,9 @@ const ContainerShopList = ({ activeStoreClass }: ContainerShopListProps) => {
       )}
     >
       <h2>dandy group shop link</h2>
-      <a href="#" className={styles.pageTop}>
+      <ScrollLink href="/" className={styles.pageTop}>
         <span>page top</span>
-      </a>
+      </ScrollLink>
       <ul>
         {Shops.map(
           (

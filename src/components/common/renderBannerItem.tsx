@@ -1,7 +1,7 @@
 /* =======================================
  * 横浜ダンディーグループ renderBannerItem
  * URL: /src/components/common/renderBannerItem.tsx
- * Referenced in: /src/components/common/BannerGroup.tsx
+ * Referenced in: /src/components/common/BannerGroup.tsx, /src/components/common/top/TopSlideBan.tsx
  * Created: 2025-08-22
  * Last updated: 2026-07-09
  * ======================================= */

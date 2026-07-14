@@ -40,7 +40,8 @@ yarn-error.log*
 next-env.d.ts
 
 # generated / imported runtime data
-public/db/
+public/db/*
+
 cp_log/
 env.download
 env.production
@@ -48,3 +49,4 @@ env.production
 # server files
 .htaccess
 google*.html
+.vscode/settings.json

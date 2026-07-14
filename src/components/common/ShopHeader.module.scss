@@ -1,0 +1,508 @@
+/* =================================
+ * 	店舗 HEADER
+ * ------------------------------ */
+@use "../../styles/foundation/" as *;
+
+.containerHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 0.3em;
+    z-index: 5;
+
+    // --baseColor: #000;
+    @include sp {
+        display: contents;
+    }
+    .headerTop {
+        padding-inline: 2vw;
+        display: flex;
+        justify-content: center;
+        @include sp {
+            display: contents;
+        }
+        .boxHead {
+            position: relative;
+            width: 100%;
+            max-width: $article-max-width;
+            display: flex;
+            justify-content: space-between;
+            font-size: inherit;
+            padding-bottom: 0.3em;
+            @include sp {
+                max-width: unset;
+                flex-direction: column;
+                order: -10;
+                padding-bottom: unset;
+            }
+            p {
+                font-size: fz(12);
+                @include futura-cyrillic-demi;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                @include sp {
+                    display: none;
+                }
+            }
+            h1 {
+                font-size: fz(12);
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                @include sp {
+                    text-align: center;
+                    font-size: 1rem;
+                    padding-block: 0.5vw;
+                }
+            }
+        }
+    }
+    .boxNav {
+        display: flex;
+        justify-content: center;
+        font-size: inherit;
+        width: 100%;
+        border-top: 3px solid var(--baseColor);
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+        padding-inline: 2vw;
+        @include sp {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            width: 100dvw;
+            height: 100vh;
+            height: 100dvh;
+            flex-direction: column;
+            padding: unset;
+            border-top: unset;
+            justify-content: flex-start;
+            clip-path: inset(0 100% 0 0);
+            opacity: 0;
+            transition: 0.5s ease-out;
+            &::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(#000, 0.6);
+                z-index: -1;
+            }
+            &.isOpen {
+                transition: 0.3s ease-out;
+                clip-path: inset(0);
+                opacity: 1;
+            }
+        }
+        .mobileHamburgerHead {
+            display: none;
+            @include sp {
+                font-size: inherit;
+                display: flex;
+                justify-content: space-between;
+                background-color: var(--baseColor);
+                padding-block: 2vw;
+                a {
+                    position: relative;
+                    width: 15vw;
+                    @include flex-center;
+                    aspect-ratio: 1;
+                }
+                .mobileHome {
+                    aspect-ratio: 1;
+                    border-left: 1px solid $base-white;
+                    svg {
+                        fill: $base-white;
+                        aspect-ratio: 1;
+                        width: 6vw;
+                    }
+                }
+                .shopName {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    font-size: inherit;
+                    color: $base-white;
+                    padding-left: 15vw;
+                    flex: 1;
+                    svg {
+                        fill: $base-white;
+                    }
+                    span {
+                        font-size: FZ(12);
+                        letter-spacing: 0.12em;
+                        margin-top: 0.2em;
+                    }
+                }
+            }
+        }
+        nav {
+            font-size: inherit;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: $article-max-width;
+            @include sp {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                max-width: unset;
+                padding: 4vw 4vw 0;
+                gap: 2vw;
+            }
+            a {
+                position: relative;
+                font-size: inherit;
+                flex-grow: 1;
+                border-right: 1px solid var(--baseColor);
+                padding: 0 1em;
+                display: flex;
+                justify-content: center;
+                &:first-of-type {
+                    border-left: 1px solid var(--baseColor);
+                }
+                span {
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    .jp {
+                        letter-spacing: 0.12em;
+                        font-size: FZ(16);
+                        @include sp {
+                            font-size: FZ(14);
+                        }
+                    }
+                    .en {
+                        display: none;
+                        @include sp {
+                            display: flex;
+                            @include futura-condensed-medium;
+                            text-transform: uppercase;
+                            font-size: FZ(24);
+                        }
+                    }
+                }
+                &::before {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 80%;
+                    height: calc(100% + 0.5em);
+                    background-color: var(--baseColor);
+                    z-index: -1;
+                    transition: 0.5s ease-out;
+                    clip-path: inset(0 50% 0 50%);
+                    border-radius: 0.3rem;
+                    opacity: 0;
+                }
+                &.active {
+                    &::before {
+                        clip-path: inset(0);
+                        opacity: 0.3;
+                        transition: unset;
+                    }
+                }
+                &.mobileOnly {
+                    display: none;
+                    @include sp {
+                        display: flex;
+                    }
+                }
+                @include pc {
+                    &:hover {
+                        transition: 0.3s ease-out;
+                        &::before {
+                            transition: 0.3s ease-out;
+                            clip-path: inset(0);
+                            opacity: 0.3;
+                        }
+                    }
+                }
+                @include sp {
+                    background-color: $base-white;
+                    height: 14vw;
+                    align-items: center;
+                    &.navTop {
+                        display: none;
+                    }
+                    &.navRealTime {
+                        order: -1;
+                        grid-column: span 2;
+                    }
+                    &.navCastList {
+                        order: -1;
+                        grid-column: span 2;
+                    }
+                    &.navRecruit {
+                        order: 2;
+                    }
+                    &.navReserve {
+                        grid-column: span 2;
+                        background-color: var(--baseColor);
+                        color: $base-white;
+                        order: 1;
+                    }
+                    &.linkTel {
+                        @include flex-center;
+                        @include futura-condensed-medium;
+                        grid-column: span 2;
+                        background-color: var(--baseColor);
+                        color: $base-white;
+                        order: 1;
+                        span {
+                            display: flex;
+                            flex-direction: row;
+                            font-size: FZ(30);
+                            letter-spacing: 0.04em;
+                            &::before {
+                                content: "CAll";
+                                text-transform: uppercase;
+                                margin-right: 0.3em;
+                            }
+                        }
+                    }
+                    &.linkMap {
+                        order: 2;
+                    }
+                }
+            }
+        }
+    }
+    .boxStripe {
+        width: 100%;
+        font-size: 1em;
+        height: 0.4em;
+        background-size: auto auto;
+        background-color: rgb(255 255 255 / 100%);
+        background-image: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 4px,
+            var(--baseColor) 4px,
+            var(--baseColor) 9px
+        );
+        @include sp {
+            order: -9;
+        }
+    }
+    .boxTelop {
+        width: 100%;
+        background: linear-gradient(rgb(218 218 218), rgb(199 199 199) 100%);
+        border-bottom: 1px solid rgb(164 164 164);
+        display: flex;
+        justify-content: center;
+        padding: 0.4em 2vw;
+        font-size: inherit;
+        @include sp {
+            order: -9;
+        }
+        .innerTelop {
+            width: 100%;
+            // max-width: $articleMaxWidth;
+            background-color: $base-white;
+            font-size: 1em;
+            padding: 0.5em;
+            border-radius: 0.3rem;
+            overflow: hidden;
+            p {
+                font-size: fz(14);
+                height: 1.4em;
+                letter-spacing: 0.04em;
+                color: $font-black;
+                padding-left: 72%;
+                white-space: nowrap;
+                animation-name: marquee;
+                animation-timing-function: linear;
+                animation-duration: 20s;
+                animation-iteration-count: infinite;
+            }
+            @keyframes marquee {
+                0% {
+                    transform: translate(0%);
+                }
+                99%,
+                100% {
+                    transform: translate(-100%);
+                }
+            }
+        }
+    }
+    // &.kbHot {
+    //     .boxNav {
+    //         .mobileHamburgerHead {
+    //             .shopName {
+    //                 svg {
+    //                     width: 40vw;
+    //                     @include svg-hot;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // &.kbVilla {
+    //     .boxNav {
+    //         .mobileHamburgerHead {
+    //             .shopName {
+    //                 svg {
+    //                     width: 40vw;
+    //                     @include svg-villa;
+    //                 }
+    //             }
+    //         }
+    //         a {
+    //             @include sp {
+    //                 &.navSystem {
+    //                     grid-column: span 2;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+}
+
+/* =================================
+ * モバイル ヘッド
+ * ------------------------------ */
+.mobilePageHead {
+    display: none;
+    @include sp {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        font-size: inherit;
+        order: -10;
+        width: 100%;
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-color: var(--baseColor);
+            z-index: -1;
+            opacity: 0.8;
+        }
+        .contentsTop {
+            font-size: inherit;
+            display: flex;
+            justify-content: space-between;
+            padding: 2vw 4vw 2vw 20vw;
+            .name {
+                font-size: inherit;
+                display: flex;
+                flex-direction: column;
+                color: #fff;
+                .en {
+                    @include futura-cyrillic-book;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    font-size: FZ(28);
+                }
+                .jp {
+                    font-size: FZ(16);
+                    font-weight: 500;
+                    letter-spacing: 0.12em;
+                }
+            }
+            .mobilePhone {
+                aspect-ratio: 1;
+                svg {
+                    fill: $base-white;
+                    aspect-ratio: 1/1.6;
+                    width: 7vw;
+                }
+            }
+        }
+        .mobileHeadNav {
+            font-size: inherit;
+            display: flex;
+            justify-content: space-between;
+            padding-inline: 4vw;
+            padding-block: 2vw;
+            background-color: var(--baseColor);
+            a {
+                order: 1;
+                width: 100%;
+                font-size: FZ(14);
+                display: flex;
+                justify-content: center;
+                border-right: 1px solid #fff;
+                color: #fff;
+                &:first-of-type {
+                    border-left: 1px solid #fff;
+                }
+            }
+        }
+        .linkRecruit {
+            font-size: inherit;
+            display: flex;
+            justify-content: center;
+            a {
+                font-size: inherit;
+                padding-block: 1vw;
+                span {
+                    display: inline-block;
+                    color: #fff;
+                    font-size: FZ(16);
+                    letter-spacing: 0.06em;
+                }
+            }
+        }
+    }
+}
+
+/* =================================
+ * ハンバーガーボタン
+ * ------------------------------ */
+.hamburgerButton {
+    display: none;
+    @include sp {
+        display: block;
+        position: fixed;
+        left: 2vw;
+        top: 6.5vw;
+        width: 13vw;
+        aspect-ratio: 1;
+        border-radius: 1vw;
+        box-shadow: 2px 2px 3px 0 rgba(#000, 0.2);
+        z-index: 100;
+        cursor: pointer;
+        background-color: var(--baseColor);
+        span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60%;
+            height: 3px;
+            background-color: $base-white;
+            transition: 0.5s ease-out;
+            &:nth-of-type(1) {
+                transform: translate(-50%, calc(-50% - 3vw));
+            }
+            &:nth-of-type(2) {
+                transform: translate(-50%, -50%);
+            }
+            &:nth-of-type(3) {
+                transform: translate(-50%, calc(-50% + 3vw));
+            }
+        }
+        &.isOpen,
+        &[data-open="true"] {
+            span {
+                transition: 0.3s ease-out;
+                &:nth-of-type(1) {
+                    transform: translate(-50%, -50%) rotate(135deg);
+                }
+                &:nth-of-type(2) {
+                    transform: translate(-50%, -50%);
+                    opacity: 0;
+                }
+                &:nth-of-type(3) {
+                    transform: translate(-50%, -50%) rotate(-135deg);
+                }
+            }
+        }
+    }
+}

@@ -30,3 +30,7 @@
     font-weight: 400;
     font-style: normal;
 }
+
+@mixin Reenie {
+    font-family: var(--font-reenie-beanie), "Reenie Beanie", cursive;
+}

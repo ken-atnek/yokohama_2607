@@ -36,7 +36,6 @@
 - `castNameKana`
 - `castNameEn`
 - `castImage`
-- `age`
 - `bust`
 - `cup`
 - `hip`
@@ -53,15 +52,57 @@
 - `tall` → `heightCm`
 - `west` → `waistCm`
 
+### 補足して使用
+
+- `age`
+  - 数値で扱える場合は `number`
+  - テキスト表記のみの場合を考慮して `null` を許容する
+- `ageText`
+  - 画面表示用の年齢文言
+  - 数値年齢ではなくテキスト表記を出したい場合のみ使用する
+  - 例: `20代後半`, `30代前半`
+
 ---
 
 ## 型ルール
 
-- `age`, `heightCm`, `bust`, `waistCm`, `hip` は `number`
+- `age` は `number | null`
+- `ageText` は表示用の `string`
+- `heightCm`, `bust`, `waistCm`, `hip` は `number`
 - 画像パス・URLは `string`
 - 日付は `YYYY-MM-DD` 形式の `string`
 - 時刻は `HH:mm` 形式の `string`
 - 空値は `null` を許容する（空文字多用は避ける）
+
+---
+
+## ランキング系JSONの補足
+
+- ランキングの順位 `rank` は `string` ではなく `number` を使う
+  - 例: `"rank": 1`
+- 表示件数はタブ単位で `displayCount` を持たせてよい
+  - 例: エリアTOPは `20`、店舗TOPは `10`
+- アコーディオンを使う場合は `accordion` を持たせてよい
+  - `enabled`: 設置有無
+  - `initialVisibleGroupCount`: 初期表示する `section` 数
+  - `insertAfterGroup`: 何個目の `layoutGroups` の後にボタンを置くか
+- レイアウトの区切り位置は `layoutGroups` の配列で管理してよい
+  - 例: `[3, 2, 2, 3, 5, 5]`
+  - この場合は `3件 → 2件 → 2件 → 3件 → 5件 → 5件` の順で区切る
+- グレード表示は `gradeId` で管理してよい
+- `gradeId` と表示文言の対応は `src/data/CastGradeData.ts` を参照する
+- ランキング内のグレード表示文言は、現時点では `labelEn` を使用する
+- `gradeId` の対応は次で固定する
+  - `0`: なし
+  - `1`: シルバー
+  - `2`: ゴールド
+  - `3`: `VIP`
+  - `4`: グランド VIP
+  - `5`: プレミアム
+  - `6`: ダイヤモンド
+  - `7`: ロイヤルクイーン
+- ランキングJSON内の店舗識別子は、現行サンプルに合わせて `shopID` を使用してよい
+  - 例: `"shopID": "dandy"`
 
 ---
 

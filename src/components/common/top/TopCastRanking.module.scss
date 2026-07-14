@@ -1,0 +1,145 @@
+@use "../../../styles/foundation" as *;
+
+/* =======================================
+ * 横浜ダンディーグループ 店舗 TOP キャストランキング スタイル
+ * URL: /src/components/common/top/TopCastRanking.module.scss
+ * Referenced in: /src/components/common/top/TopCastRanking.tsx
+ * Created: 2025-08-23
+ * Last updated: 2026-07-14
+ * ======================================= */
+.boxCastRanking {
+    position: relative;
+    font-size: inherit;
+    padding: 9em 0 1.6em;
+
+    // background: url(../../assets/images/contents-bg.webp) no-repeat center
+    //     center / cover;
+    width: 100%;
+    @include sp {
+        order: -2;
+        padding: 24vw 2vw 4vw;
+    }
+    .titleObject {
+        @include object-title;
+    }
+    &.dandy {
+        padding-bottom: 0;
+        .wrapTitle {
+            @include contents-title(#000000);
+        }
+        .titleObject {
+            &::before {
+                filter: hue-rotate(360deg)
+                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+            }
+        }
+
+        // .rankingContents {
+        //     nav {
+        //         button {
+        //             span {
+        //                 &::before {
+        //                     @include svg-icon-crown("3da3fc");
+        //                 }
+        //             }
+        //             &.isActive {
+        //                 background-color: rgba(red, 0.5);
+        //                 span {
+        //                     &::before {
+        //                         @include svg-icon-crown("231815");
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+    }
+
+    // &.kbVilla {
+    //     .wrapTitle {
+    //         @include contents-title(#000000);
+    //     }
+    //     .titleObject {
+    //         &::before {
+    //             filter: grayscale(29%) hue-rotate(318deg) saturate(103%)
+    //                 drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+    //         }
+    //     }
+    //     .rankingContents {
+    //         nav {
+    //             button {
+    //                 span {
+    //                     &::before {
+    //                         @include svg-icon-crown("c654cb");
+    //                     }
+    //                 }
+    //                 &.isActive {
+    //                     background-color: rgba($shop-villa, 0.3);
+    //                     span {
+    //                         &::before {
+    //                             @include svg-icon-crown("231815");
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         .wrapRankList {
+    //             .rankIcon {
+    //                 &.rank1 {
+    //                     background-image: url("../../assets/images/hot/icon/rank-01.webp");
+    //                 }
+    //                 &.rank2 {
+    //                     background-image: url("../../assets/images/hot/icon/rank-02.webp");
+    //                 }
+    //                 &.rank3 {
+    //                     background-image: url("../../assets/images/hot/icon/rank-03.webp");
+    //                 }
+    //                 &:not(.rank1, .rank2, .rank3) {
+    //                     background-image: url("../../assets/images/hot/icon/rank-04.webp");
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // &.kbStyle {
+    //     .wrapTitle {
+    //         @include contents-title(#000000);
+    //     }
+
+    //     .rankingContents {
+    //         nav {
+    //             button {
+    //                 span {
+    //                     &::before {
+    //                         @include svg-icon-crown("c654cb");
+    //                     }
+    //                 }
+    //                 &.isActive {
+    //                     background-color: rgba($shop-style, 0.3);
+    //                     span {
+    //                         &::before {
+    //                             @include svg-icon-crown("231815");
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         .wrapRankList {
+    //             .rankIcon {
+    //                 &.rank1 {
+    //                     background-image: url("../../assets/images/hot/icon/rank-01.webp");
+    //                 }
+    //                 &.rank2 {
+    //                     background-image: url("../../assets/images/hot/icon/rank-02.webp");
+    //                 }
+    //                 &.rank3 {
+    //                     background-image: url("../../assets/images/hot/icon/rank-03.webp");
+    //                 }
+    //                 &:not(.rank1, .rank2, .rank3) {
+    //                     background-image: url("../../assets/images/hot/icon/rank-04.webp");
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+}
