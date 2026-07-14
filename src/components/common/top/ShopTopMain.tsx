@@ -1,21 +1,21 @@
 'use client';
 /* =======================================
  *店舗 TOP MAIN
- * URL: src/components/common/ShopTopMain.tsx
+ * URL: /src/components/common/top/ShopTopMain.tsx
+ * Referenced in: /src/app/dandy/top/page.tsx
  * Created: 2025-08-22
- * Last updated: 2025-10-07
+ * Last updated: 2026-07-14
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
-// import castSlideStyles from '@/styles/components/ShopTopCastSlide.module.scss';
 // import TopPickUp from '@/components/Shop/TopPickUp';
-// import CastSlide from '@/components/Shop/TopCastSlide';
+import CastSlide from '@/components/common/top/TopCastSlide';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import clsx from 'clsx';
-// import CastRanking from '@/components/Shop/TopCastRanking';
-// import TopSlideBan from '@/components/Shop/TopSlideBan';
-// import BannerGroup from '@/components/common/BannerGroup';
-// import ShopNews from '@/components/Shop/TopNews';
+import TopPickUpBan from '@/components/common/top/TopPickUpBan';
+import CastRanking from '@/components/common/top/TopCastRanking';
+import TopSlideSquareBan from '@/components/common/top/TopSlideSquareBan';
+import BannerGroup from '@/components/common/BannerGroup';
 import { getShopFromPath, getStoreClass } from '@/lib/shopUtils';
 import { trackPageAccess } from '@/lib/accessCounterApi';
 import BlockAccess from '@/components/common/system/BlockAccess';
@@ -34,40 +34,43 @@ const ShopTopMain = () => {
   //ページ読み込み時にバックグラウンド処理でユーザーアクセス情報をログに保存する
 
   // 🔽 タイムスタンプでキャッシュバスティング
-  // const timestamp = Date.now();
+  const timestamp = Date.now();
 
   // 🔽 JSON パスを店舗別に切り替え（タイムスタンプ付き）
-  const jsonBasePath = `/data/${shop}`;
-  // const jsonPathBanMain = `${jsonBasePath}/TopMainBan01.json?t=${timestamp}`;
-  // const jsonPathNewFace = `${jsonBasePath}/TopNewFace.json?t=${timestamp}`;
-  // const jsonPathNews = `${jsonBasePath}/TopNews.json?t=${timestamp}`;
-  // const jsonPathRanking = `${jsonBasePath}/TopRanking.json?t=${timestamp}`;
+  const jsonBasePath = `/db/contents/${shop}`;
+  const jsonPathBanMain = `${jsonBasePath}/TopMainBan01.json?t=${timestamp}`;
+  const jsonPathNewFace = `${jsonBasePath}/TopNewFace.json?t=${timestamp}`;
+  const jsonPathPickUpCast = `${jsonBasePath}/TopPickUpCast.json?t=${timestamp}`;
+  const jsonPathPickUpBan = `${jsonBasePath}/TopPickUpBan.json?t=${timestamp}`;
+  const jsonPathRanking = `${jsonBasePath}/TopRanking.json?t=${timestamp}`;
+  const jsonPathSlideBan = `${jsonBasePath}/TopSlideBan.json?t=${timestamp}`;
 
   return (
     <section
       className={clsx(styles.containerShopTopMain, styles[activeStoreClass])}
     >
-      {/* <TopPickUp /> */}
-      {/* <CastSlide
-        titleJp="新人紹介"
-        titleEn="new face"
-        titleEnSub="cast"
-        classNameStyles={castSlideStyles.newFace}
-        jsonPath={jsonPathNewFace}
-      /> */}
-      {/* <ShopNews
-        titleJp="新着情報・トピックス"
-        titleEn="news"
-        jsonPath={jsonPathNews}
-      /> */}
-      {/* <CastRanking
+      <TopPickUpBan jsonPath={jsonPathPickUpBan} />
+      <CastSlide
+        titleJp="ピックアップ"
+        titleEn="pick up"
+        variant="pickUp"
+        jsonPath={jsonPathPickUpCast}
+      />
+      <CastRanking
         titleJp="キャストランキング"
         titleEn="cast"
         titleEnSub="ranking"
         jsonPath={jsonPathRanking}
-      /> */}
-      {/* <TopSlideBan /> */}
-      {/* <BannerGroup jsonPath={jsonPathBanMain} className={styles.boxBanMain} /> */}
+      />
+      <TopSlideSquareBan jsonPath={jsonPathSlideBan} />
+      <BannerGroup jsonPath={jsonPathBanMain} className={styles.boxBanMain} />
+      <CastSlide
+        titleJp="新人紹介"
+        titleEn="new face"
+        titleEnSub="cast"
+        variant="newFace"
+        jsonPath={jsonPathNewFace}
+      />
       <BlockAccess variant="topPage" />
     </section>
   );

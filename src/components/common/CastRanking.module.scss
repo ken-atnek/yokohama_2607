@@ -7,13 +7,54 @@
  * Last updated: 2026-07-09
  * ======================================= */
 
+@mixin ranking-nav-theme(
+    $button-bg,
+    $button-color,
+    $icon-color,
+    $active-bg,
+    $active-color,
+    $active-icon-color
+) {
+    .rankingNav {
+        .navButton {
+            background-color: $button-bg;
+            color: $button-color;
+            span {
+                &::before {
+                    @include svg-icon-crown($icon-color);
+                }
+            }
+            &.isActive {
+                background-color: $active-bg;
+                color: $active-color;
+                span {
+                    &::before {
+                        @include svg-icon-crown($active-icon-color);
+                    }
+                }
+            }
+        }
+    }
+}
+
 .containerRanking {
     display: flex;
     flex-direction: column;
     // gap: 1em 0;
     font-size: inherit;
+    &.dandy {
+        @include ranking-nav-theme(
+            #fceef5,
+            #de4790,
+            "de4790",
+            #de4790,
+            "fff",
+            "fff"
+        );
+    }
     .rankingNav {
         display: grid;
+        font-size: inherit;
         gap: 2px;
         &.len2 {
             grid-template-columns: repeat(2, 1fr);
@@ -25,13 +66,30 @@
             border: none;
             background-color: #f0f0f0;
             color: $base-black;
-            padding: 0.9em 1em;
-            font-size: fz(14);
-            font-weight: 700;
+            padding: 0.8em 1em;
+            font-size: inherit;
             cursor: pointer;
             @include move03;
+            &:first-of-type {
+                border-top-left-radius: 1rem;
+            }
+            &:last-of-type {
+                border-top-right-radius: 1rem;
+            }
             span {
+                position: relative;
                 display: block;
+                font-size: fz(18);
+                font-weight: 700;
+                &::before {
+                    content: "";
+                    position: absolute;
+                    right: calc(100% + 0.5em);
+                    top: 42%;
+                    translate: 0 -50%;
+                    width: 1.3em;
+                    @include svg-icon-crown("3da3fc");
+                }
             }
             &.isActive {
                 background-color: #111;
@@ -277,7 +335,8 @@
         }
     }
     // 20枠
-    .display20 {
+    .display20,
+    .display10 {
         .groupAccordion {
             &:first-of-type {
                 .groupList {

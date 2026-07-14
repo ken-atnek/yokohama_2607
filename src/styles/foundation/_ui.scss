@@ -168,6 +168,7 @@
         line-height: 0.8em;
         gap: 0.2em 0;
         letter-spacing: 0.12em;
+        color: rgba($contents-color, 1);
         @include sp {
             font-size: FZ(21);
             padding: 0 2em 0 9em;
@@ -244,7 +245,7 @@
     justify-content: center;
     align-items: center;
     z-index: 1;
-    font-size: 1em;
+    font-size: inherit;
     &::before {
         content: "";
         position: absolute;
@@ -294,8 +295,8 @@
             margin-right: 5vw;
         }
         .shopName {
-            // @include Reenie;
-            font-size: FZ(24);
+            @include Reenie;
+            font-size: fz(24);
             text-transform: capitalize;
             letter-spacing: -0.03em;
             @include sp {
@@ -304,7 +305,7 @@
         }
         .title {
             @include futura-cyrillic-demi;
-            font-size: FZ(21);
+            font-size: fz(21);
             text-transform: uppercase;
             display: inline-flex;
             flex-direction: column;

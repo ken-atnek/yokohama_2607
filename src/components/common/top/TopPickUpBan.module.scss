@@ -1,0 +1,54 @@
+@use "../../../styles/foundation" as *;
+
+/* =======================================
+ * 横浜ダンディーグループ 店舗 TOP ピックアップバナー スタイル
+ * URL: /src/components/common/top/TopPickUpBan.module.scss
+ * Referenced in: /src/components/common/top/TopPickUpBan.tsx
+ * Created: 2025-08-22
+ * Last updated: 2026-07-14
+ * ======================================= */
+
+.boxTopPickUp {
+    position: relative;
+    width: 100%;
+    font-size: inherit;
+    margin-bottom: 2rem;
+    .wrapImageList {
+        position: relative;
+        font-size: inherit;
+        width: 100%;
+        :global(.splide) {
+            width: 100%;
+        }
+        .aspectWrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 942 / 471;
+        }
+    }
+    :global {
+        .splide__pagination {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 0 1.4em;
+            font-size: inherit;
+            padding-block: 1em;
+        }
+        .splide__pagination__page {
+            width: 1.2rem;
+            height: 1.2rem;
+            aspect-ratio: 1;
+            background-color: #bfbfbf;
+            border-radius: 50%;
+            transition: opacity 0.3s;
+            z-index: 100;
+            cursor: pointer;
+            opacity: 1;
+        }
+        .splide__pagination__page.is-active {
+            background-color: #404040;
+            transform: none;
+        }
+    }
+}

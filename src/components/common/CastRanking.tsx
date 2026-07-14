@@ -1,7 +1,7 @@
 /* =======================================
  * 横浜ダンディーグループ 共通ランキング本体
  * URL: /src/components/common/CastRanking.tsx
- * Referenced in: /src/app/top/page.tsx
+ * Referenced in: /src/app/top/page.tsx, /src/components/common/top/TopCastRanking.tsx
  * Created: 2026-07-09
  * Last updated: 2026-07-09
  * ======================================= */
@@ -54,6 +54,7 @@ type CastRankingProps = {
   jsonPath: string;
   showShopName?: boolean;
   rankIconType?: 'area' | 'dandy' | 'mr' | 'club';
+  className?: string;
 };
 
 const shopColorMap = Object.fromEntries(
@@ -118,6 +119,7 @@ export default function CastRanking({
   jsonPath,
   showShopName = false,
   rankIconType = 'area',
+  className,
 }: CastRankingProps) {
   const [rankingData, setRankingData] = useState<RankingTab[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -266,7 +268,10 @@ export default function CastRanking({
   };
 
   return (
-    <div ref={rankingRef} className={styles.containerRanking}>
+    <div
+      ref={rankingRef}
+      className={clsx(styles.containerRanking, className && styles[className])}
+    >
       {rankingData.length > 1 ? (
         <nav
           className={clsx(

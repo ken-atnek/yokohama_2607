@@ -3,11 +3,11 @@
  * URL: /src/app/layout.tsx
  * Referenced in: /src/app/layout.tsx
  * Created: 2026-07-08
- * Last updated: 2026-07-08
+ * Last updated: 2026-07-14
  * ======================================= */
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-import { Bebas_Neue, Noto_Sans_JP } from 'next/font/google';
+import { Bebas_Neue, Noto_Sans_JP, Reenie_Beanie } from 'next/font/google';
 import { isRealProduction, metadataBase } from '@/lib/env';
 import '@/styles/globals.scss';
 
@@ -40,6 +40,13 @@ const notoSansJp = Noto_Sans_JP({
   subsets: ['latin'],
   variable: '--font-noto-sans-jp',
   weight: ['400', '500', '700', '900'],
+  display: 'swap',
+});
+
+const reenieBeanie = Reenie_Beanie({
+  subsets: ['latin'],
+  variable: '--font-reenie-beanie',
+  weight: '400',
   display: 'swap',
 });
 
@@ -98,7 +105,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${futuraCondensedMedium.variable} ${futuraCyrillicBook.variable} ${futuraCyrillicDemi.variable} ${bebasNeue.variable} ${notoSansJp.variable}`}
+      className={`${futuraCondensedMedium.variable} ${futuraCyrillicBook.variable} ${futuraCyrillicDemi.variable} ${bebasNeue.variable} ${notoSansJp.variable} ${reenieBeanie.variable}`}
     >
       <body>{children}</body>
     </html>

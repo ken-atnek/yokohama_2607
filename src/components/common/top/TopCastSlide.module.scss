@@ -1,0 +1,120 @@
+@use "../../../styles/foundation" as *;
+
+/* =======================================
+ * 横浜ダンディーグループ 店舗 TOP キャストスライド スタイル
+ * URL: /src/components/common/top/TopCastSlide.module.scss
+ * Referenced in: /src/components/common/top/TopCastSlide.tsx
+ * Created: 2025-08-22
+ * Last updated: 2026-07-14
+ * ======================================= */
+.boxCastSlide {
+    position: relative;
+    font-size: inherit;
+    padding: 9em 3em 1.6em;
+    width: 100%;
+    .titleObject {
+        @include object-title;
+    }
+    @include sp {
+        padding: 24vw 2vw 4vw;
+    }
+    .wrapSlideList {
+        position: relative;
+        width: 100%;
+        font-size: inherit;
+        min-height: 29rem;
+        overflow: hidden;
+        @include sp {
+            min-height: 60vw;
+        }
+        :global(.splide) {
+            width: 100%;
+        }
+        :global(.splide__track) {
+            overflow: hidden;
+        }
+        :global(.splide__list) {
+            align-items: stretch;
+        }
+        .itemCast {
+            position: relative;
+            width: 100%;
+            font-size: inherit;
+            a {
+                display: block;
+                font-size: inherit;
+            }
+            .image {
+                aspect-ratio: 3/4;
+                position: relative;
+                width: 100%;
+                img {
+                    width: 100%;
+                    object-fit: cover;
+                }
+            }
+            .castName {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: rgb(1 1 1 / 30%);
+                color: $base-white;
+                font-size: fz(14);
+                text-align: center;
+                padding-block: 0.5em;
+                letter-spacing: 0.08em;
+            }
+        }
+    }
+    &.pickUp {
+        background: url("/images/common/pickup_bg.webp") no-repeat center
+            center / cover;
+    }
+    &.newFace {
+        margin-top: 2rem;
+        background: url("/images/common/new-face-bg.webp");
+    }
+    &.dandy {
+        .titleObject {
+            &::before {
+                filter: hue-rotate(360deg)
+                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+            }
+        }
+        &.newFace {
+            background-color: rgb(0 0 0 / 50%);
+            background-blend-mode: multiply;
+            .wrapTitle {
+                @include contents-title(#fff);
+            }
+        }
+        &.pickUp {
+            background-color: hsl(327, 100%, 91%);
+            background-blend-mode: soft-light;
+            .wrapTitle {
+                @include contents-title(#000);
+            }
+        }
+    }
+    &.mr_dandy {
+        background-color: rgb(255 153 0 / 12%);
+        background-blend-mode: soft-light;
+        .wrapTitle {
+            @include contents-title(#000000);
+        }
+        .titleObject {
+            &::before {
+                filter: grayscale(15%) hue-rotate(350deg) saturate(120%)
+                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+            }
+        }
+    }
+    &.club_dandy {
+        background-color: rgb(0 204 51 / 10%);
+        background-blend-mode: soft-light;
+        .wrapTitle {
+            @include contents-title(#000000);
+        }
+    }
+}

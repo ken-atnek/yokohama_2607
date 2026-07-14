@@ -7,7 +7,7 @@
  * ======================================= */
 
 import type { Metadata } from 'next';
-import ShopTopMain from '@/components/common/ShopTopMain';
+import ShopTopMain from '@/components/common/top/ShopTopMain';
 import LayoutWrapperMain from '@/components/dandy/LayoutWrapperMain';
 
 export const metadata: Metadata = {
