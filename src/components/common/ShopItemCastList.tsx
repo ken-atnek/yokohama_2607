@@ -23,6 +23,8 @@ type Props = {
 const ItemCastList = ({ cast }: Props) => {
   const grade = CastGradeMap[cast.gradeId];
   const ageLabel = cast.ageText || (cast.age !== null ? String(cast.age) : '');
+  const hasNewBadge = cast.badgeType === 'new';
+  const hasNewKirakiraBadge = cast.badgeType === 'new_kirakira';
   const pathname = usePathname();
   const shop = getShopFromPath(pathname);
   return (
@@ -58,6 +60,8 @@ const ItemCastList = ({ cast }: Props) => {
         <div
           className={clsx(
             styles.wrapPhoto,
+            hasNewBadge && styles.hasNewBadge,
+            hasNewKirakiraBadge && styles.hasNewKirakira,
             cast.gradeId >= 0 && styles[`grade${cast.gradeId}`]
           )}
         >

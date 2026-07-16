@@ -36,7 +36,6 @@ export type CastDetail = {
   scheduleStatus?: string;
   gradeId: number;
   ranking?: number;
-  type: number[];
   serviceHealth?: boolean;
   serviceMat?: boolean;
   badgeType?: 'none' | 'new' | 'new_kirakira' | 'trial' | 'osusume' | 'event';

@@ -47,6 +47,7 @@
     }
     // grade0 : なし
     // grade1 : シルバー
+    // grade8 : レジェンド
     // grade2 : ゴールド
     // grade3 : VIP
     // grade4 : グランド VIP
@@ -73,7 +74,7 @@
             rgb(var(--grade-color), 0)
         );
     }
-    &:not(.grade0) {
+    &:not(.grade0, .grade8) {
         .photoFrame {
             background: url(/images/common/grade-frame.webp) no-repeat center
                 center/cover;
@@ -84,6 +85,10 @@
     // grade1 : シルバー
     &.grade1 {
         --grade-color: 99, 99, 99;
+    }
+    // grade8 : レジェンド
+    &.grade8 {
+        --grade-color: 140, 110, 35;
     }
     // grade2 : ゴールド
     &.grade2 {
@@ -111,6 +116,42 @@
     // grade7 : ロイヤルクイーン
     &.grade7 {
         --grade-color: 2, 38, 109;
+    }
+    // grade8 : レジェンド
+    &.grade8 {
+        .gradeLabel {
+            display: none;
+        }
+        .photoFrame {
+            padding: 12.5cqw;
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                z-index: 1;
+            }
+            &::before {
+                inset: 0;
+                background: url(/images/common/legend-frame.webp) no-repeat
+                    center center/cover;
+            }
+            &::after {
+                bottom: 0;
+                left: 50%;
+                translate: -50%;
+                width: 45cqw;
+                background: url(/images/common/icon_legend.gif) no-repeat center
+                    center/contain;
+                aspect-ratio: 400/95;
+            }
+        }
+    }
+
+    &.hasNewKirakira {
+        .photoFrame {
+            background-color: #03c275;
+            background-blend-mode: soft-light;
+        }
     }
 }
 

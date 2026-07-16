@@ -25,6 +25,8 @@ const filters = [
   { id: 'new', label: '新人' },
 ];
 
+const gradeDisplayOrder = [7, 6, 5, 4, 3, 2, 1, 8, 0];
+
 const CastList = () => {
   const pathname = usePathname();
   const shop = getShopFromPath(pathname);
@@ -137,7 +139,13 @@ const CastList = () => {
     });
 
     return Array.from(groupedMap.entries())
-      .sort(([gradeA], [gradeB]) => gradeB - gradeA)
+      .sort(([gradeA], [gradeB]) => {
+        const orderA = gradeDisplayOrder.indexOf(gradeA);
+        const orderB = gradeDisplayOrder.indexOf(gradeB);
+        const safeOrderA = orderA === -1 ? Number.MAX_SAFE_INTEGER : orderA;
+        const safeOrderB = orderB === -1 ? Number.MAX_SAFE_INTEGER : orderB;
+        return safeOrderA - safeOrderB;
+      })
       .map(([gradeId, casts]) => ({
         gradeId,
         title:
