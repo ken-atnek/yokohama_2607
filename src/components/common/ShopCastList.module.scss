@@ -1,0 +1,529 @@
+@use "../../styles/foundation/" as *;
+
+/* =================================
+ * 	店舗 キャスト一覧
+ * ------------------------------ */
+
+/* =================================
+ * ソートエリア
+ * ------------------------------ */
+.containerSearch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1em 0 1em;
+    gap: 0 1.4em;
+    z-index: 2;
+    // box-shadow: 0.5rem -3rem 3rem rgb(1 1 1 / 10%);
+    background-color: $base-white;
+    @include sp {
+        gap: 0;
+        padding: 2vw;
+    }
+    h3 {
+        position: relative;
+        @include futura-cyrillic-book;
+        font-size: fz(20);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding-left: 1em;
+        &::before {
+            content: "";
+            position: absolute;
+            width: 0.8em;
+            aspect-ratio: 1;
+            left: 0;
+            top: 50%;
+            translate: 0 -50%;
+            // background-color: #000;
+        }
+        @include sp {
+            display: none;
+        }
+    }
+    ul {
+        font-size: inherit;
+        display: grid;
+        gap: 0 0.3em;
+        grid-template-columns: repeat(6, 7em);
+        @include sp {
+            grid-template-columns: repeat(3, 1fr);
+            width: 100%;
+            gap: 1vw;
+        }
+        li {
+            font-size: inherit;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            button {
+                &::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background-image: linear-gradient(
+                        to bottom,
+                        #6c6c6c,
+                        #3b3b3b
+                    );
+                    z-index: -1;
+                }
+            }
+            .filterBtn {
+                width: 100%;
+                max-width: 4.2em;
+                padding-block: 0.8em;
+                font-size: fz(14);
+                display: flex;
+                justify-content: space-between;
+                i {
+                    display: inline-block;
+                }
+                &.btnReset {
+                    display: grid;
+                    place-content: center;
+                }
+            }
+        }
+    }
+    &.dandy {
+        background-color: $dandy-color;
+        color: $base-white;
+        h3 {
+            &::before {
+                background-color: $base-white;
+            }
+        }
+        ul {
+            li {
+                button {
+                    &::before {
+                        content: "";
+                        position: absolute;
+                        inset: 0;
+                        background-image: linear-gradient(
+                            to bottom,
+                            #971b57,
+                            #fc5eaa
+                        );
+                        z-index: -1;
+                    }
+                }
+                .filterBtn {
+                    &.isActive {
+                        &::before {
+                            background-image: linear-gradient(
+                                to bottom,
+                                #6c6c6c,
+                                #3b3b3b
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* =================================
+ * 一覧表示
+ * ------------------------------ */
+.containerList {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 3em;
+    align-items: center;
+    font-size: inherit;
+    @include sp {
+        padding: 4vw 2vw;
+    }
+    &.dandy {
+        --shop-color: #{$dandy-color-rgb};
+    }
+    // &.kbVilla {
+    //     --shop-color: #{$shop-color-villa-number};
+    // }
+    .groupBlock {
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 4em;
+        font-size: inherit;
+        padding-inline: 2vw;
+
+        h2 {
+            position: relative;
+            color: $base-white;
+            @include bebas-neue;
+            font-size: fz(48);
+            text-align: center;
+            letter-spacing: 0.04em;
+            padding-top: 0.32em;
+            padding-bottom: 0.2em;
+            &::before {
+                content: "";
+                position: absolute;
+                left: 50%;
+                translate: -50%;
+                top: 0;
+                width: 100vw;
+                height: 100%;
+                font-size: fz(36);
+                background-color: rgb(var(--grade-color));
+                z-index: -1;
+            }
+        }
+        &.grade8,
+        &.grade7,
+        &.grade6,
+        &.grade5,
+        &.grade4,
+        &.grade3 {
+            .castList {
+                max-width: 64rem;
+            }
+        }
+        // grade1 : シルバー
+        &.grade1 {
+            --grade-color: 99, 99, 99;
+            .castList {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        // grade2 : ゴールド
+        &.grade2 {
+            --grade-color: 255, 215, 0;
+            h2 {
+                color: $font-black;
+            }
+            .castList {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        // grade3 : VIP
+        &.grade3 {
+            --grade-color: 0, 181, 70;
+        }
+        // grade4 : グランド VIP
+        &.grade4 {
+            --grade-color: 209, 29, 30;
+        }
+        // grade5 : プレミアム
+        &.grade5 {
+            --grade-color: 29, 29, 209;
+        }
+        // grade6 : ダイヤモンド
+        &.grade6 {
+            --grade-color: 209, 29, 209;
+        }
+        // grade7 : ロイヤルクイーン
+        &.grade7 {
+            --grade-color: 2, 38, 109;
+        }
+
+        // grade8 : レジェンド
+        &.grade8 {
+            --grade-color: 12, 31, 46;
+            background-color: #000;
+            .castList {
+                max-width: 78rem;
+            }
+            h2 {
+                color: #d8bb74;
+                font-size: fz(56);
+            }
+        }
+        // grade0: ノーマル
+        &.grade0 {
+            --grade-color: 67, 67, 67;
+            .castList {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            h2 {
+                color: #999;
+            }
+        }
+        .castList {
+            width: 100%;
+            position: relative;
+            display: grid;
+            font-size: inherit;
+            gap: 2em 1em;
+            margin-top: 3em;
+            max-width: $article-max-width;
+            align-self: center;
+            grid-template-rows: auto 1fr auto auto;
+            @include sp {
+                grid-template-columns: repeat(2, 1fr);
+                padding-inline: 0;
+                margin-top: unset;
+                gap: 0 2vw;
+            }
+        }
+    }
+}
+
+/* =================================
+ * キャストボックス
+ * ------------------------------ */
+.boxCast {
+    position: relative;
+    font-size: inherit;
+    display: grid;
+    background-color: #fff;
+    box-shadow: 1px 1px 5px rgba(#6a6a6a, 0.2);
+    color: $font-black;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    container-type: inline-size;
+    padding-bottom: 1em;
+    .wrapTodayTime {
+        font-size: inherit;
+        display: flex;
+        justify-content: space-between;
+        height: max(7cqw, 3rem);
+        h3 {
+            display: grid;
+            place-content: center;
+            // font-size: fz(14);
+            font-size: max(3cqw, 1.4rem);
+            padding-inline: 0.8em;
+            background-color: rgb(var(--shop-color), 1);
+            color: $base-white;
+            font-weight: 500;
+            @include sp {
+                font-size: 2.8vw;
+            }
+        }
+        .itemTime {
+            // padding-block: max(1cqw, 0.5rem);
+            font-size: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgb(var(--shop-color), 0.1);
+            flex: 1;
+            border-top: 1px solid rgb(var(--shop-color), 1);
+            border-right: 1px solid rgb(var(--shop-color), 1);
+            @include sp {
+                padding-block: 0.8vw;
+            }
+            span {
+                display: flex;
+                font-size: max(4cqw, 1.8rem);
+                @include futura-cyrillic-book;
+                align-items: center;
+                letter-spacing: 0.12em;
+                @include sp {
+                    font-size: fz(15);
+                    letter-spacing: 0.08em;
+                }
+                &:nth-of-type(2) {
+                    &::before {
+                        display: inline-block;
+                        content: "";
+                        width: 0.4em;
+                        aspect-ratio: 0.85;
+                        background-color: $font-black;
+                        margin-inline: 0.56em;
+                        clip-path: polygon(0 0, 100% 50%, 0 100%);
+                    }
+                }
+            }
+        }
+        .scheduleStatus {
+            font-size: max(3cqw, 1.6rem);
+            letter-spacing: 0.04em;
+            background-color: rgb(var(--shop-color), 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid rgb(var(--shop-color), 1);
+            border-right: 1px solid rgb(var(--shop-color), 1);
+            flex: 1;
+        }
+    }
+    .cardLink {
+        position: relative;
+        font-size: inherit;
+        display: flex;
+        flex-direction: column;
+        .wrapBadge {
+            position: absolute;
+            right: 1cqw;
+            top: 4cqw;
+            display: grid;
+            grid-auto-flow: row;
+            font-size: inherit;
+            gap: 5px 0;
+            z-index: 1;
+            @include sp {
+                top: 2vw;
+                gap: 1vw 0;
+            }
+            .badgeImage {
+                width: max(5rem, 9cqw);
+                @include sp {
+                    width: 4.8em;
+                }
+            }
+        }
+        .wrapPhoto {
+            @include cast-list-box-image;
+            &.hasNewBadge {
+                border: solid 6px #03c275;
+            }
+            &.hasNewKirakira {
+                .photoFrame {
+                    img {
+                        clip-path: inset(max(1rem, 3cqw));
+                    }
+                }
+            }
+            &:not(.grade0, .grade8) {
+                .photoFrame {
+                    img {
+                        clip-path: inset(max(1rem, 3cqw));
+                    }
+                }
+            }
+            .gradeLabel {
+                font-size: min(10cqw, 3.6rem);
+            }
+        }
+        .itemRanking {
+            font-size: inherit;
+            width: max(8rem, 25cqw);
+            position: absolute;
+            left: -1cqw;
+            bottom: -1cqw;
+            @include sp {
+                width: 12vw;
+            }
+            img {
+                width: 100%;
+            }
+        }
+    }
+    .castProfile {
+        font-size: inherit;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 0.5em;
+        gap: 0.2em 0;
+        .wrapName {
+            font-size: inherit;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .castName {
+                font-size: max(4.4cqw, 2rem);
+                letter-spacing: 0.12em;
+            }
+            .age {
+                @include futura-cyrillic-book;
+                font-size: max(4.4cqw, 2rem);
+                &::before {
+                    font-size: 0.8em;
+                    content: "Age.";
+                }
+            }
+        }
+        .castSize {
+            font-size: inherit;
+            display: flex;
+            align-items: center;
+            gap: 0 0.1em;
+            span {
+                @include futura-cyrillic-book;
+                font-size: max(4cqw, 1.8rem);
+                @include sp {
+                    font-size: fz(18);
+                }
+                &.tall {
+                    &::before {
+                        content: "T.";
+                    }
+                }
+                &.bust {
+                    &::before {
+                        content: "B.";
+                    }
+                    i {
+                        font-size: inherit;
+                        text-transform: uppercase;
+                        margin-left: 0.05em;
+                        &::before,
+                        &::after {
+                            display: inline-block;
+                            translate: 0 -0.08em;
+                        }
+                        &::before {
+                            content: "[";
+                            margin-right: 0.1em;
+                        }
+                        &::after {
+                            content: "]";
+                            margin-left: 0.05em;
+                        }
+                    }
+                }
+                &.west {
+                    &::before {
+                        content: "W.";
+                    }
+                }
+                &.hip {
+                    &::before {
+                        content: "H.";
+                    }
+                }
+            }
+        }
+    }
+    .serviceList {
+        font-size: inherit;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        padding-inline: 0.5em;
+        gap: 0 0.3em;
+        li {
+            font-size: max(2.6cqw, 1.6rem);
+            text-align: center;
+            padding-block: 0.4em;
+            letter-spacing: 0.08em;
+            &.isActive {
+                background-color: #8ee786;
+                color: #2b2b2b;
+            }
+            &.isInactive {
+                background-color: #d2d2d2;
+                color: $base-white;
+            }
+            @include sp {
+                font-size: fz(12);
+                padding-block: 0.2em;
+            }
+            &:nth-of-type(1) {
+                border-radius: 100vmax 0 0 100vmax;
+            }
+            &:nth-of-type(2) {
+                border-radius: 0 100vmax 100vmax 0;
+            }
+        }
+    }
+    // &:nth-of-type(n + 5) {
+    //     margin-top: 3em;
+    //     @include sp {
+    //         margin-top: unset;
+    //     }
+    // }
+    // &:nth-of-type(n + 3) {
+    //     @include sp {
+    //         margin-top: 8vw;
+    //     }
+    // }
+}

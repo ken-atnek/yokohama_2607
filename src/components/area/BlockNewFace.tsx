@@ -169,8 +169,12 @@ const BlockNewFace = () => {
     cast: NewFaceCast,
     isActive: boolean,
     keySuffix: string
-  ) => (
-    <Link
+  ) => {
+    const ageLabel =
+      cast.ageText || (cast.age !== null ? String(cast.age) : '');
+
+    return (
+      <Link
       key={`${cast.shopId}-${cast.castId}-${keySuffix}`}
       href={`/${cast.shopId}/profile/?id=${cast.castId}`}
       className={`${styles.wrapLink} ${styles.fadeItem} ${
@@ -191,7 +195,7 @@ const BlockNewFace = () => {
       <div className={styles.wrapProfile}>
         <div className={styles.castName}>{cast.castName}</div>
         <div className={styles.castSize}>
-          <span className={styles.age}>{cast.age}</span>
+          <span className={styles.age}>{ageLabel}</span>
           <span className={styles.tall}>{cast.tall}</span>
           <span className={styles.bust}>
             {cast.bust}
@@ -201,8 +205,9 @@ const BlockNewFace = () => {
           <span className={styles.hip}>{cast.hip}</span>
         </div>
       </div>
-    </Link>
-  );
+      </Link>
+    );
+  };
 
   return (
     <ul className={styles.blockNewFace}>

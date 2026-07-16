@@ -1,9 +1,9 @@
 /* =======================================
- *神戸ホットポイントグループ ショップリンク
- * URL: src/components/common/ContainerShopList.tsx
- * Referenced in: /app/page.tsx
+ * 横浜ダンディーグループ 店舗一覧リンク
+ * URL: /src/components/common/ContainerShopList.tsx
+ * Referenced in: /src/app/top/page.tsx
  * Created: 2025-08-19
- * Last updated: 2026-07-09
+ * Last updated: 2026-07-16
  * ======================================= */
 import styles from './ContainerShopList.module.scss';
 import { Shops } from '@/data/AreaShopData';

@@ -36,8 +36,11 @@ export type CastDetail = {
   scheduleStatus?: string;
   gradeId: number;
   ranking?: number;
-  type: number[];
-  badges?: string[];
+  serviceHealth?: boolean;
+  serviceMat?: boolean;
+  badgeType?: 'none' | 'new' | 'new_kirakira' | 'trial' | 'osusume' | 'event';
+  shopIconRank?: number | null;
+  areaIconRank?: number | null;
   ratings?: RatingItem[];
   photoBlogUrl?: string;
   reservationUrl?: string;

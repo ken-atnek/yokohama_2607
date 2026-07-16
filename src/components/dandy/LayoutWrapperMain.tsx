@@ -1,9 +1,9 @@
 /* =======================================
- * 神戸ホットポイント メインレイアウト
- * URL: src/components/Shop/Hot/LayoutWrapperMain.tsx
- * Referenced in: src/app/hot/layout.tsx
+ * 横浜ダンディー メインレイアウト
+ * URL: /src/components/dandy/LayoutWrapperMain.tsx
+ * Referenced in: /src/app/dandy/top/page.tsx
  * Created: 2025-10-11
- * Last updated: 2025-10-11
+ * Last updated: 2026-07-16
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
 import Footer from '@/components/common/Footer';

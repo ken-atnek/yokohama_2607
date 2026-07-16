@@ -1,0 +1,67 @@
+/* =================================
+ * 	 店舗切替タブ
+ * ------------------------------ */
+@use "../../styles/foundation/" as *;
+
+.shopSwitchTabs {
+    position: relative;
+    font-size: inherit;
+    display: flex;
+    gap: 0 0.8em;
+    z-index: 5;
+    padding-inline: 2vw;
+    padding-bottom: 1px;
+    a {
+        position: relative;
+        font-size: fz(14);
+        color: #8e8e8e;
+        width: 11em;
+        height: 2.8em;
+        display: flex;
+        justify-content: center;
+        padding: 0.8em 0 0em;
+        transition: 0.3s ease-out;
+        @include sp {
+            width: 11em;
+        }
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            border-radius: 0.5em 0.5em 0 0;
+            // border: 1px solid #c2c2c2;
+            border-bottom: unset;
+            transform: perspective(1em) rotateX(2deg);
+            background-color: #e6e6e6;
+            transform-origin: right;
+            transition: 0.3s ease-out;
+        }
+        &.isActive {
+            color: $base-white;
+            &::before {
+                background-color: rgb(var(--shop-color), 1);
+            }
+        }
+        @include hover {
+            color: $base-white;
+            &::before {
+                background-color: rgb(var(--shop-color), 0.9);
+            }
+        }
+        &.dandy {
+            --shop-color: #{$dandy-color-rgb};
+        }
+    }
+    &.realtime {
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+    &.cast {
+        justify-content: flex-end;
+    }
+    &.dandy {
+        background-color: rgba($dandy-color, 0.3);
+    }
+}

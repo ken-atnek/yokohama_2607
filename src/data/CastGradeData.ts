@@ -2,7 +2,7 @@
  * キャストグレード定義
  * URL:/src/data/CastGradeData.ts
  * Created: 2026-07-09
- * Last updated: 2026-07-09
+ * Last updated: 2026-07-16
  * ======================================= */
 
 export type CastGrade = {
@@ -14,6 +14,7 @@ export type CastGrade = {
 export const CastGrades: CastGrade[] = [
   { gradeId: 0, label: 'なし', labelEn: 'none' },
   { gradeId: 1, label: 'シルバー', labelEn: 'silver' },
+  { gradeId: 8, label: 'レジェンド', labelEn: 'legend' },
   { gradeId: 2, label: 'ゴールド', labelEn: 'gold' },
   { gradeId: 3, label: 'VIP', labelEn: 'vip' },
   { gradeId: 4, label: 'グランド VIP', labelEn: 'grand vip' },

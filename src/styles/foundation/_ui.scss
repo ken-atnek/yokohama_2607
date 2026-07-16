@@ -29,25 +29,44 @@
 }
 
 /* =================================
- * 	キャストランク
+ * 	キャストリストBOX
  * ------------------------------ */
-@mixin cast-wrap-photo {
+@mixin cast-list-box-image {
     position: relative;
+    width: 100%;
     font-size: inherit;
-    --grade-color: 0, 0, 0;
+    .photoFrame {
+        position: relative;
+        width: 100%;
+        // overflow: hidden;
+        img {
+            width: 100%;
+            aspect-ratio: 270/397;
+            object-fit: cover;
+        }
+    }
+    // grade0 : なし
+    // grade1 : シルバー
+    // grade8 : レジェンド
+    // grade2 : ゴールド
+    // grade3 : VIP
+    // grade4 : グランド VIP
+    // grade5 : プレミアム
+    // grade6 : ダイヤモンド
+    // grade7 : ロイヤルクイーン
     .gradeLabel {
         position: absolute;
-        bottom: 0;
         right: 0;
+        bottom: 0;
         z-index: 1;
-
-        // font-size: fz(16);
-        color: #fff;
-        display: flex;
-        min-width: 7em;
-        align-items: center;
-        justify-content: flex-end;
-        padding: 0.3em 0.5em;
+        min-width: 6em;
+        padding: 0.2em 0.7em;
+        color: $base-white;
+        // font-size: fz(12);
+        font-weight: 700;
+        text-align: right;
+        @include futura-condensed-medium;
+        text-transform: uppercase;
         background-image: repeating-linear-gradient(
             to left,
             rgb(var(--grade-color), 1),
@@ -55,73 +74,83 @@
             rgb(var(--grade-color), 0)
         );
     }
-    .gradeFrame {
-        position: absolute;
-        font-size: 1em;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url("/images/common/grade-frame.webp") no-repeat center
-            center / cover;
-        background-blend-mode: hard-light;
-        background-color: rgb(var(--grade-color));
+    &:not(.grade0, .grade8) {
+        .photoFrame {
+            background: url(/images/common/grade-frame.webp) no-repeat center
+                center/cover;
+            background-blend-mode: hard-light;
+            background-color: rgb(var(--grade-color));
+        }
     }
-
-    // &:not(.grade9) {
-    //     img {
-    //         clip-path: inset(0.5em);
-    //     }
-    // }
-
-    /* =========================================================
- 1: { label: 'DIAMOND', className: 'grade1' }
- 2: { label: 'PREMIUM', className: 'grade2' }
- 3: { label: 'GRAND VIP', className: 'grade3' }
- 4: { label: '筆頭 VIP', className: 'grade4' }
- 5: { label: 'VIP', className: 'grade5' }
- 6: { label: 'GOLD', className: 'grade6' }
- 7: { label: 'SILVER', className: 'grade7' }
- 8: { label: 'BRONZE', className: 'grade8' }
- 9: { label: 'NORMAL', className: 'grade9' }
-  * --------------------------------------------------------- */
+    // grade1 : シルバー
     &.grade1 {
-        --grade-color: 158, 44, 229;
-    }
-    &.grade2 {
-        --grade-color: 42, 63, 182;
-    }
-    &.grade3 {
-        --grade-color: 201, 14, 14;
-    }
-    &.grade4 {
-        --grade-color: 228, 11, 105;
-    }
-    &.grade5 {
-        --grade-color: 101, 205, 162;
-    }
-    &.grade6 {
-        --grade-color: 210, 167, 74;
-        .gradeFrame {
-            background-image: unset;
-        }
-    }
-    &.grade7 {
         --grade-color: 99, 99, 99;
-        .gradeFrame {
-            background-image: unset;
-        }
     }
+    // grade8 : レジェンド
     &.grade8 {
-        --grade-color: 214, 135, 98;
-        .gradeFrame {
-            background-image: unset;
+        --grade-color: 140, 110, 35;
+    }
+    // grade2 : ゴールド
+    &.grade2 {
+        --grade-color: 255, 215, 0;
+        .gradeLabel {
+            color: $font-black;
         }
     }
-    &.grade9 {
-        --grade-color: 102, 195, 224;
-        .gradeFrame {
-            background-image: unset;
+    // grade3 : VIP
+    &.grade3 {
+        --grade-color: 0, 181, 70;
+    }
+    // grade4 : グランド VIP
+    &.grade4 {
+        --grade-color: 209, 29, 30;
+    }
+    // grade5 : プレミアム
+    &.grade5 {
+        --grade-color: 29, 29, 209;
+    }
+    // grade6 : ダイヤモンド
+    &.grade6 {
+        --grade-color: 209, 29, 209;
+    }
+    // grade7 : ロイヤルクイーン
+    &.grade7 {
+        --grade-color: 2, 38, 109;
+    }
+    // grade8 : レジェンド
+    &.grade8 {
+        .gradeLabel {
+            display: none;
+        }
+        .photoFrame {
+            padding: 12.5cqw;
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                z-index: 1;
+            }
+            &::before {
+                inset: 0;
+                background: url(/images/common/legend-frame.webp) no-repeat
+                    center center/cover;
+            }
+            &::after {
+                bottom: 0;
+                left: 50%;
+                translate: -50%;
+                width: 45cqw;
+                background: url(/images/common/icon_legend.gif) no-repeat center
+                    center/contain;
+                aspect-ratio: 400/95;
+            }
+        }
+    }
+
+    &.hasNewKirakira {
+        .photoFrame {
+            background-color: #03c275;
+            background-blend-mode: soft-light;
         }
     }
 }
