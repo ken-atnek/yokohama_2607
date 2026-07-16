@@ -1,8 +1,8 @@
 /* =======================================
- * 神戸ホットポイントグループ キャストアクセスカウンターAPI
- * URL: src/lib/accessCastCounterApi.ts
+ * 横浜ダンディーグループ キャストアクセスカウンターAPI
+ * URL: /src/lib/accessCastCounterApi.ts
  * Created: 2025-10-08
- * Last updated: 2025-10-08
+ * Last updated: 2026-07-16
  * ======================================= */
 
 export async function fetchCastCounter(

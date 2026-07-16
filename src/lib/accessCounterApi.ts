@@ -1,8 +1,8 @@
 /* =======================================
- * 神戸ホットポイントグループ アクセスカウンターAPI
- * URL: src/lib/accessCounterApi.ts
+ * 横浜ダンディーグループ アクセスカウンターAPI
+ * URL: /src/lib/accessCounterApi.ts
  * Created: 2025-10-07
- * Last updated: 2025-10-07
+ * Last updated: 2026-07-16
  * ======================================= */
 
 export async function fetchCounter(

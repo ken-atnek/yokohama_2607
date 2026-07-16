@@ -1,9 +1,10 @@
 'use client';
 /* =======================================
- *神戸ホットポイント 店舗HEADER
- * URL: src/components/common/ShopHeader.tsx
+ * 横浜ダンディーグループ 店舗HEADER
+ * URL: /src/components/common/ShopHeader.tsx
+ * Referenced in: /src/components/dandy/LayoutWrapperMain.tsx
  * Created: 2025-08-21
- * Last updated: 2025-09-11
+ * Last updated: 2026-07-16
  * ======================================= */
 import { usePathname } from 'next/navigation';
 import styles from './ShopHeader.module.scss';
