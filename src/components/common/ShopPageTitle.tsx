@@ -3,7 +3,7 @@
  * URL: /src/components/common/ShopPageTitle.tsx
  * Referenced in: /src/app/dandy/cast/page.tsx
  * Created: 2025-08-28
- * Last updated: 2026-07-15
+ * Last updated: 2026-07-16
  * ======================================= */
 import styles from './ShopPageTitle.module.scss';
 import Image from 'next/image';
@@ -34,7 +34,7 @@ const PageTitle = ({ titleJp, titleEn, shop = 'dandy' }: PageTitleProps) => {
       <article className={styles.innerPageTitle}>
         <div className={styles.boxH2}>
           <span className={styles.sidebarH2}>{titleEn}</span>
-          <h2>{titleJp}</h2>
+          <h1>{titleJp}</h1>
         </div>
         <div className={styles.itemLogo}>
           <Image

@@ -1,10 +1,10 @@
 'use client';
 /* =======================================
- *店舗 TOP MAIN
+ * 横浜ダンディーグループ 店舗 TOP MAIN
  * URL: /src/components/common/top/ShopTopMain.tsx
  * Referenced in: /src/app/dandy/top/page.tsx
  * Created: 2025-08-22
- * Last updated: 2026-07-14
+ * Last updated: 2026-07-16
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
 // import TopPickUp from '@/components/Shop/TopPickUp';
@@ -19,11 +19,13 @@ import BannerGroup from '@/components/common/BannerGroup';
 import { getShopFromPath, getStoreClass } from '@/lib/shopUtils';
 import { trackPageAccess } from '@/lib/accessCounterApi';
 import BlockAccess from '@/components/common/system/BlockAccess';
+import { getShopData } from '@/components/common/ShopHeader';
 
 const ShopTopMain = () => {
   const pathname = usePathname();
   const shop = getShopFromPath(pathname);
   const activeStoreClass = getStoreClass(shop);
+  const shopData = getShopData(shop);
 
   //ページ読み込み時にバックグラウンド処理でユーザーアクセス情報をログに保存する
   useEffect(() => {
@@ -49,6 +51,9 @@ const ShopTopMain = () => {
     <section
       className={clsx(styles.containerShopTopMain, styles[activeStoreClass])}
     >
+      <h1 className="sr-only">
+        {shopData?.name ? `${shopData.name}の店舗情報` : '店舗情報'}
+      </h1>
       <TopPickUpBan jsonPath={jsonPathPickUpBan} />
       <CastSlide
         titleJp="ピックアップ"

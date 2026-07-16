@@ -8,12 +8,18 @@ export type QAItem = {
   answer: string;
 };
 
+export type RecommendationItem = {
+  shopId: string;
+  castId: string;
+};
+
 export type CastDetail = {
   rankID?: string;
   rank?: number;
   castId: string;
   castName: string;
   castNameEn: string;
+  castNameKana?: string;
   castImage: string;
   movie?: string;
   moviePosterImage?: string;
@@ -26,6 +32,7 @@ export type CastDetail = {
   cup: string;
   west: number;
   hip: number;
+  type?: string[];
   shopId: string;
   shopName: string;
   realTimeStatus: number;
@@ -42,9 +49,15 @@ export type CastDetail = {
   shopIconRank?: number | null;
   areaIconRank?: number | null;
   ratings?: RatingItem[];
+  blogUrl?: string;
+  reviewUrl?: string;
+  reserveUrl?: string;
   photoBlogUrl?: string;
   reservationUrl?: string;
+  telop?: string;
   castMessage?: string;
   shopComment?: string;
   questions?: QAItem[];
+  recommendations?: RecommendationItem[];
+  joinedDate?: string;
 };

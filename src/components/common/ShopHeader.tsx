@@ -140,7 +140,7 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
       <article className={styles.headerTop}>
         <div className={styles.boxHead}>
           <p>DANDY GROUP YOKOHAMA AREA</p>
-          <h1>{title}</h1>
+          <p className={styles.pageTitle}>{title}</p>
         </div>
       </article>
       <div
