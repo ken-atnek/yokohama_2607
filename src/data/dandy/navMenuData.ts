@@ -5,14 +5,12 @@
  * Last updated: 2025-09-15
  * ======================================= */
 export const navMenu = [
-  { id: 'navTop', href: '/hot/top/', label: 'トップ', labelEn: 'top' },
+  { id: 'navTop', href: '/dandy/top/', label: 'トップ', labelEn: 'top' },
   {
-    id: 'navReserve',
-    href: '#',
-    // href: 'https://www.cityheaven.net/hyogo/A2802/A280201/koubehp/S6ShopReservation/?pcmode=sp',
-    label: 'ネット予約',
-    labelEn: 'reservation',
-    target: true,
+    id: 'navCastList',
+    href: '/dandy/cast/',
+    label: '在籍一覧',
+    labelEn: 'cast list',
   },
   {
     id: 'navRealTime',
@@ -22,19 +20,22 @@ export const navMenu = [
     labelEn: 'real time info ',
   },
   {
+    id: 'navReserve',
+    href: '#',
+    // href: 'https://www.cityheaven.net/hyogo/A2802/A280201/koubehp/S6ShopReservation/?pcmode=sp',
+    label: 'ネット予約',
+    labelEn: 'reservation',
+    target: true,
+  },
+
+  {
     id: 'navSchedule',
     // href: '/hot/schedule/',
     href: '#',
     label: '出勤情報',
     labelEn: 'schedule',
   },
-  {
-    id: 'navCastList',
-    // href: '/hot/cast/',
-    href: '#',
-    label: '在籍一覧',
-    labelEn: 'cast list',
-  },
+
   {
     id: 'navPhotoBlog',
     // href: 'https://www.cityheaven.net/hyogo/A2802/A280201/koubehp/diarylist/?of=y',

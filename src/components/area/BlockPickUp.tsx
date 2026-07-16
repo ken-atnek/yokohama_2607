@@ -184,6 +184,8 @@ const BlockPickUp = () => {
   ) => {
     const isActive = options?.isActive ?? true;
     const keySuffix = options?.keySuffix ?? 'default';
+    const ageLabel =
+      cast.ageText || (cast.age !== null ? String(cast.age) : '');
 
     return (
       <Link
@@ -212,7 +214,7 @@ const BlockPickUp = () => {
         <div className={styles.wrapProfile}>
           <div className={styles.castName}>{cast.castName}</div>
           <div className={styles.castSize}>
-            <span className={styles.age}>{cast.age}</span>
+            <span className={styles.age}>{ageLabel}</span>
             <span className={styles.tall}>{cast.tall}</span>
             <span className={styles.bust}>
               {cast.bust}

@@ -74,6 +74,20 @@
 - 時刻は `HH:mm` 形式の `string`
 - 空値は `null` を許容する（空文字多用は避ける）
 
+### 在籍一覧の表示用キー
+
+- 横浜の在籍一覧では、サービス表示用に真偽値キーを持たせてよい
+  - `serviceHealth`: `ヘルス` 表示のON/OFF
+  - `serviceMat`: `マット` 表示のON/OFF
+- 上記2項目は `boolean` で管理する
+- サービス表示文言を配列で持つ方式（例: `serviceLabels`）は現時点では採用しない
+- キャスト画像右上のアイコン表示は、次の3ジャンルで管理してよい
+  - `badgeType`: `none | new | new_kirakira | trial | osusume | event`
+  - `shopIconRank`: 店舗アイコンランキング順位。未設定時は `null`
+  - `areaIconRank`: エリアアイコンランキング順位。未設定時は `null`
+- `shopIconRank` / `areaIconRank` は現時点では数値管理とし、画像ファイル名はゼロ埋め2桁に合わせてよい
+  - 例: `1` → `01.webp`
+
 ---
 
 ## ランキング系JSONの補足
@@ -101,6 +115,7 @@
   - `5`: プレミアム
   - `6`: ダイヤモンド
   - `7`: ロイヤルクイーン
+- 在籍一覧を `gradeId` ごとにブロック表示する場合、`0` の見出しは `normal` として扱ってよい
 - ランキングJSON内の店舗識別子は、現行サンプルに合わせて `shopID` を使用してよい
   - 例: `"shopID": "dandy"`
 

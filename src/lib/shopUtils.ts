@@ -10,6 +10,12 @@ export const logoHrefMap: Record<string, string> = {
   club_dandy: '',
 };
 
+export const logoImageMap: Record<string, string> = {
+  dandy: '/images/logo/logo-y-dandy.svg',
+  mr_dandy: '/images/logo/logo-mr-dandy.svg',
+  club_dandy: '/images/logo/logo-club-dandy.svg',
+};
+
 export function getShopFromPath(pathname: string): string {
   const shop = pathname.split('/')[1];
 
@@ -32,6 +38,10 @@ export function getStoreClass(shop: string): string {
 
 export function getLogoHref(shop: string): string {
   return logoHrefMap[shop] || logoHrefMap['dandy'];
+}
+
+export function getLogoImageSrc(shop: string): string {
+  return logoImageMap[shop] || logoImageMap['dandy'];
 }
 
 export const platinumMailUrlMap: Record<string, string> = {

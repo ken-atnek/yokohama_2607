@@ -28,6 +28,15 @@
         display: contents;
     }
 }
+.innerSub {
+    font-size: inherit;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    @include sp {
+        display: contents;
+    }
+}
 .shopMainContainer {
     display: grid;
     max-width: $article-max-width;
@@ -58,7 +67,7 @@
 }
 .shopSubContainer {
     display: grid;
-    max-width: $article-max-width;
+    // max-width: $article-max-width;
     grid-auto-flow: row;
 }
 .containerShopTopMain {
