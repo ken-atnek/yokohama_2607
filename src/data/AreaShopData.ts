@@ -2,7 +2,7 @@
  * 店舗データ
  * URL:src/data/AreaShopData.ts
  * Created: 2025-08-19
- * Last updated: 2026-07-13
+ * Last updated: 2026-07-16
  * ======================================= */
 
 import LogoYokohama from '/public/images/logo/logo-y-dandy.svg';
@@ -18,6 +18,7 @@ export type Shop = {
   address: string;
   logo: StaticImageData;
   phone: string;
+  noticeMailAddress?: string;
   url: string;
   businessHours: string;
   shopColor?: string;
@@ -33,6 +34,7 @@ export const Shops = [
     post: '〒231-0057',
     address: '神奈川県横浜市中区曙町2丁目25番地 中山ビル 1階',
     phone: '045-243-2468',
+    noticeMailAddress: '',
     url: '/club_dandy/top/',
     businessHours: '6:00～24:00',
     shopColor: '#00CC33',
@@ -46,6 +48,7 @@ export const Shops = [
     post: '〒231-0057',
     address: '神奈川県横浜市中区曙町3丁目32-17 楽園ビル 6F',
     phone: '045-242-8030',
+    noticeMailAddress: 'workgmail_dy72gu0x@hot-point.jp',
     url: '/dandy/top/',
     businessHours: '6:00～24:00',
     shopColor: '#e776ad',
@@ -59,6 +62,7 @@ export const Shops = [
     post: '〒231-0055',
     address: '奈川県横浜市中区末吉町3丁目45番地 川村ビル 2F',
     phone: '045-243-9555',
+    noticeMailAddress: '',
     url: '/mr_dandy/top/',
     businessHours: '6:00～24:00',
     shopColor: '#FF9900',

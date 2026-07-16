@@ -10,7 +10,7 @@ import localFont from 'next/font/local';
 import { Bebas_Neue, Noto_Sans_JP, Reenie_Beanie } from 'next/font/google';
 import { isRealProduction, metadataBase } from '@/lib/env';
 import '@/styles/globals.scss';
-
+import SvgDefs from '@/components/SvgDefs';
 const futuraCondensedMedium = localFont({
   src: '../../public/fonts/FuturaCondensedMedium.woff2',
   variable: '--font-futura-condensed-medium',
@@ -39,7 +39,7 @@ const bebasNeue = Bebas_Neue({
 const notoSansJp = Noto_Sans_JP({
   subsets: ['latin'],
   variable: '--font-noto-sans-jp',
-  weight: ['400', '500', '700', '900'],
+  weight: ['300', '400', '500', '700', '900'],
   display: 'swap',
 });
 
@@ -107,7 +107,10 @@ export default function RootLayout({
       lang="ja"
       className={`${futuraCondensedMedium.variable} ${futuraCyrillicBook.variable} ${futuraCyrillicDemi.variable} ${bebasNeue.variable} ${notoSansJp.variable} ${reenieBeanie.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <SvgDefs />
+        {children}
+      </body>
     </html>
   );
 }

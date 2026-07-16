@@ -25,6 +25,7 @@ type PickUpCast = Pick<
   | 'castName'
   | 'castImage'
   | 'age'
+  | 'ageText'
   | 'tall'
   | 'bust'
   | 'cup'
