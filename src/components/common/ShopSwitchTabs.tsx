@@ -1,7 +1,7 @@
 /* =======================================
  * 横浜ダンディーグループ 店舗切替タブ
  * URL: /src/components/common/ShopSwitchTabs.tsx
- * Referenced in: /src/components/common/ShopCastList.tsx
+ * Referenced in: /src/components/common/cast/ShopCastList.tsx
  * Created: 2025-09-16
  * Last updated: 2026-07-15
  * ======================================= */

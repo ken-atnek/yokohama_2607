@@ -119,42 +119,6 @@
                         width: 65%;
                     }
                 }
-                // &.kbHot {
-                //     svg {
-                //         width: 60%;
-                //         aspect-ratio: 500/176;
-                //         stroke: unset;
-                //         fill: #000;
-                //         @include sp {
-                //             width: 80%;
-                //             fill: $shop-hot;
-                //         }
-                //     }
-                // }
-                // &.kbVilla {
-                //     svg {
-                //         width: 70%;
-                //         aspect-ratio: 500/161;
-                //         stroke: unset;
-                //         fill: #000;
-                //         @include sp {
-                //             width: 85%;
-                //             fill: $shop-villa;
-                //         }
-                //     }
-                // }
-                // &.kbStyle {
-                //     svg {
-                //         width: 75%;
-                //         aspect-ratio: 298/81;
-                //         stroke: unset;
-                //         fill: #000;
-                //         @include sp {
-                //             width: 85%;
-                //             fill: $shop-style;
-                //         }
-                //     }
-                // }
             }
             p {
                 font-size: fz(18);

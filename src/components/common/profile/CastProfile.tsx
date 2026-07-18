@@ -24,7 +24,8 @@ import { trackCastAccess } from '@/lib/accessCastCounterApi';
 import type { CastDetail, RecommendationItem } from '@/types/CastDetails';
 import ExternalLink from '@/components/common/ExternalLink';
 import CastSchedule from './CastSchedule';
-import CastBadgeIcons from '@/components/common/CastBadgeIcons';
+import CastBadgeIcons from '@/components/common/cast/CastBadgeIcons';
+import { normalizeCastBase } from '@/lib/normalizeCast';
 
 const shopNameMap: Record<string, string> = {
   dandy: '横浜ダンディー',
@@ -46,94 +47,42 @@ function normalizeCastDetail(
   shop: string,
   castId: string
 ): CastProfileDetail {
-  const fallbackImage =
-    typeof source.castImage === 'string' && source.castImage
-      ? source.castImage
-      : `/images/cast/${shop}/no-image.webp`;
-  const rawBadgeType = source.badgeType;
-  const badgeType =
-    rawBadgeType === 'new' ||
-    rawBadgeType === 'new_kirakira' ||
-    rawBadgeType === 'trial' ||
-    rawBadgeType === 'osusume' ||
-    rawBadgeType === 'event' ||
-    rawBadgeType === 'none'
-      ? rawBadgeType
-      : 'none';
+  const normalized = normalizeCastBase(source, {
+    shop,
+    fallbackCastId: castId,
+    profileImagesMode: 'fallback',
+  });
+
+  if (!normalized) {
+    return {
+      castId,
+      castName: '',
+      castNameEn: '',
+      castImage: `/images/cast/${shop}/no-image.webp`,
+      profileImages: [`/images/cast/${shop}/no-image.webp`],
+      age: null,
+      tall: 0,
+      bust: 0,
+      cup: '',
+      west: 0,
+      hip: 0,
+      shopId: shop,
+      shopName: '',
+      realTimeStatus: 0,
+      realTimeDetail: '',
+      realTimeComment: '',
+      gradeId: 0,
+      type: [],
+      recommendations: [],
+      badgeType: 'none',
+      shopIconRank: null,
+      areaIconRank: null,
+    };
+  }
 
   return {
-    castId: typeof source.castId === 'string' ? source.castId : castId,
-    castName: typeof source.castName === 'string' ? source.castName : '',
-    castNameEn: typeof source.castNameEn === 'string' ? source.castNameEn : '',
-    castImage: fallbackImage,
-    profileImages:
-      Array.isArray(source.profileImages) && source.profileImages.length > 0
-        ? source.profileImages.filter(
-            (image): image is string =>
-              typeof image === 'string' && image !== ''
-          )
-        : [fallbackImage],
-    age: typeof source.age === 'number' ? source.age : null,
-    ageText: typeof source.ageText === 'string' ? source.ageText : undefined,
-    tall:
-      typeof source.tall === 'number'
-        ? source.tall
-        : typeof source.heightCm === 'number'
-          ? source.heightCm
-          : 0,
-    bust: typeof source.bust === 'number' ? source.bust : 0,
-    cup: typeof source.cup === 'string' ? source.cup : '',
-    west:
-      typeof source.west === 'number'
-        ? source.west
-        : typeof source.waistCm === 'number'
-          ? source.waistCm
-          : 0,
-    hip: typeof source.hip === 'number' ? source.hip : 0,
-    type: Array.isArray(source.type)
-      ? source.type
-          .filter((item): item is string => typeof item === 'string')
-          .slice(0, 4)
-      : [],
-    shopId: typeof source.shopId === 'string' ? source.shopId : shop,
-    shopName: typeof source.shopName === 'string' ? source.shopName : '',
-    realTimeStatus:
-      typeof source.realTimeStatus === 'number' ? source.realTimeStatus : 0,
-    realTimeDetail:
-      typeof source.realTimeDetail === 'string' ? source.realTimeDetail : '',
-    realTimeComment:
-      typeof source.realTimeComment === 'string' ? source.realTimeComment : '',
-    startTime:
-      typeof source.startTime === 'string' && source.startTime
-        ? source.startTime
-        : undefined,
-    endTime:
-      typeof source.endTime === 'string' && source.endTime
-        ? source.endTime
-        : undefined,
-    scheduleStatus:
-      typeof source.scheduleStatus === 'string' && source.scheduleStatus
-        ? source.scheduleStatus
-        : undefined,
-    gradeId: typeof source.gradeId === 'number' ? source.gradeId : 0,
-    ranking: typeof source.ranking === 'number' ? source.ranking : undefined,
-    serviceHealth:
-      typeof source.serviceHealth === 'boolean'
-        ? source.serviceHealth
-        : undefined,
-    serviceMat:
-      typeof source.serviceMat === 'boolean' ? source.serviceMat : undefined,
-    badgeType,
-    shopIconRank:
-      typeof source.shopIconRank === 'number' ? source.shopIconRank : null,
-    areaIconRank:
-      typeof source.areaIconRank === 'number' ? source.areaIconRank : null,
-    ratings: Array.isArray(source.ratings) ? source.ratings : undefined,
-    blogUrl: typeof source.blogUrl === 'string' ? source.blogUrl : undefined,
-    reviewUrl:
-      typeof source.reviewUrl === 'string' ? source.reviewUrl : undefined,
-    reserveUrl:
-      typeof source.reserveUrl === 'string' ? source.reserveUrl : undefined,
+    ...normalized,
+    type: (normalized.type ?? []).slice(0, 4),
     photoBlogUrl:
       typeof source.photoBlogUrl === 'string'
         ? source.photoBlogUrl
@@ -146,12 +95,6 @@ function normalizeCastDetail(
         : typeof source.reserveUrl === 'string'
           ? source.reserveUrl
           : undefined,
-    telop: typeof source.telop === 'string' ? source.telop : undefined,
-    castMessage:
-      typeof source.castMessage === 'string' ? source.castMessage : undefined,
-    shopComment:
-      typeof source.shopComment === 'string' ? source.shopComment : undefined,
-    questions: Array.isArray(source.questions) ? source.questions : undefined,
     recommendations: Array.isArray(source.recommendations)
       ? source.recommendations
           .filter(
@@ -163,21 +106,6 @@ function normalizeCastDetail(
           )
           .slice(0, 4)
       : [],
-    movie: typeof source.movie === 'string' ? source.movie : undefined,
-    moviePosterImage:
-      typeof source.moviePosterImage === 'string'
-        ? source.moviePosterImage
-        : undefined,
-    castImageSquare:
-      typeof source.castImageSquare === 'string'
-        ? source.castImageSquare
-        : undefined,
-    rankID: typeof source.rankID === 'string' ? source.rankID : undefined,
-    rank: typeof source.rank === 'number' ? source.rank : undefined,
-    castNameKana:
-      typeof source.castNameKana === 'string' ? source.castNameKana : undefined,
-    joinedDate:
-      typeof source.joinedDate === 'string' ? source.joinedDate : undefined,
   };
 }
 

@@ -1,10 +1,10 @@
-@use "../../styles/foundation/" as *;
+@use "../../../styles/foundation/" as *;
 /* =======================================
  * 横浜ダンディーグループ 共通ランキング本体 スタイル
- * URL: /src/components/common/CastRanking.module.scss
- * Referenced in: /src/components/common/CastRanking.tsx
+ * URL: /src/components/common/cast/CastRanking.module.scss
+ * Referenced in: /src/components/common/cast/CastRanking.tsx
  * Created: 2026-07-09
- * Last updated: 2026-07-09
+ * Last updated: 2026-07-17
  * ======================================= */
 
 @mixin ranking-nav-theme(

@@ -14,10 +14,15 @@ export const navMenu = [
   },
   {
     id: 'navRealTime',
-    // href: '/dandy/realtime/',
-    href: '#',
+    href: '/dandy/realtime/',
     label: 'リアルタイム',
     labelEn: 'real time info ',
+  },
+  {
+    id: 'navSchedule',
+    href: '/dandy/schedule/',
+    label: '出勤情報',
+    labelEn: 'schedule',
   },
   {
     id: 'navReserve',
@@ -26,14 +31,6 @@ export const navMenu = [
     label: 'ネット予約',
     labelEn: 'reservation',
     target: true,
-  },
-
-  {
-    id: 'navSchedule',
-    // href: '/dandy/schedule/',
-    href: '#',
-    label: '出勤情報',
-    labelEn: 'schedule',
   },
 
   {

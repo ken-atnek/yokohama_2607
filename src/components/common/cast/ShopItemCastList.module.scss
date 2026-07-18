@@ -1,0 +1,331 @@
+@use "../../../styles/foundation/" as *;
+
+/* =======================================
+ * 横浜ダンディーグループ ShopItemCastList スタイル
+ * URL: /src/components/common/cast/ShopItemCastList.module.scss
+ * Referenced in: /src/components/common/cast/ShopItemCastList.tsx
+ * Created: 2026-07-17
+ * Last updated: 2026-07-17
+ * ======================================= */
+
+/* =================================
+ * キャストボックス
+ * ------------------------------ */
+.boxCast {
+    position: relative;
+    font-size: inherit;
+    display: grid;
+    background-color: #fff;
+    box-shadow: 1px 1px 5px rgba(#6a6a6a, 0.2);
+    color: $font-black;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    container-type: inline-size;
+    padding-bottom: 1em;
+    .wrapTodayTime {
+        font-size: inherit;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        min-height: max(7cqw, 3rem);
+        h3 {
+            display: grid;
+            place-content: center;
+            font-size: max(3cqw, 1.4rem);
+            padding-inline: 0.8em;
+            background-color: rgb(var(--shop-color), 1);
+            color: $base-white;
+            font-weight: 500;
+            @include sp {
+                font-size: 2.8vw;
+            }
+        }
+        .itemTimeList {
+            font-size: inherit;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            gap: 0 3cqw;
+            background-color: rgb(var(--shop-color), 0.1);
+            border-top: 1px solid rgb(var(--shop-color), 1);
+            border-right: 1px solid rgb(var(--shop-color), 1);
+            .itemTime {
+                font-size: inherit;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                span {
+                    display: flex;
+                    font-size: max(4cqw, 1.8rem);
+                    @include futura-cyrillic-book;
+                    align-items: center;
+                    letter-spacing: 0.12em;
+                    @include sp {
+                        font-size: fz(15);
+                        letter-spacing: 0.08em;
+                    }
+                    &:nth-of-type(2) {
+                        &::before {
+                            display: inline-block;
+                            content: "";
+                            width: 0.4em;
+                            aspect-ratio: 0.85;
+                            background-color: $font-black;
+                            margin-inline: 0.56em;
+                            clip-path: polygon(0 0, 100% 50%, 0 100%);
+                        }
+                    }
+                }
+            }
+            &:has(.itemTime + .itemTime) {
+                span {
+                    font-size: max(3.6cqw, 1.5rem);
+                    letter-spacing: 0.04em;
+                    &:nth-of-type(2) {
+                        &::before {
+                            margin-inline: 0.3em;
+                        }
+                    }
+                }
+            }
+        }
+        .scheduleStatus {
+            font-size: max(3cqw, 1.6rem);
+            letter-spacing: 0.04em;
+            background-color: rgb(var(--shop-color), 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid rgb(var(--shop-color), 1);
+            border-right: 1px solid rgb(var(--shop-color), 1);
+            flex: 1;
+            border: solid 1px #ff0000;
+        }
+    }
+    .cardLink {
+        position: relative;
+        font-size: inherit;
+        display: flex;
+        flex-direction: column;
+        .wrapBadge {
+            position: absolute;
+            right: 1cqw;
+            top: 4cqw;
+            display: grid;
+            grid-auto-flow: row;
+            font-size: inherit;
+            gap: 5px 0;
+            z-index: 1;
+            @include sp {
+                top: 2vw;
+                gap: 1vw 0;
+            }
+            .badgeImage {
+                width: max(5rem, 9cqw);
+                @include sp {
+                    width: 4.8em;
+                }
+            }
+        }
+        .itemRanking {
+            font-size: inherit;
+            width: max(8rem, 25cqw);
+            position: absolute;
+            left: -1cqw;
+            bottom: -1cqw;
+            @include sp {
+                width: 12vw;
+            }
+            img {
+                width: 100%;
+            }
+        }
+        .wrapPhoto {
+            @include cast-list-box-image;
+            &.hasNewBadge {
+                border: solid 6px #03c275;
+            }
+            &.hasNewKirakira {
+                .photoFrame {
+                    img {
+                        clip-path: inset(max(1rem, 3cqw));
+                    }
+                }
+            }
+            &:not(.grade0, .grade8) {
+                .photoFrame {
+                    img {
+                        clip-path: inset(max(1rem, 3cqw));
+                    }
+                }
+            }
+            .gradeLabel {
+                font-size: min(10cqw, 3.6rem);
+            }
+        }
+    }
+    .castProfile {
+        font-size: inherit;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 0.5em;
+        gap: 0.2em 0;
+        .wrapName {
+            font-size: inherit;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .castName {
+                font-size: max(4.4cqw, 2rem);
+                letter-spacing: 0.12em;
+            }
+            .age {
+                @include futura-cyrillic-book;
+                font-size: max(4.4cqw, 2rem);
+                &::before {
+                    font-size: 0.8em;
+                    content: "Age.";
+                }
+            }
+        }
+        .castSize {
+            font-size: inherit;
+            display: flex;
+            align-items: center;
+            gap: 0 0.1em;
+            span {
+                @include futura-cyrillic-book;
+                font-size: max(4cqw, 1.8rem);
+                @include sp {
+                    font-size: fz(18);
+                }
+                &.tall {
+                    &::before {
+                        content: "T.";
+                    }
+                }
+                &.bust {
+                    &::before {
+                        content: "B.";
+                    }
+                    i {
+                        font-size: inherit;
+                        text-transform: uppercase;
+                        margin-left: 0.05em;
+                        &::before,
+                        &::after {
+                            display: inline-block;
+                            translate: 0 -0.08em;
+                        }
+                        &::before {
+                            content: "[";
+                            margin-right: 0.1em;
+                        }
+                        &::after {
+                            content: "]";
+                            margin-left: 0.05em;
+                        }
+                    }
+                }
+                &.west {
+                    &::before {
+                        content: "W.";
+                    }
+                }
+                &.hip {
+                    &::before {
+                        content: "H.";
+                    }
+                }
+            }
+        }
+    }
+    .serviceList {
+        font-size: inherit;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        padding-inline: 0.5em;
+        gap: 0 0.3em;
+        li {
+            font-size: max(2.6cqw, 1.6rem);
+            text-align: center;
+            padding-block: 0.4em;
+            letter-spacing: 0.08em;
+            &.isActive {
+                background-color: #8ee786;
+                color: #2b2b2b;
+            }
+            &.isInactive {
+                background-color: #d2d2d2;
+                color: $base-white;
+            }
+            @include sp {
+                font-size: fz(12);
+                padding-block: 0.2em;
+            }
+            &:nth-of-type(1) {
+                border-radius: 100vmax 0 0 100vmax;
+            }
+            &:nth-of-type(2) {
+                border-radius: 0 100vmax 100vmax 0;
+            }
+        }
+    }
+}
+/* =================================
+ * スケジュール用キャストボックス
+ * ------------------------------ */
+.isSchedule {
+    padding-bottom: 0.5em;
+    .cardLink {
+        .wrapBadge {
+            right: 2cqw;
+            .badgeImage {
+                width: 16cqw;
+            }
+        }
+        .wrapPhoto {
+            .gradeLabel {
+                font-size: fz(20);
+            }
+            &.grade8 {
+                .photoFrame {
+                    background: unset;
+                    padding: 0;
+                    &::before {
+                        display: none;
+                    }
+                    &::after {
+                        width: 60%;
+                        left: unset;
+                        translate: unset;
+                        right: 0;
+                    }
+                    img {
+                        clip-path: inset(0);
+                    }
+                }
+            }
+        }
+    }
+    .castProfile {
+        .wrapName {
+            .castName {
+                font-size: fz(18);
+                letter-spacing: 0.04em;
+            }
+        }
+        .castSize {
+            span {
+                font-size: max(7cqw, 1.6rem);
+            }
+        }
+    }
+    .serviceList {
+        li {
+            font-size: fz(14);
+            padding-block: 0.2em;
+        }
+    }
+}

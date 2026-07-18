@@ -10,30 +10,7 @@
 /* stylelint-disable no-descending-specificity */
 /* stylelint-disable keyframes-name-pattern */
 /* stylelint-disable custom-property-pattern */
-// @mixin svg-icon-badge-new($color) {
-//     background-image: none;
-// }
-// @mixin svg-icon-badge-trial($color) {
-//     background-image: none;
-// }
-// @mixin svg-icon-badge-sport($color) {
-//     background-image: none;
-// }
-// @mixin svg-icon-diamond($color) {
-//     background-image: none;
-// }
-// @mixin svg-icon-camera($color) {
-//     background-image: none;
-// }
-// @mixin svg-text-q($color) {
-//     background-image: none;
-// }
-// @mixin svg-text-a($color) {
-//     background-image: none;
-// }
-// @mixin svg-icon-grade($color) {
-//     background-image: none;
-// }
+
 .containerContents {
     display: flex;
     flex-direction: column;
@@ -50,7 +27,7 @@
 .blockDetails {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    max-width: 1167px;
+    max-width: $article-max-width;
     width: 100%;
     padding-top: 3rem;
     padding-bottom: 5rem;
@@ -326,6 +303,13 @@
                 color: $base-white;
                 padding-bottom: 1em;
                 padding-top: 4em;
+                &::before {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    translate: -50%;
+                    top: 1.5em;
+                }
                 h2 {
                     font-weight: 500;
                     font-size: fz(32);
@@ -355,9 +339,19 @@
             }
             .linkReservation {
                 background-color: #ff5781;
+                &::before {
+                    @include svg-icon-pc("fff");
+                    aspect-ratio: 33/28;
+                    width: 2.1em;
+                }
             }
             .linkPhotoBlog {
                 background-color: #ffa047;
+                &::before {
+                    @include svg-icon-camera("fff");
+                    aspect-ratio: 32/28;
+                    width: 2em;
+                }
             }
         }
         .linkMailNotice {
@@ -485,7 +479,7 @@
         grid-template-columns: repeat(7, 1fr);
         font-size: inherit;
         width: 100%;
-        max-width: 1166px;
+        max-width: $article-max-width;
         gap: 0 0.3em;
         margin-top: 2em;
         @include sp {
@@ -524,8 +518,8 @@
                 }
                 .itemDate {
                     @include futura-cyrillic-book;
-                    font-size: fz(40);
-                    letter-spacing: 0.04em;
+                    font-size: fz(36);
+                    letter-spacing: 0.01em;
                     @include sp {
                         font-size: fz(36);
                     }
@@ -533,7 +527,6 @@
                 .itemWeek {
                     font-size: fz(14);
                     letter-spacing: 0.2em;
-                    border-bottom: 1px solid #070707;
                     width: 100%;
                     text-align: center;
                     padding-bottom: 0.5em;
@@ -543,7 +536,7 @@
                     }
                 }
                 &.saturday {
-                    color: #3039ee;
+                    color: #616fd5;
                 }
                 &.sunday {
                     color: #ea567b;
@@ -554,42 +547,54 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                justify-content: center;
                 padding: 0.5em 0.5em 0.8em;
-                gap: 1em 0;
+                gap: 0.5em 0;
                 @include sp {
                     padding: unset;
                     flex-direction: row;
                     justify-content: center;
                     gap: 0 8vw;
                 }
-                span {
-                    position: relative;
-                    @include futura-cyrillic-book;
-                    font-size: fz(24);
-                    letter-spacing: 0.1em;
+                .scheduleSlot {
+                    font-size: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.3em 0;
                     @include sp {
-                        font-size: fz(20);
+                        flex-direction: row;
+                        gap: 0 8vw;
                     }
-                    &:nth-of-type(2) {
-                        &::before {
-                            content: "";
-                            position: absolute;
-                            left: 50%;
-                            translate: -50%;
-                            width: 14px;
-                            height: 6px;
-                            background-color: #070707;
-                            bottom: calc(100% + 0.2em);
-                            clip-path: polygon(0 0, 100% 0, 50% 100%);
-                            @include sp {
-                                left: unset;
-                                bottom: unset;
-                                top: 50%;
-                                width: 8px;
-                                height: 10px;
-                                translate: 0 -50%;
-                                right: calc(100% + 3vw);
-                                clip-path: polygon(0 0, 100% 50%, 0 100%);
+                    span {
+                        position: relative;
+                        @include futura-cyrillic-book;
+                        font-size: fz(20);
+                        letter-spacing: 0.1em;
+                        @include sp {
+                            font-size: fz(20);
+                        }
+                        &:nth-of-type(2) {
+                            &::before {
+                                content: "";
+                                position: absolute;
+                                left: 50%;
+                                translate: -50%;
+                                width: 10px;
+                                height: 6px;
+                                background-color: #070707;
+                                bottom: calc(100% - 0.1em);
+                                clip-path: polygon(0 0, 100% 0, 50% 100%);
+                                @include sp {
+                                    left: unset;
+                                    bottom: unset;
+                                    top: 50%;
+                                    width: 8px;
+                                    height: 10px;
+                                    translate: 0 -50%;
+                                    right: calc(100% + 3vw);
+                                    clip-path: polygon(0 0, 100% 50%, 0 100%);
+                                }
                             }
                         }
                     }
@@ -606,6 +611,17 @@
                 }
             }
         }
+    }
+    .scheduleComment {
+        width: 100%;
+        max-width: $article-max-width;
+        margin-top: 2em;
+        padding: 1.4em 1.6em;
+        background-color: #f8f8f8;
+        font-size: fz(16);
+        line-height: 1.8;
+        letter-spacing: 0.04em;
+        text-align: center;
     }
     .boxBottom {
         position: relative;

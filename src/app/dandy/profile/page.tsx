@@ -1,7 +1,7 @@
 /* =======================================
  * 横浜ダンディー キャスト詳細ページ
  * URL: /src/app/dandy/profile/page.tsx
- * Referenced in: /src/components/common/ShopItemCastList.tsx
+ * Referenced in: /src/components/common/cast/ShopItemCastList.tsx
  * Created: 2025-09-06
  * Last updated: 2026-07-16
  * ======================================= */

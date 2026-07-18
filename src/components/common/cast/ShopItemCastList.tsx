@@ -1,52 +1,99 @@
 /* =======================================
  * キャスト一覧 コンポーネントアイテム
- * URL:src/components/Shop/ItemCastList.tsx
- * Referenced in: : src/app/hot/cast/page.tsx
+ * URL: /src/components/common/cast/ShopItemCastList.tsx
+ * Referenced in: /src/components/common/cast/ShopCastList.tsx
  * Created: 2025-09-03
- * Last updated: 2026-07-15
+ * Last updated: 2026-07-17
  * ======================================= */
 
-import styles from './ShopCastList.module.scss';
+import styles from './ShopItemCastList.module.scss';
 import clsx from 'clsx';
 import type { CastDetail } from '@/types/CastDetails';
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CastGradeMap } from '@/data/CastGradeData';
 import { usePathname } from 'next/navigation';
 import { getShopFromPath } from '@/lib/shopUtils';
-import CastBadgeIcons from '@/components/common/CastBadgeIcons';
+import CastBadgeIcons from '@/components/common/cast/CastBadgeIcons';
+import ScheduleTimeBlock from '@/components/common/cast/ScheduleTimeBlock';
 
 type Props = {
   cast: CastDetail;
+  linkType?: string;
+  topSlot?: ReactNode;
+  showDefaultScheduleInfo?: boolean;
+  showServiceList?: boolean;
+  variant?: 'default' | 'schedule';
 };
 
-const ItemCastList = ({ cast }: Props) => {
+const getValidTimeSlots = (cast: CastDetail) => {
+  if (Array.isArray(cast.timeSlots) && cast.timeSlots.length > 0) {
+    return cast.timeSlots.filter(
+      (slot) =>
+        typeof slot?.startTime === 'string' &&
+        slot.startTime !== '' &&
+        typeof slot?.endTime === 'string' &&
+        slot.endTime !== ''
+    );
+  }
+
+  if (
+    typeof cast.startTime === 'string' &&
+    cast.startTime !== '' &&
+    typeof cast.endTime === 'string' &&
+    cast.endTime !== ''
+  ) {
+    return [{ startTime: cast.startTime, endTime: cast.endTime }];
+  }
+
+  return [];
+};
+
+const ItemCastList = ({
+  cast,
+  linkType = 'castlist',
+  topSlot,
+  showDefaultScheduleInfo = true,
+  showServiceList = true,
+  variant = 'default',
+}: Props) => {
   const grade = CastGradeMap[cast.gradeId];
   const ageLabel = cast.ageText || (cast.age !== null ? String(cast.age) : '');
   const hasNewBadge = cast.badgeType === 'new';
   const hasNewKirakiraBadge = cast.badgeType === 'new_kirakira';
   const pathname = usePathname();
   const shop = getShopFromPath(pathname);
+  const timeSlots = getValidTimeSlots(cast);
   return (
-    <li key={cast.castId} className={styles.boxCast}>
-      <div className={styles.wrapTodayTime}>
-        {(cast.startTime && cast.endTime) || cast.scheduleStatus ? (
-          <h3>本日出勤</h3>
-        ) : null}
+    <li
+      className={clsx(
+        styles.boxCast,
+        variant === 'schedule' && styles.isSchedule
+      )}
+    >
+      {topSlot}
+      {showDefaultScheduleInfo ? (
+        <div className={styles.wrapTodayTime}>
+          {timeSlots.length > 0 || cast.scheduleStatus ? (
+            <h3>本日出勤</h3>
+          ) : null}
 
-        {cast.startTime && cast.endTime && (
-          <div className={styles.itemTime}>
-            <span>{cast.startTime}</span>
-            <span>{cast.endTime}</span>
-          </div>
-        )}
-
-        {cast.scheduleStatus && (
-          <p className={styles.scheduleStatus}>{cast.scheduleStatus}</p>
-        )}
-      </div>
+          {(timeSlots.length > 0 || cast.scheduleStatus) && (
+            <ScheduleTimeBlock
+              timeSlots={timeSlots}
+              scheduleStatus={cast.scheduleStatus}
+              slotListClassName={styles.itemTimeList}
+              slotItemClassName={styles.itemTime}
+              statusClassName={styles.scheduleStatus}
+              timeTag="span"
+              slotKeyPrefix={cast.castId}
+            />
+          )}
+        </div>
+      ) : null}
       <Link
-        href={`/${shop}/profile/?id=${cast.castId}&type=castlist`}
+        href={`/${shop}/profile/?id=${cast.castId}&type=${linkType}`}
         prefetch={false}
         className={styles.cardLink}
       >
@@ -107,22 +154,24 @@ const ItemCastList = ({ cast }: Props) => {
           <span className={styles.hip}>{cast.hip}</span>
         </div>
       </div>
-      <ul className={styles.serviceList}>
-        <li
-          className={clsx(
-            cast.serviceHealth ? styles.isActive : styles.isInactive
-          )}
-        >
-          ヘルス
-        </li>
-        <li
-          className={clsx(
-            cast.serviceMat ? styles.isActive : styles.isInactive
-          )}
-        >
-          マット
-        </li>
-      </ul>
+      {showServiceList ? (
+        <ul className={styles.serviceList}>
+          <li
+            className={clsx(
+              cast.serviceHealth ? styles.isActive : styles.isInactive
+            )}
+          >
+            ヘルス
+          </li>
+          <li
+            className={clsx(
+              cast.serviceMat ? styles.isActive : styles.isInactive
+            )}
+          >
+            マット
+          </li>
+        </ul>
+      ) : null}
     </li>
   );
 };
