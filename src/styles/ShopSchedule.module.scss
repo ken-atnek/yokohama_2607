@@ -1,0 +1,559 @@
+@use "../styles/foundation" as *;
+
+/* =================================
+ * 店舗切替部分
+ * ------------------------------ */
+.containerHead {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 1em;
+    gap: 0 1em;
+    z-index: 10;
+    background-color: $base-white;
+    padding-inline: 2vw;
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        height: 100%;
+        width: 100vw;
+        translate: -50%;
+        left: 50%;
+        top: 0;
+    }
+    &::before {
+        background-color: $base-white;
+    }
+    &::after {
+        background-color: rgb(var(--shop-color), 0.3);
+    }
+    @include sp {
+        padding-top: unset;
+        justify-content: flex-end;
+    }
+    .linkByDay,
+    .linkByPeriod {
+        display: flex;
+        justify-content: center;
+        background-color: #00a173;
+        font-size: fz(16);
+        padding: 0.5em 0;
+        font-weight: 500;
+        border-radius: 0.3em;
+        color: $base-white;
+        letter-spacing: 0.04em;
+        z-index: 6;
+        width: 14em;
+        position: absolute;
+        right: 2vw;
+        bottom: 3em;
+    }
+    .linkByPeriod {
+        @include sp {
+            display: none;
+        }
+    }
+    .boxPeriod {
+        font-size: inherit;
+        display: flex;
+        flex: 1;
+        z-index: 6;
+        width: max-content;
+        justify-content: center;
+        time {
+            @include futura-cyrillic-book;
+            font-size: min(2.4vw, 3rem);
+            span {
+                font-size: 0.6em;
+                &::before {
+                    content: "（";
+                }
+                &::after {
+                    content: "）";
+                }
+            }
+            &:first-of-type {
+                &::after {
+                    content: "~";
+                    margin-inline: 0.2em;
+                }
+            }
+        }
+        p {
+            font-size: min(1.2vw, 1.8rem);
+            display: inline-block;
+            align-self: flex-end;
+            padding-bottom: 0.1em;
+            margin-left: 0.2em;
+        }
+    }
+    &.dandy {
+        --shop-color: #{$dandy-color-rgb};
+    }
+}
+
+/* =================================
+ * 	店舗 スケジュール
+ * ------------------------------ */
+
+.containerContents {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 3em;
+    z-index: 1;
+    width: 100%;
+    &.dandy {
+        --shop-color: #{$dandy-color-rgb};
+    }
+    @include sp {
+        padding: 0 0 6vw;
+    }
+}
+
+/* =================================
+ * 週間出勤一覧
+ * ------------------------------ */
+.blockPeriod {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: $article-max-width;
+    box-shadow: 0.5rem -3rem 3rem rgba(1, 1, 1, 0.1);
+    align-self: center;
+    padding-inline: 2vw;
+    background-color: #fff;
+    padding-top: 3rem;
+    .scheduleList {
+        position: relative;
+        width: 100%;
+        display: grid;
+        font-size: inherit;
+        border-top: 1px solid;
+        border-left: 1px solid;
+        border-color: rgb(var(--shop-color), 1);
+        grid-template-columns: auto repeat(7, minmax(0, 1fr));
+        container-type: inline-size;
+        li {
+            position: relative;
+            grid-column: span 8;
+            display: grid;
+            grid-template-columns: subgrid;
+            font-size: inherit;
+            border-bottom: 1px solid;
+            border-color: rgb(var(--shop-color), 1);
+            width: 100%;
+            & > div {
+                min-width: 0;
+                padding: 0.5em;
+                font-size: inherit;
+                border-right: 1px solid;
+                border-color: rgb(var(--shop-color), 1);
+            }
+            &.rowHeader {
+                background-color: rgb(var(--shop-color), 0.8);
+                color: $base-white;
+                display: none;
+                div {
+                    display: grid;
+                    place-content: center;
+                }
+                .cellCastHeader {
+                    font-size: fz(18);
+                }
+                .cellDate {
+                    time {
+                        @include futura-cyrillic-book;
+                        font-size: max(1.2rem, 1.6cqw);
+                        span {
+                            font-size: 0.7em;
+                            font-weight: 500;
+                            &::before {
+                                content: "（";
+                            }
+                            &::after {
+                                content: "）";
+                            }
+                        }
+                    }
+                }
+            }
+            .boxCastInfo {
+                position: relative;
+                display: grid;
+                grid-template-columns: auto 1fr;
+                font-size: inherit;
+                gap: 0 0.5em;
+                .wrapImage {
+                    position: relative;
+                    aspect-ratio: 1;
+                    width: 9rem;
+                    img {
+                        object-fit: cover;
+                        object-position: center top;
+                    }
+                }
+                .castProfile {
+                    font-size: inherit;
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-end;
+                    margin-bottom: 0.3em;
+                    .wrapName {
+                        font-size: inherit;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        .castName {
+                            font-size: max(1.3cqw, 1.4rem);
+                            font-weight: 600;
+                            letter-spacing: 0.04em;
+                        }
+                        .age {
+                            @include futura-cyrillic-book;
+                            font-size: max(1.4cqw, 1.4rem);
+                            &::before {
+                                font-size: 0.8em;
+                                content: "Age.";
+                            }
+                        }
+                    }
+                    .castSize {
+                        font-size: inherit;
+                        display: flex;
+                        align-items: center;
+                        gap: 0 0.2em;
+                        margin-top: 0.2em;
+                        span {
+                            @include futura-cyrillic-book;
+                            font-size: max(1.2cqw, 1.4rem);
+                            &.tall {
+                                &::before {
+                                    content: "T.";
+                                }
+                            }
+                            &.bust {
+                                &::before {
+                                    content: "B.";
+                                }
+                                i {
+                                    font-size: inherit;
+                                    text-transform: uppercase;
+                                    margin-left: 0.05em;
+                                    &::before,
+                                    &::after {
+                                        display: inline-block;
+                                        translate: 0 -0.08em;
+                                    }
+                                    &::before {
+                                        content: "[";
+                                        margin-right: 0.1em;
+                                    }
+                                    &::after {
+                                        content: "]";
+                                        margin-left: 0.05em;
+                                    }
+                                }
+                            }
+                            &.west {
+                                &::before {
+                                    content: "W.";
+                                }
+                            }
+                            &.hip {
+                                &::before {
+                                    content: "H.";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .wrapDate {
+                font-size: inherit;
+                place-content: center;
+                display: flex;
+                align-items: center;
+                flex-direction: column;
+                .scheduleTimeSlots {
+                    display: grid;
+                    gap: 0.3em 0;
+                    font-size: inherit;
+                    .scheduleTimeSlot {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        font-size: inherit;
+                        time {
+                            @include futura-cyrillic-book;
+                            font-size: max(1.4cqw, 1.4rem);
+                            &:nth-of-type(2) {
+                                &::before {
+                                    content: "~";
+                                    margin-inline: 0.1em;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .scheduleStatus {
+                    font-size: max(1.2cqw, 1.2rem);
+                    letter-spacing: 0.04em;
+                }
+            }
+            &:not(:first-of-type) {
+                &:nth-of-type(2n - 1) {
+                    background-color: rgb(var(--shop-color), 0.1);
+                }
+            }
+        }
+
+        // 3日表示スタイル
+        &--3 {
+            grid-template-columns: auto 1fr 1fr 1fr;
+            li {
+                grid-column: span 4;
+            }
+        }
+
+        // 5日表示スタイル
+        &--5 {
+            grid-template-columns: auto 1fr 1fr 1fr 1fr 1fr;
+            li {
+                grid-column: span 6;
+            }
+        }
+    }
+}
+
+/* =================================
+ * 日別表示
+ * ------------------------------ */
+.blockByDay {
+    display: flex;
+    flex-direction: column;
+    padding-inline: 2vw;
+    align-items: center;
+    nav {
+        width: 100%;
+        max-width: $article-max-width;
+        z-index: 2;
+        position: relative;
+        display: grid;
+        font-size: inherit;
+        grid-template-columns: repeat(7, 1fr);
+        padding-block: 5px;
+        &::before,
+        &::after {
+            content: "";
+            position: absolute;
+            width: 100vw;
+            height: 100%;
+            left: 50%;
+            translate: -50%;
+            top: 0;
+        }
+        &::before {
+            background-color: rgb(var(--shop-color), 1);
+            filter: brightness(40%);
+        }
+        &::after {
+            background-image: linear-gradient(
+                to top,
+                rgb(var(--shop-color), 0.4),
+                rgb(var(--shop-color), 0.8) 70%,
+                rgb(var(--shop-color), 1) 95%,
+                rgb(var(--shop-color), 0.8)
+            );
+        }
+        div {
+            font-size: inherit;
+            z-index: +1;
+            position: relative;
+            padding-inline: 5px;
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                height: 60%;
+                width: 1px;
+                translate: 0 -50%;
+            }
+            &::after {
+                right: 0;
+                background-color: $base-white;
+            }
+            button {
+                position: relative;
+                font-size: FZ(20);
+                color: $base-white;
+                @include futura-cyrillic-book;
+                align-items: center;
+                gap: 0 0.2em;
+                padding-block: 0.7em;
+                width: 100%;
+                display: flex;
+                @include sp {
+                    flex-direction: column;
+                    align-items: center;
+                    font-size: FZ(16);
+                }
+                span {
+                    font-size: 0.8em;
+                    font-weight: 500;
+                    display: inline-block;
+                    translate: 0 0.08em;
+                }
+            }
+            &:first-of-type {
+                &::before {
+                    left: 0;
+                    background-color: $base-white;
+                }
+            }
+            &.isActive {
+                button {
+                    background-color: $base-white;
+                    color: rgb(var(--shop-color), 1);
+                    @include futura-cyrillic-demi;
+                    border-radius: 3px;
+                }
+            }
+        }
+    }
+    .blockCastList {
+        width: 100%;
+        padding-inline: 2vw;
+        max-width: $article-max-width;
+        box-shadow: 0.5rem -3rem 3rem rgba(1, 1, 1, 0.1);
+        font-size: inherit;
+
+        .castList {
+            width: 100%;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding-top: 5rem;
+            font-size: inherit;
+            gap: 2rem 1rem;
+            background-color: #fff;
+            // border: solid 1px #0000ff;
+            @media (max-width: 1100px) {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            @include sp {
+                grid-template-columns: unset;
+                padding: 4vw;
+                gap: 0;
+            }
+            li {
+                .realTImeDetail {
+                    position: relative;
+                    font-size: fz(14);
+                    color: $base-white;
+                    text-align: center;
+                    letter-spacing: 0.04em;
+                    // min-height: 2em;
+                    height: 2em;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: rgb(var(--shop-color), 1);
+                    @include sp {
+                        order: 1;
+                        font-size: FZ(16);
+                        padding-block: 2vw;
+                    }
+                    &.status6 {
+                        background-color: #eaeaea;
+                        color: rgb(var(--shop-color), 0.8);
+                        &::before {
+                            content: "";
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 0.5rem;
+                            height: 100%;
+                            background-color: rgb(var(--shop-color), 1);
+                        }
+                    }
+                }
+                .wrapTodayTime {
+                    font-size: inherit;
+                    display: flex;
+                    justify-content: center;
+                    flex-direction: column;
+                    padding-block: 0.3em;
+                    background-color: rgb(var(--shop-color), 0.1);
+                    border-top: 2px solid rgb(var(--shop-color), 1);
+                    @include sp {
+                        border-bottom: 2px solid rgb(var(--shop-color), 1);
+                        padding-block: unset;
+                        min-height: 2.4em;
+                        align-items: center;
+                    }
+                    .scheduleTimeSlot {
+                        display: flex;
+                        font-size: inherit;
+                        justify-content: center;
+                        gap: 0 3cqw;
+                        .innerScheduleTimeSlot {
+                            display: flex;
+                            justify-content: center;
+                            font-size: inherit;
+                            span {
+                                display: flex;
+                                font-size: fz(16);
+                                @include futura-cyrillic-book;
+                                align-items: center;
+                                letter-spacing: 0.12em;
+                                @include sp {
+                                    font-size: FZ(18);
+                                }
+                                &:nth-of-type(2) {
+                                    &::before {
+                                        display: inline-block;
+                                        content: "";
+                                        width: 0.4em;
+                                        aspect-ratio: 0.85;
+                                        background-color: $font-black;
+                                        margin-inline: 0.56em;
+                                        clip-path: polygon(
+                                            0 0,
+                                            100% 50%,
+                                            0 100%
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    &:has(.innerScheduleTimeSlot + .innerScheduleTimeSlot) {
+                        span {
+                            font-size: max(3.6cqw, 1.5rem);
+                            letter-spacing: 0.04em;
+                            &:nth-of-type(2) {
+                                &::before {
+                                    margin-inline: 0.3em;
+                                }
+                            }
+                        }
+                    }
+                    .scheduleStatus {
+                        font-size: fz(14);
+                        letter-spacing: 0.04em;
+                        text-align: center;
+                        @include sp {
+                            font-size: FZ(16);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

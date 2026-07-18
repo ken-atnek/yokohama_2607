@@ -1,0 +1,422 @@
+@use "./foundation" as *;
+/* =======================================
+ * 横浜ダンディーグループ 店舗リアルタイムページ スタイル
+ * URL: /src/styles/ShopRealtime.module.scss
+ * Referenced in: /src/components/common/realtime/ContainerRealTime.tsx
+ * Created: 2025-08-29
+ * Last updated: 2026-07-17
+ * ======================================= */
+.containerRealtime {
+    position: relative;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-inline: 2vw;
+    z-index: 1;
+
+    @include sp {
+        padding: 14vw 0 6vw;
+        gap: 0;
+    }
+    .blockRialTimeDetails {
+        width: 100%;
+        background-color: $pure-white;
+        padding-inline: 2vw;
+        padding-top: 3rem;
+        padding-bottom: 5rem;
+        font-size: inherit;
+        box-shadow: 0.5rem -3rem 3rem rgba(1, 1, 1, 0.1);
+        display: flex;
+        max-width: $article-max-width;
+        flex-direction: column;
+        gap: 3rem 0;
+        .boxUpDateTime {
+            align-self: center;
+            font-size: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8em 0;
+            @include sp {
+                margin-bottom: 4vw;
+            }
+            .itemTime {
+                font-size: inherit;
+                display: flex;
+                border: 1px solid #4d4d4d;
+                background-color: #4d4d4d;
+                span {
+                    color: $base-white;
+                    display: grid;
+                    place-content: center;
+                    padding-inline: 0.5em;
+                    font-size: fz(14);
+                }
+                time {
+                    background-color: $base-white;
+                    @include futura-cyrillic-book;
+                    font-size: fz(36);
+                    padding: 0.1em 0.3em;
+                }
+            }
+            p {
+                font-size: fz(12);
+                letter-spacing: 0.04em;
+            }
+        }
+
+        .statusGroup {
+            display: flex;
+            flex-direction: column;
+            h3 {
+                color: $base-white;
+                text-align: center;
+                font-size: fz(24);
+                font-weight: 500;
+                padding-block: 0.4em;
+                letter-spacing: 0.12em;
+                border-top-left-radius: 1rem;
+                border-top-right-radius: 1rem;
+                background-image: linear-gradient(
+                    rgb(var(--status-color)),
+                    rgb(var(--status-color)) 40%,
+                    rgb(var(--status-color))
+                );
+                @include sp {
+                    border-radius: unset;
+                    font-size: fz(20);
+                    padding-block: 4vw;
+                }
+            }
+            .castList {
+                position: relative;
+                font-size: 1em;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                background-color: #ececec;
+                padding: 1em 1em 2em;
+                gap: 1em;
+                border-bottom-left-radius: 1rem;
+                border-bottom-right-radius: 1rem;
+                .itemCast {
+                    position: relative;
+                    font-size: inherit;
+                    background-color: $pure-white;
+                    padding: 1.6em 0.5em;
+                    border-radius: 0.5em;
+                    container-type: inline-size;
+                    width: 100%;
+                    box-shadow: 0.3rem 0.3rem 1rem -0.5rem #b4b4b4;
+                    display: inline-grid;
+                    grid-template-rows: subgrid;
+                    grid-row: span 1;
+                    &.grade2 {
+                        .innerItemCast {
+                            .boxImage {
+                                .wrapPhoto {
+                                    .gradeLabel {
+                                        color: $font-black;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .innerItemCast {
+                        position: relative;
+                        display: grid;
+                        font-size: inherit;
+                        grid-template-columns: auto 1fr;
+                        background-color: $pure-white;
+                        gap: 0.5em;
+                        border-radius: 0.5em;
+                        padding: 0.5em;
+                        .boxImage {
+                            position: relative;
+                            font-size: inherit;
+                            width: 35cqw;
+                            .wrapPhoto {
+                                aspect-ratio: 1;
+                                img {
+                                    object-fit: cover;
+                                    object-position: center top;
+                                }
+                                .gradeLabel {
+                                    position: absolute;
+                                    right: 0;
+                                    bottom: 0;
+                                    z-index: 1;
+                                    min-width: 6em;
+                                    padding: 0.2em 0.7em;
+                                    color: $base-white;
+                                    font-size: max(2.6cqw, 1.5rem);
+                                    font-weight: 700;
+                                    text-align: right;
+                                    @include futura-condensed-medium;
+                                    text-transform: uppercase;
+                                    background-image: repeating-linear-gradient(
+                                        to left,
+                                        rgb(var(--grade-color), 1),
+                                        rgb(var(--grade-color), 1) 42%,
+                                        rgb(var(--grade-color), 0)
+                                    );
+                                }
+                            }
+                        }
+                        .boxDetails {
+                            position: relative;
+                            font-size: inherit;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
+                            .realTimeDetail {
+                                display: flex;
+                                justify-content: center;
+                                border: 1px solid rgb(var(--status-color), 1);
+                                font-size: fz(14);
+                                font-weight: 600;
+                                letter-spacing: 0.04em;
+                                padding: 0.3em 0;
+                                border-radius: 0.3em;
+                                color: rgb(var(--status-color), 1);
+                                @include sp {
+                                    font-size: fz(16);
+                                    padding: 0.5em 0;
+                                }
+                            }
+                            .castProfile {
+                                font-size: inherit;
+                                flex: 1;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: flex-end;
+                                margin-bottom: 0.3em;
+                                .wrapName {
+                                    font-size: inherit;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: space-between;
+                                    .castName {
+                                        font-size: max(5cqw, 1.6rem);
+                                        font-weight: 600;
+                                        letter-spacing: 0.04em;
+                                        @include sp {
+                                            font-size: fz(20);
+                                        }
+                                    }
+                                    .age {
+                                        @include futura-cyrillic-book;
+                                        font-size: max(6cqw, 1.8rem);
+                                        @include sp {
+                                            font-size: fz(20);
+                                        }
+                                        &::before {
+                                            font-size: 0.8em;
+                                            content: "Age.";
+                                        }
+                                    }
+                                }
+                                .castSize {
+                                    font-size: inherit;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0 0.3em;
+                                    margin-top: 0.2em;
+                                    span {
+                                        @include futura-cyrillic-book;
+                                        font-size: max(4cqw, 1.4rem);
+                                        @include sp {
+                                            font-size: fz(17);
+                                        }
+                                        &.tall {
+                                            &::before {
+                                                content: "T.";
+                                            }
+                                        }
+                                        &.bust {
+                                            &::before {
+                                                content: "B.";
+                                            }
+                                            i {
+                                                font-size: inherit;
+                                                text-transform: uppercase;
+                                                margin-left: 0.05em;
+                                                &::before,
+                                                &::after {
+                                                    display: inline-block;
+                                                    translate: 0 -0.08em;
+                                                }
+                                                &::before {
+                                                    content: "[";
+                                                    margin-right: 0.1em;
+                                                }
+                                                &::after {
+                                                    content: "]";
+                                                    margin-left: 0.05em;
+                                                }
+                                            }
+                                        }
+                                        &.west {
+                                            &::before {
+                                                content: "W.";
+                                            }
+                                        }
+                                        &.hip {
+                                            &::before {
+                                                content: "H.";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .wrapTodayTime {
+                                display: flex;
+                                background-color: #000;
+                                color: $base-white;
+                                font-size: inherit;
+                                h4 {
+                                    font-size: 1.1rem;
+                                    background-color: #f06;
+                                    padding-inline: 0.5em;
+                                    display: grid;
+                                    letter-spacing: 0.08em;
+                                    place-content: center;
+                                    @include sp {
+                                        font-size: 1rem;
+                                    }
+                                }
+                                .innerTime {
+                                    font-size: inherit;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-self: center;
+                                    flex: 1;
+                                    padding-block: 0.2em;
+                                    .innerTimeSlot {
+                                        display: flex;
+                                        justify-content: center;
+                                        font-size: inherit;
+                                        span {
+                                            display: flex;
+                                            font-size: min(4cqw, 1.4rem);
+                                            @include futura-cyrillic-book;
+                                            align-items: center;
+                                            letter-spacing: 0.12em;
+                                            @include sp {
+                                                font-size: FZ(18);
+                                            }
+                                            &:nth-of-type(2) {
+                                                &::before {
+                                                    display: inline-block;
+                                                    content: "";
+                                                    width: 0.4em;
+                                                    aspect-ratio: 0.85;
+                                                    background-color: $base-white;
+                                                    margin-inline: 0.56em;
+                                                    clip-path: polygon(
+                                                        0 0,
+                                                        100% 50%,
+                                                        0 100%
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                &:has(.innerTimeSlot + .innerTimeSlot) {
+                                    .innerTime {
+                                        flex-direction: column;
+                                    }
+                                    .innerTimeSlot {
+                                        span {
+                                            font-size: max(3.2cqw, 1.4rem);
+                                            letter-spacing: 0.04em;
+                                            &:nth-of-type(2) {
+                                                &::before {
+                                                    margin-inline: 0.3em;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                .innerTimeStatus {
+                                    font-size: min(4cqw, 1.4rem);
+                                    align-self: center;
+                                    padding-block: 0.2em;
+                                    flex: 1;
+                                    display: flex;
+                                    justify-content: center;
+                                }
+                            }
+                        }
+                        .boxComment {
+                            grid-column: span 2;
+                            font-size: inherit;
+                            p {
+                                font-size: fz(12);
+                                text-align: justify;
+                                letter-spacing: 0.04em;
+                                line-height: 1.2em;
+                                @include sp {
+                                    font-size: fz(14);
+                                }
+                            }
+                        }
+                    }
+                    // grade0 : なし
+                    // grade1 : シルバー
+                    // grade8 : レジェンド
+                    // grade2 : ゴールド
+                    // grade3 : VIP
+                    // grade4 : グランド VIP
+                    // grade5 : プレミアム
+                    // grade6 : ダイヤモンド
+                    // grade7 : ロイヤルクイーン
+                    @include grade-color;
+                    &:not(.grade0, .grade8) {
+                        background: url(/images/common/grade-frame.webp)
+                            no-repeat center center/cover;
+                        background-blend-mode: hard-light;
+                        background-color: rgb(var(--grade-color));
+                    }
+                }
+                @media screen and (width <= 1030px) {
+                    grid-template-columns: repeat(2, 1fr);
+                    li {
+                        .boxImage {
+                            width: 14cqw;
+                            max-width: unset;
+                            @include sp {
+                                width: 42vw;
+                                max-width: unset;
+                            }
+                        }
+                    }
+                }
+                @include sp {
+                    grid-template-columns: unset;
+                    padding: 4vw 4vw 6vw;
+                    gap: 4vw 0;
+                }
+            }
+            &.status1 {
+                --status-color: 255, 0, 102;
+            }
+            &.status2 {
+                --status-color: 230, 0, 17;
+            }
+            &.status3 {
+                --status-color: 0, 160, 233;
+            }
+            &.status4 {
+                --status-color: 69, 70, 205;
+            }
+            &.status5 {
+                --status-color: 134, 0, 228;
+            }
+            &.status6 {
+                --status-color: 98, 98, 98;
+            }
+        }
+    }
+}

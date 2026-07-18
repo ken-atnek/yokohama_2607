@@ -16,7 +16,7 @@ import BlockPickUp from '@/components/area/BlockPickUp';
 import BannerGroup from '@/components/common/BannerGroup';
 import bannerGroupStyles from '@/components/common/BannerGroup.module.scss';
 import BlockNewFace from '@/components/area/BlockNewFace';
-import CastRanking from '@/components/common/CastRanking';
+import CastRanking from '@/components/common/cast/CastRanking';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import { isRealProduction } from '@/lib/env';
 

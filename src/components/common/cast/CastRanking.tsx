@@ -1,9 +1,9 @@
 /* =======================================
  * 横浜ダンディーグループ 共通ランキング本体
- * URL: /src/components/common/CastRanking.tsx
+ * URL: /src/components/common/cast/CastRanking.tsx
  * Referenced in: /src/app/top/page.tsx, /src/components/common/top/TopCastRanking.tsx
  * Created: 2026-07-09
- * Last updated: 2026-07-09
+ * Last updated: 2026-07-17
  * ======================================= */
 
 'use client';
@@ -13,7 +13,7 @@ import type { CSSProperties } from 'react';
 import clsx from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import styles from '@/components/common/CastRanking.module.scss';
+import styles from '@/components/common/cast/CastRanking.module.scss';
 import { CastGradeMap } from '@/data/CastGradeData';
 import { Shops } from '@/data/AreaShopData';
 import type { CastDetail } from '@/types/CastDetails';

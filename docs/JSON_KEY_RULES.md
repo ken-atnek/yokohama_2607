@@ -46,6 +46,10 @@
 - `reserveUrl`
 - `startTime`
 - `joinedDate`
+- `profileImages`
+- `reservationUrl`
+- `telop`
+- `recommendations`
 
 ### 変更するキー（最小）
 
@@ -61,6 +65,18 @@
   - 画面表示用の年齢文言
   - 数値年齢ではなくテキスト表記を出したい場合のみ使用する
   - 例: `20代後半`, `30代前半`
+- `type`
+  - キャスト詳細では文字列配列として扱ってよい
+  - 管理画面の選択数に合わせて最大4件まで表示してよい
+- `recommendations`
+  - おすすめキャスト導線用の配列
+  - 各要素は `shopId` と `castId` を持つ
+  - 表示名は詳細JSONに持たず、`CastList.json` 側から解決してよい
+- `telop`
+  - キャスト詳細画像下のテロップ文言
+  - 1つの文字列として保持してよい
+- `reservationUrl`
+  - キャスト詳細のWEB予約リンク先
 
 ---
 
@@ -120,6 +136,34 @@
 - 在籍一覧の表示順は `ロイヤルクイーン → ダイヤモンド → プレミアム → グランド VIP → VIP → ゴールド → シルバー → レジェンド → normal` としてよい
 - ランキングJSON内の店舗識別子は、現行サンプルに合わせて `shopID` を使用してよい
   - 例: `"shopID": "dandy"`
+
+---
+
+## スケジュールJSONの補足
+
+- キャスト詳細の週間スケジュールJSONは、配列直書きでもオブジェクト形式でも受けてよい
+- 新規実装では次のトップレベル構造を推奨する
+  - `displayType`: `calendar | comment`
+  - `comment`: コメント表示時の文言
+  - `schedule`: 日別配列
+- `displayType` が `comment` のときは、カレンダーを出さず `comment` の文言のみ表示してよい
+- `schedule` の各要素は次のキーを持たせてよい
+  - `date`: `YYYY-MM-DD`
+  - `weekday`: `mon | tue | wed | thu | fri | sat | sun`
+  - `scheduleStatus`: ステータス文言
+  - `timeSlots`: 出勤時間帯の配列
+- `timeSlots` の各要素は次のキーを持たせてよい
+  - `startTime`
+  - `endTime`
+- 1日内に複数枠ある場合は `timeSlots` を使ってよい
+  - 例: `12:00-16:00` と `18:00-23:00`
+- 旧形式との互換のため、`startTime` / `endTime` の単独保持も許容してよい
+- `scheduleStatus` の想定文言は次を含んでよい
+  - `届出休`
+  - `公休日`
+  - `日の出`
+  - `TEL確認`
+  - `ご予約満了`
 
 ---
 

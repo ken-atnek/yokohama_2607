@@ -13,6 +13,11 @@ export type RecommendationItem = {
   castId: string;
 };
 
+export type ScheduleTimeSlot = {
+  startTime?: string;
+  endTime?: string;
+};
+
 export type CastDetail = {
   rankID?: string;
   rank?: number;
@@ -40,6 +45,7 @@ export type CastDetail = {
   realTimeComment: string;
   startTime?: string;
   endTime?: string;
+  timeSlots?: ScheduleTimeSlot[];
   scheduleStatus?: string;
   gradeId: number;
   ranking?: number;

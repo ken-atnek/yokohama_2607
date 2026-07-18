@@ -32,7 +32,7 @@ body {
     justify-content: space-between;
     width: 100%;
     color: $base-black;
-    // background-color: $light-gray;
+    background-color: $base-white;
 
     @include tbw {
         overflow-x: clip;

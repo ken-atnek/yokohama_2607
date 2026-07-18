@@ -1,9 +1,9 @@
 /* =======================================
  * キャスト一覧 コンポーネント
- * URL:src/components/CastList.tsx
- * Referenced in: : src/app/hot/cast/page.tsx
+ * URL: /src/components/common/cast/ShopCastList.tsx
+ * Referenced in: /src/app/dandy/cast/page.tsx
  * Created: 2025-09-02
- * Last updated: 2025-10-08
+ * Last updated: 2026-07-17
  * ======================================= */
 'use client';
 import styles from './ShopCastList.module.scss';
@@ -11,7 +11,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useEffect, useMemo, useState } from 'react';
 import type { CastDetail } from '@/types/CastDetails';
-import ShopItemCastList from '@/components/common/ShopItemCastList';
+import ShopItemCastList from '@/components/common/cast/ShopItemCastList';
 import { getShopFromPath, getStoreClass } from '@/lib/shopUtils';
 import { trackPageAccess } from '@/lib/accessCounterApi';
 import ShopSwitchTabs from '@/components/common/ShopSwitchTabs';
@@ -76,7 +76,11 @@ const CastList = () => {
     }
     if (activeFilter === 'today') {
       filtered = allCasts.filter(
-        (cast) => cast.scheduleStatus || cast.startTime || cast.endTime
+        (cast) =>
+          cast.scheduleStatus ||
+          cast.startTime ||
+          cast.endTime ||
+          (Array.isArray(cast.timeSlots) && cast.timeSlots.length > 0)
       );
     } else if (activeFilter === 'new') {
       filtered = allCasts.filter(
@@ -168,7 +172,9 @@ const CastList = () => {
   }, [registeredCastList]);
   return (
     <>
-      <ShopSwitchTabs basePath="cast" variant="cast" />
+      <div className={styles.blockSwitchTab}>
+        <ShopSwitchTabs basePath="cast" variant="cast" />
+      </div>
       <section
         className={clsx(styles.containerSearch, styles[activeStoreClass])}
       >

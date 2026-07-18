@@ -29,6 +29,46 @@
 }
 
 /* =================================
+ * 	グレードカラー
+ * ------------------------------ */
+@mixin grade-color {
+    // grade1 : シルバー
+    &.grade1 {
+        --grade-color: 99, 99, 99;
+    }
+    // grade8 : レジェンド
+    &.grade8 {
+        --grade-color: 140, 110, 35;
+    }
+    // grade2 : ゴールド
+    &.grade2 {
+        --grade-color: 255, 215, 0;
+        .gradeLabel {
+            color: $font-black;
+        }
+    }
+    // grade3 : VIP
+    &.grade3 {
+        --grade-color: 0, 181, 70;
+    }
+    // grade4 : グランド VIP
+    &.grade4 {
+        --grade-color: 209, 29, 30;
+    }
+    // grade5 : プレミアム
+    &.grade5 {
+        --grade-color: 29, 29, 209;
+    }
+    // grade6 : ダイヤモンド
+    &.grade6 {
+        --grade-color: 209, 29, 209;
+    }
+    // grade7 : ロイヤルクイーン
+    &.grade7 {
+        --grade-color: 2, 38, 109;
+    }
+}
+/* =================================
  * 	キャストリストBOX
  * ------------------------------ */
 @mixin cast-list-box-image {
@@ -41,7 +81,7 @@
         // overflow: hidden;
         img {
             width: 100%;
-            aspect-ratio: 270/397;
+            aspect-ratio: 34/50;
             object-fit: cover;
         }
     }
@@ -82,41 +122,7 @@
             background-color: rgb(var(--grade-color));
         }
     }
-    // grade1 : シルバー
-    &.grade1 {
-        --grade-color: 99, 99, 99;
-    }
-    // grade8 : レジェンド
-    &.grade8 {
-        --grade-color: 140, 110, 35;
-    }
-    // grade2 : ゴールド
-    &.grade2 {
-        --grade-color: 255, 215, 0;
-        .gradeLabel {
-            color: $font-black;
-        }
-    }
-    // grade3 : VIP
-    &.grade3 {
-        --grade-color: 0, 181, 70;
-    }
-    // grade4 : グランド VIP
-    &.grade4 {
-        --grade-color: 209, 29, 30;
-    }
-    // grade5 : プレミアム
-    &.grade5 {
-        --grade-color: 29, 29, 209;
-    }
-    // grade6 : ダイヤモンド
-    &.grade6 {
-        --grade-color: 209, 29, 209;
-    }
-    // grade7 : ロイヤルクイーン
-    &.grade7 {
-        --grade-color: 2, 38, 109;
-    }
+    @include grade-color;
     // grade8 : レジェンド
     &.grade8 {
         .gradeLabel {

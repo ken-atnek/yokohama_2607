@@ -1,9 +1,9 @@
 /* =======================================
  * 横浜ダンディーグループ キャストバッジアイコン
- * URL: /src/components/common/CastBadgeIcons.tsx
- * Referenced in: /src/components/common/ShopItemCastList.tsx
+ * URL: /src/components/common/cast/CastBadgeIcons.tsx
+ * Referenced in: /src/components/common/cast/ShopItemCastList.tsx
  * Created: 2026-07-16
- * Last updated: 2026-07-16
+ * Last updated: 2026-07-17
  * ======================================= */
 import Image from 'next/image';
 import type { CastDetail } from '@/types/CastDetails';

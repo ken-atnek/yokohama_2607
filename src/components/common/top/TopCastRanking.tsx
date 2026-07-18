@@ -11,7 +11,7 @@
 import styles from './TopCastRanking.module.scss';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import BaseCastRanking from '@/components/common/CastRanking';
+import BaseCastRanking from '@/components/common/cast/CastRanking';
 import { Shops } from '@/data/AreaShopData';
 import { getShopFromPath, getStoreClass } from '@/lib/shopUtils';
 
