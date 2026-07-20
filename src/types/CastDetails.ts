@@ -35,14 +35,16 @@ export type CastDetail = {
   tall: number;
   bust: number;
   cup: string;
-  west: number;
+  waist: number;
   hip: number;
   type?: string[];
   shopId: string;
   shopName: string;
   realTimeStatus: number;
+  realTimeUpdatedAt?: string;
   realTimeDetail: string;
   realTimeComment: string;
+  availableFrom?: string;
   startTime?: string;
   endTime?: string;
   timeSlots?: ScheduleTimeSlot[];

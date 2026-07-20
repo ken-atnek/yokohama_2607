@@ -30,7 +30,7 @@ type RankingCast = Pick<
   | 'tall'
   | 'bust'
   | 'cup'
-  | 'west'
+  | 'waist'
   | 'hip'
   | 'gradeId'
 > & {
@@ -259,7 +259,7 @@ export default function CastRanking({
           <div className={styles.size}>
             <span className={styles.tall}>T.{cast.tall}</span>
             <span className={styles.bust}>B.{cast.bust}</span>
-            <span className={styles.west}>W.{cast.west}</span>
+            <span className={styles.waist}>W.{cast.waist}</span>
             <span className={styles.hip}>H.{cast.hip}</span>
           </div>
         </div>

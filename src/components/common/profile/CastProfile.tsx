@@ -3,7 +3,7 @@
  * URL: /src/components/common/profile/CastProfile.tsx
  * Referenced in: /src/app/dandy/profile/page.tsx
  * Created: 2025-09-06
- * Last updated: 2026-07-16
+ * Last updated: 2026-07-20
  * ======================================= */
 'use client';
 
@@ -26,6 +26,13 @@ import ExternalLink from '@/components/common/ExternalLink';
 import CastSchedule from './CastSchedule';
 import CastBadgeIcons from '@/components/common/cast/CastBadgeIcons';
 import { normalizeCastBase } from '@/lib/normalizeCast';
+import { getRealTimeDetailText } from '@/lib/getRealTimeDetailText';
+import {
+  formatRealtimeTime,
+  normalizeRealTimeData,
+  REALTIME_STATUS_LABELS,
+  type RealTimeData,
+} from '@/lib/realtime';
 
 const shopNameMap: Record<string, string> = {
   dandy: '横浜ダンディー',
@@ -64,7 +71,7 @@ function normalizeCastDetail(
       tall: 0,
       bust: 0,
       cup: '',
-      west: 0,
+      waist: 0,
       hip: 0,
       shopId: shop,
       shopName: '',
@@ -117,6 +124,7 @@ export default function CastProfile() {
   const [recommendationCards, setRecommendationCards] = useState<
     RecommendationCard[]
   >([]);
+  const [realTimeData, setRealTimeData] = useState<RealTimeData | null>(null);
   const [error, setError] = useState(false);
 
   const shop = getShopFromPath(pathname);
@@ -182,7 +190,7 @@ export default function CastProfile() {
         '@context': 'https://schema.org',
         '@type': 'Person',
         name: cast.castName,
-        description: `${cast.age ?? ''}歳 / ${cast.tall}cm / ${cast.bust}-${cast.west}-${cast.hip} (${cast.cup})`,
+        description: `${cast.age ?? ''}歳 / ${cast.tall}cm / ${cast.bust}-${cast.waist}-${cast.hip} (${cast.cup})`,
         image: cast.castImage,
       };
 
@@ -248,6 +256,40 @@ export default function CastProfile() {
     };
 
     fetchCastData();
+  }, [castId, shop]);
+
+  useEffect(() => {
+    if (!castId) return;
+
+    const fetchRealTimeData = async () => {
+      const timestamp = Date.now();
+      const realtimePaths = [
+        `/db/cast/${shop}/${castId}/realtime.json`,
+        `/cast/${shop}/${castId}/realtime.json`,
+      ];
+
+      try {
+        for (const path of realtimePaths) {
+          const response = await fetch(`${path}?t=${timestamp}`, {
+            cache: 'no-store',
+          });
+          if (!response.ok) {
+            continue;
+          }
+
+          const data = (await response.json()) as Partial<RealTimeData> &
+            Record<string, unknown>;
+          setRealTimeData(normalizeRealTimeData(data));
+          return;
+        }
+
+        setRealTimeData(null);
+      } catch {
+        setRealTimeData(null);
+      }
+    };
+
+    fetchRealTimeData();
   }, [castId, shop]);
 
   useEffect(() => {
@@ -346,6 +388,23 @@ export default function CastProfile() {
   const hasScheduleBadge =
     Boolean(cast.startTime && cast.endTime) || Boolean(cast.scheduleStatus);
   const hasRecommendations = recommendationCards.length > 0;
+  const showServiceList =
+    typeof cast.serviceHealth === 'boolean' ||
+    typeof cast.serviceMat === 'boolean';
+  const realtimeStatusLabel = realTimeData
+    ? REALTIME_STATUS_LABELS[realTimeData.realTimeStatus]
+    : undefined;
+  const realtimeDetailText = getRealTimeDetailText({
+    detail: realTimeData?.realTimeDetail,
+    availableFrom: realTimeData?.availableFrom,
+    shouldCompareTime: true,
+  });
+  const formattedRealtimeUpdateTime = formatRealtimeTime(
+    realTimeData?.realTimeUpdatedAt
+  );
+  const hasRealtimeBox = Boolean(
+    realtimeStatusLabel || realtimeDetailText || realTimeData?.realTimeComment
+  );
 
   return (
     <>
@@ -432,11 +491,7 @@ export default function CastProfile() {
                 ))}
               </ul>
             ) : null}
-            {cast.telop ? (
-              <div className={styles.telop}>
-                <span>{cast.telop}</span>
-              </div>
-            ) : null}
+
             <div className={styles.innerProfile}>
               <h1 className={styles.castName}>
                 {cast.castName}
@@ -455,11 +510,62 @@ export default function CastProfile() {
                     {cast.bust}
                     <i>{cast.cup}</i>
                   </span>
-                  <span className={styles.west}>{cast.west}</span>
+                  <span className={styles.waist}>{cast.waist}</span>
                   <span className={styles.hip}>{cast.hip}</span>
                 </div>
               </div>
+              {showServiceList ? (
+                <ul className={styles.serviceList}>
+                  <li
+                    className={clsx(
+                      cast.serviceHealth ? styles.isActive : styles.isInactive
+                    )}
+                  >
+                    ヘルス
+                  </li>
+                  <li
+                    className={clsx(
+                      cast.serviceMat ? styles.isActive : styles.isInactive
+                    )}
+                  >
+                    マット
+                  </li>
+                </ul>
+              ) : null}
             </div>
+            {hasRealtimeBox ? (
+              <div className={styles.boxRealTime}>
+                <div className={styles.headRealTime}>
+                  <h2>リアルタイム情報</h2>
+                  {formattedRealtimeUpdateTime ? (
+                    <p>
+                      update!
+                      <time dateTime={realTimeData?.realTimeUpdatedAt}>
+                        {formattedRealtimeUpdateTime}
+                      </time>
+                    </p>
+                  ) : null}
+                </div>
+                {realtimeStatusLabel ? (
+                  <p
+                    className={clsx(
+                      styles.statusRealTime,
+                      styles[`status${realTimeData?.realTimeStatus}`]
+                    )}
+                  >
+                    {realtimeStatusLabel}
+                  </p>
+                ) : null}
+                {realtimeDetailText ? (
+                  <p className={styles.detailRealTime}>{realtimeDetailText}</p>
+                ) : null}
+                {realTimeData?.realTimeComment ? (
+                  <p className={styles.commentRealTime}>
+                    {realTimeData.realTimeComment}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <nav className={styles.wrapLink}>
               <ExternalLink
                 href={cast.reservationUrl}
@@ -515,29 +621,13 @@ export default function CastProfile() {
                 <use href="#iconArrowRight" />
               </svg>
             </ExternalLink>
-            {hasRecommendations ? (
-              <div className={styles.recommendation}>
-                <h2>
-                  <span>RECOMMENDATION</span>
-                  このキャストを見た方におすすめのキャスト
-                </h2>
-                <nav>
-                  {recommendationCards.map((item, index) => (
-                    <Link
-                      key={`${item.shopId}-${item.castId}-${index}`}
-                      href={`/${item.shopId}/profile?id=${item.castId}`}
-                    >
-                      <svg>
-                        <use href="#iconArrowRight" />
-                      </svg>
-                      <span>{item.castName}</span>
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-            ) : null}
           </div>
         </article>
+        {cast.telop ? (
+          <div className={styles.blockTelop}>
+            <span>{cast.telop}</span>
+          </div>
+        ) : null}
         <div className={styles.boxSchedule}>
           <span className={styles.sidebarH2}>schedule</span>
           <h2 className={styles.itemH2}>週間スケジュール</h2>
@@ -569,6 +659,27 @@ export default function CastProfile() {
             </div>
           </div>
         </div>
+        {hasRecommendations ? (
+          <div className={styles.blockRecommendation}>
+            <h2>
+              <span>RECOMMENDATION</span>
+              このキャストを見た方におすすめのキャスト
+            </h2>
+            <nav>
+              {recommendationCards.map((item, index) => (
+                <Link
+                  key={`${item.shopId}-${item.castId}-${index}`}
+                  href={`/${item.shopId}/profile?id=${item.castId}`}
+                >
+                  <svg>
+                    <use href="#iconArrowRight" />
+                  </svg>
+                  <span>{item.castName}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        ) : null}
         <div className={styles.boxShopComment}>
           <div className={styles.boxInner}>
             <div className={styles.wrapShopComment}>

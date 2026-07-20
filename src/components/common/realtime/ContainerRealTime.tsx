@@ -21,15 +21,11 @@ import ShopSwitchTabs from '@/components/common/ShopSwitchTabs';
 import ScheduleTimeBlock from '@/components/common/cast/ScheduleTimeBlock';
 import { getRealTimeDetailText } from '@/lib/getRealTimeDetailText';
 import { normalizeCastBase } from '@/lib/normalizeCast';
-
-const STATUS_LABELS: Record<string, string> = {
-  '1': '現在受付中',
-  '2': '残りわずか',
-  '3': '残り1枠 電話にてお問い合わせください',
-  '4': 'キャンセル待ち',
-  '5': '予約受付中',
-  '6': '受付終了、次回のご予約受付致します',
-};
+import {
+  formatRealtimeTime,
+  normalizeRealTimeData,
+  REALTIME_STATUS_LABELS,
+} from '@/lib/realtime';
 
 type CastWithStatus = CastDetail & {
   realTimeStatus: string | number;
@@ -54,17 +50,15 @@ function normalizeRealtimeCast(
     return null;
   }
 
+  const realtime = normalizeRealTimeData(source);
+
   return {
     ...normalized,
-    realTimeStatus:
-      typeof source.realTimeStatus === 'number' ||
-      typeof source.realTimeStatus === 'string'
-        ? source.realTimeStatus
-        : normalized.realTimeStatus,
-    availableFrom:
-      typeof source.availableFrom === 'string' && source.availableFrom !== ''
-        ? source.availableFrom
-        : undefined,
+    realTimeStatus: realtime.realTimeStatus,
+    realTimeUpdatedAt: realtime.realTimeUpdatedAt,
+    realTimeDetail: realtime.realTimeDetail,
+    realTimeComment: realtime.realTimeComment,
+    availableFrom: realtime.availableFrom,
   };
 }
 
@@ -156,12 +150,7 @@ const ContainerRealtime = () => {
     return [];
   };
 
-  const formattedUpdateTime = updateTime
-    ? new Date(updateTime).toLocaleTimeString('ja-JP', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '--:--';
+  const formattedUpdateTime = formatRealtimeTime(updateTime) || '--:--';
 
   return (
     <section
@@ -189,7 +178,7 @@ const ContainerRealtime = () => {
             className={clsx(styles.statusGroup, styles[`status${status}`])}
           >
             <h3 className={styles.statusTitle}>
-              {STATUS_LABELS[status] ?? '未設定'}
+              {REALTIME_STATUS_LABELS[Number(status)] ?? '未設定'}
             </h3>
             <ul className={styles.castList}>
               {list.map((cast) => {
@@ -246,7 +235,7 @@ const ContainerRealtime = () => {
                               {cast.bust}
                               <i>{cast.cup}</i>
                             </span>
-                            <span className={styles.west}>{cast.west}</span>
+                            <span className={styles.waist}>{cast.waist}</span>
                             <span className={styles.hip}>{cast.hip}</span>
                           </div>
                         </div>
