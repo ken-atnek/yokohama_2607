@@ -153,7 +153,8 @@
             }
             a {
                 position: relative;
-                font-size: inherit;
+                font-size: min(1.6rem, 1.3vw);
+
                 flex-grow: 1;
                 border-right: 1px solid var(--baseColor);
                 padding: 0 1em;
@@ -167,9 +168,9 @@
                     display: flex;
                     flex-direction: column;
                     align-items: center;
+                    font-size: inherit;
                     .jp {
                         letter-spacing: 0.12em;
-                        font-size: FZ(16);
                         @include sp {
                             font-size: FZ(14);
                         }

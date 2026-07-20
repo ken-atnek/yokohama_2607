@@ -12,7 +12,8 @@
     flex-direction: column;
     padding-inline: 1em;
 
-    // background-color: #fff;
+    background-color: rgb(var(--shop-color), 0.1);
+
     @include sp {
         display: contents;
     }
@@ -65,12 +66,33 @@
             }
         }
     }
+    .boxRealTime {
+        position: relative;
+        width: 100%;
+        margin-top: 2rem;
+        font-size: inherit;
+        &::before {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: calc(100% + 1em);
+            background-color: rgba(#e776ad, 1);
+            border-top-right-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+        }
+        @include sp {
+            display: none;
+        }
+    }
     .boxPhotoDiary {
         width: 100%;
         position: relative;
         font-size: inherit;
         padding-top: 8em;
         padding-bottom: 1em;
+        margin-top: 5rem;
         @include sp {
             padding: 24vw 2vw 4vw;
         }
@@ -179,7 +201,7 @@
         }
     }
     &.dandy {
-        background-color: rgba(#e776ad, 0.1);
+        --shop-color: #{$dandy-color-rgb};
         .shopLogoWrap {
             width: 90%;
             align-self: center;
