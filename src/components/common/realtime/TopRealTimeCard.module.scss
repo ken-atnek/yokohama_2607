@@ -1,0 +1,183 @@
+@use "../../../styles/foundation/" as *;
+/* =======================================
+ * 横浜ダンディーグループ TOPリアルタイムカード スタイル
+ * URL: /src/components/common/realtime/TopRealTimeCard.module.scss
+ * Referenced in: /src/components/common/realtime/TopRealTimeCard.tsx
+ * Created: 2026-07-20
+ * Last updated: 2026-07-20
+ * ======================================= */
+.topRealTimeCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem 0;
+    padding: 1.8rem 2rem 2rem 0;
+    color: $base-white;
+    font-size: inherit;
+    z-index: 2;
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        height: calc(100% + 1rem);
+        right: calc(100% + 1em);
+        width: 1.2rem;
+        border-radius: 1rem 0 0 1rem;
+        background: linear-gradient(
+            90deg,
+            rgb(var(--shop-color), 1) 0%,
+            rgb(var(--shop-color), 0.4) 18%,
+            rgb(var(--shop-color), 0.6) 52%,
+            rgb(var(--shop-color), 1) 90%,
+            rgb(var(--shop-color), 1) 100%
+        );
+    }
+    &::after {
+        content: "";
+        position: absolute;
+        width: 1.2rem;
+        right: calc(100% + 1em);
+        top: 100%;
+        border-bottom-left-radius: 1rem;
+        height: 1rem;
+        background-color: rgba(#000, 0.3);
+        mix-blend-mode: multiply;
+    }
+    .head {
+        position: relative;
+        display: flex;
+        gap: 0 1rem;
+        font-size: inherit;
+        align-items: flex-end;
+        .titleEn {
+            @include bebas-neue;
+            font-size: fz(40);
+            line-height: 1;
+            letter-spacing: 0.04em;
+        }
+        .titleJp {
+            font-size: fz(14);
+            display: inline-block;
+            translate: 0 -0.3em;
+            letter-spacing: 0.04em;
+        }
+    }
+    .boxDetails {
+        display: grid;
+        grid-template-columns: minmax(8rem, 12rem) 1fr;
+        gap: 0 1rem;
+        align-items: start;
+        font-size: inherit;
+        position: relative;
+        .wrapPhoto {
+            display: block;
+            font-size: inherit;
+            @include cast-list-box-image;
+            .photoFrame {
+                position: relative;
+                aspect-ratio: 240 / 320;
+                overflow: hidden;
+                background: #fff;
+                img {
+                    object-fit: cover;
+                    object-position: center top;
+                }
+            }
+            &.hasNewBadge {
+                border: solid 6px #03c275;
+            }
+            &.hasNewKirakira {
+                .photoFrame {
+                    img {
+                        clip-path: inset(0.4rem);
+                    }
+                }
+            }
+            &:not(.grade0, .grade8) {
+                .photoFrame {
+                    img {
+                        clip-path: inset(0.4rem);
+                    }
+                }
+            }
+            .gradeLabel {
+                font-size: fz(14);
+            }
+        }
+        .textBlock {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem 0;
+            font-size: inherit;
+            .castName {
+                font-size: fz(18);
+                font-weight: 500;
+                line-height: 1.2;
+                letter-spacing: 0.04em;
+            }
+            .comment {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem 0;
+                font-size: inherit;
+                p {
+                    font-size: fz(12);
+                    line-height: 1.55;
+                    letter-spacing: 0.02em;
+                }
+            }
+        }
+    }
+    .statusBalloon {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 4.4rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.5rem;
+        color: $font-black;
+        font-size: fz(18);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        background: $pure-white;
+        &::before {
+            content: "";
+            position: absolute;
+            left: 6.2rem;
+            top: -1rem;
+            width: 1.8rem;
+            height: 1.2rem;
+            background: $pure-white;
+            clip-path: polygon(50% 0, 0 100%, 100% 100%);
+        }
+    }
+    .linkButton {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 5.4rem;
+        padding: 0.8rem 1rem;
+        font-size: inherit;
+        background: #111;
+        transition: opacity 0.2s ease;
+        span {
+            color: $base-white;
+            position: relative;
+            font-size: fz(16);
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 0 2rem;
+            svg {
+                fill: $base-white;
+                aspect-ratio: 7/12;
+                width: 8px;
+            }
+        }
+
+        &:hover {
+            opacity: 0.88;
+        }
+    }
+}

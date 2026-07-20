@@ -1,8 +1,9 @@
 /* =======================================
  * 店舗 LEFTコンテンツ
- * URL: src/components/common/ShopLeft.tsx
+ * URL: /src/components/common/ShopLeft.tsx
+ * Referenced in: /src/components/dandy/LayoutWrapperMain.tsx
  * Created: 2025-08-22
- * Last updated: 2025-09-19
+ * Last updated: 2026-07-20
  * ======================================= */
 import styles from './ShopLeft.module.scss';
 import BannerGroup from '@/components/common/BannerGroup';
@@ -11,6 +12,7 @@ import { Shops } from '@/data/AreaShopData';
 import ExternalLink from '@/components/common/ExternalLink';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
+import TopRealTimeCard from '@/components/common/realtime/TopRealTimeCard';
 
 type ShopLeftProps = {
   photoDiaryUrl?: string;
@@ -23,7 +25,11 @@ export type ShopLeftIframeItem = {
   className: string;
 };
 
-const ShopLeft = ({ photoDiaryUrl, shop, bottomIframes = [] }: ShopLeftProps) => {
+const ShopLeft = ({
+  photoDiaryUrl,
+  shop,
+  bottomIframes = [],
+}: ShopLeftProps) => {
   const storeId = shop;
   const activeStoreClass = storeId;
   const shopData = Shops.find((item) => item.storeId === storeId);
@@ -68,6 +74,9 @@ const ShopLeft = ({ photoDiaryUrl, shop, bottomIframes = [] }: ShopLeftProps) =>
             </ExternalLink>
           </div>
         )}
+      </div>
+      <div className={styles.boxRealTime}>
+        <TopRealTimeCard shop={shop} />
       </div>
       <div className={styles.boxPhotoDiary}>
         <div className={styles.wrapTitle}>

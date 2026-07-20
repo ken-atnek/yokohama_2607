@@ -89,9 +89,7 @@ const BlockPickUp = () => {
           if (casts.length === 0) {
             return null;
           }
-
           const activeIndex = activeIndices[shopId] ?? 0;
-
           return (
             <li key={shopId}>
               <div className={styles.fadeStage}>
