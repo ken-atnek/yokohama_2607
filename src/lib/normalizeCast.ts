@@ -6,6 +6,7 @@
  * Last updated: 2026-07-17
  * ======================================= */
 import type { CastDetail, ScheduleTimeSlot } from '@/types/CastDetails';
+import { normalizeRealTimeData } from '@/lib/realtime';
 
 type NormalizeCastOptions = {
   shop: string;
@@ -93,32 +94,17 @@ export function normalizeCastBase(
     profileImages,
     age: typeof source.age === 'number' ? source.age : null,
     ageText: typeof source.ageText === 'string' ? source.ageText : undefined,
-    tall:
-      typeof source.tall === 'number'
-        ? source.tall
-        : typeof source.heightCm === 'number'
-          ? source.heightCm
-          : 0,
+    tall: typeof source.tall === 'number' ? source.tall : 0,
     bust: typeof source.bust === 'number' ? source.bust : 0,
     cup: typeof source.cup === 'string' ? source.cup : '',
-    west:
-      typeof source.west === 'number'
-        ? source.west
-        : typeof source.waistCm === 'number'
-          ? source.waistCm
-          : 0,
+    waist: typeof source.waist === 'number' ? source.waist : 0,
     hip: typeof source.hip === 'number' ? source.hip : 0,
     type: Array.isArray(source.type)
       ? source.type.filter((item): item is string => typeof item === 'string')
       : undefined,
     shopId: typeof source.shopId === 'string' ? source.shopId : shop,
     shopName: typeof source.shopName === 'string' ? source.shopName : '',
-    realTimeStatus:
-      typeof source.realTimeStatus === 'number' ? source.realTimeStatus : 0,
-    realTimeDetail:
-      typeof source.realTimeDetail === 'string' ? source.realTimeDetail : '',
-    realTimeComment:
-      typeof source.realTimeComment === 'string' ? source.realTimeComment : '',
+    ...normalizeRealTimeData(source),
     startTime: isNonEmptyString(source.startTime) ? source.startTime : undefined,
     endTime: isNonEmptyString(source.endTime) ? source.endTime : undefined,
     timeSlots: normalizeTimeSlots(source.timeSlots),

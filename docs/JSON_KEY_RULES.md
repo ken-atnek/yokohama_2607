@@ -36,6 +36,7 @@
 - `castNameKana`
 - `castNameEn`
 - `castImage`
+- `tall`
 - `bust`
 - `cup`
 - `hip`
@@ -53,14 +54,17 @@
 
 ### 変更するキー（最小）
 
-- `tall` → `heightCm`
-- `west` → `waistCm`
+- `west` → `waist`（誤記のため訂正。「ウエスト」の意図で`west`という誤った英単語が使われていたため）
 
 ### 補足して使用
 
 - `age`
   - 数値で扱える場合は `number`
   - テキスト表記のみの場合を考慮して `null` を許容する
+- `realTimeUpdatedAt`
+  - リアルタイム情報の更新日時
+- `availableFrom`
+  - リアルタイム情報における対応可能時刻
 - `ageText`
   - 画面表示用の年齢文言
   - 数値年齢ではなくテキスト表記を出したい場合のみ使用する
@@ -84,7 +88,7 @@
 
 - `age` は `number | null`
 - `ageText` は表示用の `string`
-- `heightCm`, `bust`, `waistCm`, `hip` は `number`
+- `tall`, `bust`, `waist`, `hip` は `number`
 - 画像パス・URLは `string`
 - 日付は `YYYY-MM-DD` 形式の `string`
 - 時刻は `HH:mm` 形式の `string`

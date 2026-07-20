@@ -10,11 +10,7 @@
 import styles from './ShopCastProfile.module.scss';
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
-
-type ScheduleTimeSlot = {
-  startTime?: string;
-  endTime?: string;
-};
+import type { ScheduleTimeSlot } from '@/types/CastDetails';
 
 type ScheduleItem = {
   date: string;

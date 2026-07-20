@@ -230,7 +230,7 @@ const CastScheduleByPeriod = () => {
                         {cast.bust}
                         <i>{cast.cup}</i>
                       </span>
-                      <span className={styles.west}>{cast.west}</span>
+                      <span className={styles.waist}>{cast.waist}</span>
                       <span className={styles.hip}>{cast.hip}</span>
                     </div>
                   </div>
