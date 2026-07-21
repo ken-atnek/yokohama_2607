@@ -1,28 +1,33 @@
 'use client';
 /* =======================================
  *店舗システム  アクセスマップ
- * URL: src/components/Shop/system/BlockAccess.tsx
- * Referenced in: src/components/Shop/Hot/SystemMain.tsx
+ * URL: src/components/common/system/BlockAccess.tsx
+ * Referenced in: src/components/common/system/SystemMain.tsx
  * Created: 2025-08-27
- * Last updated: 2025-09-17
+ * Last updated: 2026-07-21
  * ======================================= */
 import styles from './BlockAccess.module.scss';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import clsx from 'clsx';
 import { Shops } from '@/data/AreaShopData';
 import ExternalLink from '@/components/common/ExternalLink';
-import { getShopFromPath } from '@/lib/shopUtils';
+import { getShopFromPath, getStoreClass } from '@/lib/shopUtils';
 
 type ShopDetails = {
   variant?: 'default' | 'systemPage' | 'topPage'; // バリアント追加
 };
 
+const mapImageSrcMap: Record<string, string> = {
+  dandy: '/images/dandy/map.webp',
+};
+
 const BlockAccess = ({ variant = 'default' }: ShopDetails) => {
   const pathname = usePathname();
-  const pathShop = getShopFromPath(pathname);
-  const shop = pathShop || pathname.split('/')[1] || '';
-  const activeStoreClass = shop;
+  const shop = getShopFromPath(pathname);
+  const activeStoreClass = getStoreClass(shop);
   const shopData = Shops.find((s) => s.storeId === shop);
+  const mapImageSrc = mapImageSrcMap[shop];
   const googleMapUrl = shopData
     ? `https://maps.google.com/maps?q=${encodeURIComponent(
         `${shopData.post} ${shopData.address}`
@@ -37,10 +42,17 @@ const BlockAccess = ({ variant = 'default' }: ShopDetails) => {
         styles[variant] // バリアントクラスを適用
       )}
     >
-      <h2 className="pageH2">
-        <span>access</span>
-        アクセス／地図
-      </h2>
+      <h2 className={styles.itemH2}>access map</h2>
+      {mapImageSrc && shopData ? (
+        <div className={styles.boxMapInfo}>
+          <Image
+            src={mapImageSrc}
+            alt={`${shopData.name} アクセスマップ`}
+            width={640}
+            height={640}
+          />
+        </div>
+      ) : null}
       {shopData ? (
         <div className={styles.wrapText}>
           <address>

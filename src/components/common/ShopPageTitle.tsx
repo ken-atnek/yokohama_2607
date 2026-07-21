@@ -3,7 +3,7 @@
  * URL: /src/components/common/ShopPageTitle.tsx
  * Referenced in: /src/app/dandy/cast/page.tsx
  * Created: 2025-08-28
- * Last updated: 2026-07-16
+ * Last updated: 2026-07-21
  * ======================================= */
 import styles from './ShopPageTitle.module.scss';
 import Image from 'next/image';
@@ -14,6 +14,7 @@ type PageTitleProps = {
   titleJp: string;
   titleEn: string;
   shop?: string;
+  variant?: 'default' | 'noLogo';
 };
 
 const shopLogoAltMap: Record<string, string> = {
@@ -22,10 +23,16 @@ const shopLogoAltMap: Record<string, string> = {
   club_dandy: 'クラブダンディ',
 };
 
-const PageTitle = ({ titleJp, titleEn, shop = 'dandy' }: PageTitleProps) => {
+const PageTitle = ({
+  titleJp,
+  titleEn,
+  shop = 'dandy',
+  variant = 'default',
+}: PageTitleProps) => {
   const activeStoreClass = getStoreClass(shop);
   const logoSrc = getLogoImageSrc(shop);
   const logoAlt = shopLogoAltMap[shop] || shopLogoAltMap['dandy'];
+  const shouldShowLogo = variant !== 'noLogo';
 
   return (
     <section
@@ -36,15 +43,17 @@ const PageTitle = ({ titleJp, titleEn, shop = 'dandy' }: PageTitleProps) => {
           <span className={styles.sidebarH2}>{titleEn}</span>
           <h1>{titleJp}</h1>
         </div>
-        <div className={styles.itemLogo}>
-          <Image
-            className={styles.logoImage}
-            src={logoSrc}
-            alt={logoAlt}
-            width={200}
-            height={50}
-          />
-        </div>
+        {shouldShowLogo && (
+          <div className={styles.itemLogo}>
+            <Image
+              className={styles.logoImage}
+              src={logoSrc}
+              alt={logoAlt}
+              width={200}
+              height={50}
+            />
+          </div>
+        )}
       </article>
     </section>
   );
