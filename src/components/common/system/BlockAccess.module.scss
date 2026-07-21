@@ -12,13 +12,22 @@
     @include sp {
         margin-top: 4vw;
     }
+    .boxMapInfo {
+        position: relative;
+        width: 100%;
+        padding: 2em;
+        img {
+            width: 100%;
+            height: auto;
+        }
+    }
     .wrapText {
         font-size: inherit;
         display: flex;
         justify-content: center;
         align-items: center;
         margin-bottom: 1em;
-        margin-top: 3em;
+        margin-top: 1em;
         gap: 0 1em;
         @include sp {
             display: grid;
@@ -54,6 +63,19 @@
             }
         }
     }
+    &.systemPage {
+        &.dandy {
+            --shop-color: #{$dandy-color-rgb};
+        }
+        .itemH2 {
+            @include futura-cyrillic-book;
+            text-transform: uppercase;
+            font-size: fz(32);
+            background-color: rgb(var(--shop-color), 1);
+            color: $base-white;
+            padding: 0.3em 1em;
+        }
+    }
     &.topPage {
         margin-top: 3em;
         @include sp {
@@ -61,6 +83,9 @@
             margin-top: 2vw;
         }
         h2 {
+            display: none;
+        }
+        .boxMapInfo {
             display: none;
         }
         .wrapText {
