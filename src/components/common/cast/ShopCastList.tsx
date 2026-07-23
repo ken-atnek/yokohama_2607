@@ -27,6 +27,12 @@ const filters = [
 
 const gradeDisplayOrder = [7, 6, 5, 4, 3, 2, 1, 8, 0];
 
+const timeToMinutes = (time?: string) => {
+  if (!time || !/^\d{2}:\d{2}$/.test(time)) return null;
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
 const CastList = () => {
   const pathname = usePathname();
   const shop = getShopFromPath(pathname);
@@ -92,6 +98,20 @@ const CastList = () => {
     }
 
     switch (activeFilter) {
+      case 'today':
+        filtered.sort((a, b) => {
+          const startA = timeToMinutes(a.startTime);
+          const startB = timeToMinutes(b.startTime);
+
+          if (startA !== null && startB !== null) {
+            return startA - startB;
+          }
+          if (startA !== null) return -1;
+          if (startB !== null) return 1;
+
+          return 0;
+        });
+        break;
       case 'age':
         filtered.sort((a, b) => {
           const safeAgeA = a.age ?? Number.MAX_SAFE_INTEGER;
@@ -209,19 +229,30 @@ const CastList = () => {
         </ul>
       </section>
       <div className={clsx(styles.containerList, styles[activeStoreClass])}>
-        {groupedCastList.map((group) => (
-          <section
-            key={`grade-${group.gradeId}`}
-            className={clsx(styles.groupBlock, styles[`grade${group.gradeId}`])}
-          >
-            <h2>{group.title}</h2>
-            <ul className={styles.castList}>
-              {group.casts.map((cast) => (
-                <ShopItemCastList key={cast.castId} cast={cast} />
-              ))}
-            </ul>
-          </section>
-        ))}
+        {activeFilter ? (
+          <ul className={clsx(styles.castList, styles.filteredCastList)}>
+            {registeredCastList.map((cast) => (
+              <ShopItemCastList key={cast.castId} cast={cast} />
+            ))}
+          </ul>
+        ) : (
+          groupedCastList.map((group) => (
+            <section
+              key={`grade-${group.gradeId}`}
+              className={clsx(
+                styles.groupBlock,
+                styles[`grade${group.gradeId}`]
+              )}
+            >
+              <h2>{group.title}</h2>
+              <ul className={styles.castList}>
+                {group.casts.map((cast) => (
+                  <ShopItemCastList key={cast.castId} cast={cast} />
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
       </div>
     </>
   );
