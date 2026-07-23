@@ -268,4 +268,14 @@
             }
         }
     }
+    .filteredCastList {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        width: 100%;
+        gap: 2em 1em;
+        margin-top: 5em;
+        max-width: $article-max-width;
+        align-self: center;
+        font-size: inherit;
+    }
 }
