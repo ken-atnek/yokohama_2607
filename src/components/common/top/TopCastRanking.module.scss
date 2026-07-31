@@ -46,4 +46,16 @@
             }
         }
     }
+    &.club_dandy {
+        padding-bottom: 0;
+        .wrapTitle {
+            @include contents-title(#000000);
+        }
+        .titleObject {
+            &::before {
+                filter: brightness(96%) hue-rotate(151deg) saturate(205%)
+                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+            }
+        }
+    }
 }

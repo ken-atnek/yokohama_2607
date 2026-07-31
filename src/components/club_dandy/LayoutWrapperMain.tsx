@@ -21,7 +21,16 @@ export default function LayoutWrapperMain({
   children: React.ReactNode;
 }) {
   const storeId = 'club_dandy';
-  const bottomIframes: ShopLeftIframeItem[] = [];
+  const bottomIframes: ShopLeftIframeItem[] = [
+    {
+      url: 'https://qzin.jp/clubdandy/blogwidget?width=300&height=460',
+      className: 'bottomDandyVanilla01',
+    },
+    // {
+    //   url: 'https://qzin.jp/mrdandy0/widget?d=0',
+    //   className: 'bottomDandyVanilla02',
+    // },
+  ];
 
   return (
     <>
@@ -37,7 +46,11 @@ export default function LayoutWrapperMain({
       />
       <div className={styles.innerMain}>
         <main className={styles.shopMainContainer}>
-          <ShopLeft shop={storeId} bottomIframes={bottomIframes} />
+          <ShopLeft
+            shop={storeId}
+            photoDiaryUrl="https://blogparts.cityheaven.net/widget/?shopId=3887&mode=2&type=14&num=12&col=3&color=2&fontsize=12&width=300"
+            bottomIframes={bottomIframes}
+          />
           {children}
         </main>
       </div>

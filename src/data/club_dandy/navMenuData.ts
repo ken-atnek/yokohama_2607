@@ -33,7 +33,7 @@ export const navMenu = [
   },
   {
     id: 'navPhotoBlog',
-    href: 'https://www.cityheaven.net/kanagawa/A1401/A140103/club-dandy/diarylist/',
+    href: 'https://www.cityheaven.net/kanagawa/A1401/A140103/club-dandy/diarylist/?of=y',
     label: '写メ日記',
     labelEn: 'blog',
     target: true,
@@ -66,7 +66,7 @@ export const navMenu = [
   },
   {
     id: 'navRecruitMen',
-    href: 'https://mensheaven.jp/5/club-dandy/',
+    href: 'https://mensheaven.jp/5/yokohama-dandy/',
     label: '男子求人',
     labelEn: 'job offer Men',
     target: true,
