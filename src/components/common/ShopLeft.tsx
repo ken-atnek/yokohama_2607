@@ -40,7 +40,7 @@ const ShopLeft = ({
   // 🔽 JSON パスを店舗別に切り替え（タイムスタンプ付き）
   const jsonBasePath = `/db/contents/${shop}`;
   const jsonPathTop = `${jsonBasePath}/LeftBan01.json?t=${timestamp}`;
-  const jsonPathBottom = `${jsonBasePath}/LeftBan02.json?t=${timestamp}`;
+  // const jsonPathBottom = `${jsonBasePath}/LeftBan02.json?t=${timestamp}`;
 
   return (
     <section
@@ -102,11 +102,11 @@ const ShopLeft = ({
         </div>
       </div>
       <BannerGroup jsonPath={jsonPathTop} className={styles.boxBanTop} />
-      <div className={styles.titleContents}>
+      {/* <div className={styles.titleContents}>
         <span>contents</span>
         <h2 className={styles.titleContentsHeading}>コンテンツ</h2>
       </div>
-      <BannerGroup jsonPath={jsonPathBottom} className={styles.boxBanBottom} />
+      <BannerGroup jsonPath={jsonPathBottom} className={styles.boxBanBottom} /> */}
       {bottomIframes.map((item) => (
         <div
           key={`${item.className}-${item.url}`}
