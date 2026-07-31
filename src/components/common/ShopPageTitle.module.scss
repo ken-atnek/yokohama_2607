@@ -72,4 +72,10 @@
             width: 16em;
         }
     }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+        .itemLogo {
+            width: 16em;
+        }
+    }
 }

@@ -21,7 +21,7 @@
     grid-row: span 4;
     grid-template-rows: subgrid;
     container-type: inline-size;
-    padding-bottom: 1em;
+    padding-bottom: 0.2em;
     .wrapTodayTime {
         font-size: inherit;
         display: flex;
@@ -247,6 +247,7 @@
         grid-template-columns: repeat(2, 1fr);
         padding-inline: 0.5em;
         gap: 0 0.3em;
+        margin-bottom: 0.5em;
         li {
             font-size: max(2.6cqw, 1.6rem);
             text-align: center;

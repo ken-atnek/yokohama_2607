@@ -52,6 +52,16 @@
             "fff"
         );
     }
+    &.mr_dandy {
+        @include ranking-nav-theme(
+            #fcfbee,
+            #ff9900,
+            "FF9900",
+            #ff9900,
+            "fff",
+            "fff"
+        );
+    }
     .rankingNav {
         display: grid;
         font-size: inherit;

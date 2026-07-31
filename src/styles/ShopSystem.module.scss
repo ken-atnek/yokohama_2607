@@ -236,6 +236,9 @@
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
     }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+    }
     // &.kbHot {
     //     --shopColor: #{$shop-color-hot-number};
     // }
@@ -439,32 +442,6 @@
             }
         }
     }
-    // &.kbHot {
-    //     .itemLogo {
-    //         width: 60%;
-    //         margin-bottom: 1em;
-    //         margin-top: 2em;
-    //         svg {
-    //             width: 100%;
-    //             @include svg-hot;
-    //             stroke: unset;
-    //             fill: $shop-hot;
-    //         }
-    //     }
-    // }
-    // &.kbVilla {
-    //     .itemLogo {
-    //         width: 60%;
-    //         margin-bottom: 1em;
-    //         margin-top: 2em;
-    //         svg {
-    //             width: 100%;
-    //             @include svg-villa;
-    //             stroke: unset;
-    //             fill: $shop-villa;
-    //         }
-    //     }
-    // }
 }
 
 /* =================================

@@ -3,7 +3,7 @@
  * URL: /src/components/common/profile/CastProfile.tsx
  * Referenced in: /src/app/dandy/profile/page.tsx
  * Created: 2025-09-06
- * Last updated: 2026-07-20
+ * Last updated: 2026-07-31
  * ======================================= */
 'use client';
 
@@ -389,8 +389,9 @@ export default function CastProfile() {
     Boolean(cast.startTime && cast.endTime) || Boolean(cast.scheduleStatus);
   const hasRecommendations = recommendationCards.length > 0;
   const showServiceList =
-    typeof cast.serviceHealth === 'boolean' ||
-    typeof cast.serviceMat === 'boolean';
+    shop === 'dandy' &&
+    (typeof cast.serviceHealth === 'boolean' ||
+      typeof cast.serviceMat === 'boolean');
   const realtimeStatusLabel = realTimeData
     ? REALTIME_STATUS_LABELS[realTimeData.realTimeStatus]
     : undefined;
