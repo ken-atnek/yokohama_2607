@@ -10,11 +10,11 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem 0;
     padding: 1.8rem 2rem 2rem 0;
     color: $base-white;
     font-size: inherit;
     z-index: 2;
+    container-type: inline-size;
     &::before {
         content: "";
         position: absolute;
@@ -51,12 +51,12 @@
         align-items: flex-end;
         .titleEn {
             @include bebas-neue;
-            font-size: fz(40);
+            font-size: 13cqw;
             line-height: 1;
             letter-spacing: 0.04em;
         }
         .titleJp {
-            font-size: fz(14);
+            font-size: 5cqw;
             display: inline-block;
             translate: 0 -0.3em;
             letter-spacing: 0.04em;
@@ -69,6 +69,7 @@
         align-items: start;
         font-size: inherit;
         position: relative;
+        margin-top: 1rem;
         .wrapPhoto {
             display: block;
             font-size: inherit;
@@ -136,10 +137,11 @@
         padding: 0.6rem 1.2rem;
         border-radius: 0.5rem;
         color: $font-black;
-        font-size: fz(18);
+        font-size: 6cqw;
         font-weight: 600;
         letter-spacing: 0.04em;
         background: $pure-white;
+        margin-top: 1.5rem;
         &::before {
             content: "";
             position: absolute;
@@ -160,10 +162,11 @@
         font-size: inherit;
         background: #111;
         transition: opacity 0.2s ease;
+        margin-top: 1.5rem;
         span {
             color: $base-white;
             position: relative;
-            font-size: fz(16);
+            font-size: 5.5cqw;
             font-weight: 600;
             letter-spacing: 0.04em;
             display: flex;

@@ -1,8 +1,8 @@
 /* =======================================
- * 横浜ダンディー メインレイアウト
- * URL: /src/components/dandy/LayoutWrapperMain.tsx
- * Referenced in: /src/app/dandy/top/page.tsx
- * Created: 2025-10-11
+ * クラブダンディー メインレイアウト
+ * URL: /src/components/club_dandy/LayoutWrapperMain.tsx
+ * Referenced in: /src/app/club_dandy/top/page.tsx
+ * Created: 2026-07-31
  * Last updated: 2026-07-31
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
@@ -12,28 +12,21 @@ import ShopLeft, {
   type ShopLeftIframeItem,
 } from '@/components/common/ShopLeft';
 import ContainerShopList from '@/components/common/ContainerShopList';
-import { navMenu } from '@/data/dandy/navMenuData';
+import { navMenu } from '@/data/club_dandy/navMenuData';
 import ShopFooterMenu from '@/components/common/ShopFooterMenu';
+
 export default function LayoutWrapperMain({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const storeId = 'dandy';
-  const bottomIframes: ShopLeftIframeItem[] = [
-    {
-      url: 'https://qzin.jp/1021/widget?d=0',
-      className: 'bottomDandyVanilla01',
-    },
-    {
-      url: 'https://qzin.jp/1021/blogwidget?width=300&height=460',
-      className: 'bottomDandyVanilla02',
-    },
-  ];
+  const storeId = 'club_dandy';
+  const bottomIframes: ShopLeftIframeItem[] = [];
+
   return (
     <>
       <Header
-        title="横浜 風俗(ヘルス)｜横浜ダンディー "
+        title="横浜 風俗(ヘルス)｜クラブダンディー "
         navMenu={navMenu}
         selectedNavIds={[
           'navRealTime',
@@ -44,11 +37,7 @@ export default function LayoutWrapperMain({
       />
       <div className={styles.innerMain}>
         <main className={styles.shopMainContainer}>
-          <ShopLeft
-            shop={storeId}
-            photoDiaryUrl="https://blogparts.cityheaven.net/widget/?shopId=3470&mode=2&type=14&num=12&col=3&color=8&fontsize=12&width=300"
-            bottomIframes={bottomIframes}
-          />
+          <ShopLeft shop={storeId} bottomIframes={bottomIframes} />
           {children}
         </main>
       </div>

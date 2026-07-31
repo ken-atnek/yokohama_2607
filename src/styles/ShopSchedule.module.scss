@@ -92,6 +92,9 @@
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
     }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+    }
 }
 
 /* =================================
@@ -106,6 +109,9 @@
     width: 100%;
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
+    }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
     }
     @include sp {
         padding: 0 0 6vw;

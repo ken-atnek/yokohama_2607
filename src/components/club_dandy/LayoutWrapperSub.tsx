@@ -1,8 +1,8 @@
 /* =======================================
- * 横浜ダンディー サブレイアウト
- * URL: /src/components/dandy/LayoutWrapperSub.tsx
- * Referenced in: /src/app/dandy/cast/page.tsx
- * Created:  2026-07-15
+ * クラブダンディー サブレイアウト
+ * URL: /src/components/club_dandy/LayoutWrapperSub.tsx
+ * Referenced in: /src/app/club_dandy/cast/page.tsx
+ * Created: 2026-07-31
  * Last updated: 2026-07-31
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
@@ -10,17 +10,19 @@ import Footer from '@/components/common/Footer';
 import Header from '@/components/common/ShopHeader';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import ShopFooterMenu from '@/components/common/ShopFooterMenu';
-import { navMenu } from '@/data/dandy/navMenuData';
-export default function LayoutWrapperMain({
+import { navMenu } from '@/data/club_dandy/navMenuData';
+
+export default function LayoutWrapperSub({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const activeStoreClass = 'dandy';
+  const activeStoreClass = 'club_dandy';
+
   return (
     <>
       <Header
-        title="横浜 風俗(ヘルス)｜横浜ダンディー "
+        title="横浜 風俗(ヘルス)｜クラブダンディー "
         navMenu={navMenu}
         selectedNavIds={[
           'navRealTime',

@@ -32,6 +32,9 @@
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
     }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+    }
     a {
         position: relative;
         font-size: fz(14);

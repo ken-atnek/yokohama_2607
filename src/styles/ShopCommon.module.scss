@@ -40,7 +40,7 @@
 .shopMainContainer {
     display: grid;
     max-width: $article-max-width;
-    grid-template-columns: 25% 1fr;
+    grid-template-columns: max(25%, 278px) 1fr;
     padding-bottom: 3em;
     box-shadow: 0.5rem -3rem 4rem rgb(1 1 1 / 15%);
     gap: 0 1em;

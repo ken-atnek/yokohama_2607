@@ -19,6 +19,9 @@
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
     }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+    }
 }
 
 /* =================================

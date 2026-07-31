@@ -1,8 +1,8 @@
 /* =======================================
- * 横浜ダンディー メインレイアウト
- * URL: /src/components/dandy/LayoutWrapperMain.tsx
- * Referenced in: /src/app/dandy/top/page.tsx
- * Created: 2025-10-11
+ * ミスターダンディー メインレイアウト
+ * URL: /src/components/mr_dandy/LayoutWrapperMain.tsx
+ * Referenced in: /src/app/mr_dandy/top/page.tsx
+ * Created: 2026-07-31
  * Last updated: 2026-07-31
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
@@ -12,28 +12,30 @@ import ShopLeft, {
   type ShopLeftIframeItem,
 } from '@/components/common/ShopLeft';
 import ContainerShopList from '@/components/common/ContainerShopList';
-import { navMenu } from '@/data/dandy/navMenuData';
+import { navMenu } from '@/data/mr_dandy/navMenuData';
 import ShopFooterMenu from '@/components/common/ShopFooterMenu';
+
 export default function LayoutWrapperMain({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const storeId = 'dandy';
+  const storeId = 'mr_dandy';
   const bottomIframes: ShopLeftIframeItem[] = [
     {
-      url: 'https://qzin.jp/1021/widget?d=0',
+      url: 'https://qzin.jp/mrdandy0/blogwidget?width=300&height=460',
       className: 'bottomDandyVanilla01',
     },
     {
-      url: 'https://qzin.jp/1021/blogwidget?width=300&height=460',
+      url: 'https://qzin.jp/mrdandy0/widget?d=0',
       className: 'bottomDandyVanilla02',
     },
   ];
+
   return (
     <>
       <Header
-        title="横浜 風俗(ヘルス)｜横浜ダンディー "
+        title="横浜 風俗(ヘルス)｜ミスターダンディー "
         navMenu={navMenu}
         selectedNavIds={[
           'navRealTime',
@@ -46,7 +48,7 @@ export default function LayoutWrapperMain({
         <main className={styles.shopMainContainer}>
           <ShopLeft
             shop={storeId}
-            photoDiaryUrl="https://blogparts.cityheaven.net/widget/?shopId=3470&mode=2&type=14&num=12&col=3&color=8&fontsize=12&width=300"
+            photoDiaryUrl="https://blogparts.cityheaven.net/widget/?shopId=3352&mode=2&type=14&num=12&col=3&color=2&fontsize=12&width=300"
             bottomIframes={bottomIframes}
           />
           {children}

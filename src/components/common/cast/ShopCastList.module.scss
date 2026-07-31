@@ -130,6 +130,43 @@
             }
         }
     }
+    &.mr_dandy {
+        background-color: $mr-color;
+        color: $base-white;
+        h3 {
+            &::before {
+                background-color: $base-white;
+            }
+        }
+        ul {
+            li {
+                button {
+                    &::before {
+                        content: "";
+                        position: absolute;
+                        inset: 0;
+                        background-image: linear-gradient(
+                            to bottom,
+                            #a67802,
+                            #f19102
+                        );
+                        z-index: -1;
+                    }
+                }
+                .filterBtn {
+                    &.isActive {
+                        &::before {
+                            background-image: linear-gradient(
+                                to bottom,
+                                #6c6c6c,
+                                #3b3b3b
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /* =================================
@@ -146,6 +183,9 @@
     }
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
+    }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
     }
     // &.kbVilla {
     //     --shop-color: #{$shop-color-villa-number};

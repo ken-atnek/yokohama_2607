@@ -78,7 +78,7 @@
             top: 0;
             height: 100%;
             width: calc(100% + 1em);
-            background-color: rgba(#e776ad, 1);
+            background-color: rgb(var(--shop-color), 1);
             border-top-right-radius: 1rem;
             border-bottom-right-radius: 1rem;
         }
@@ -213,8 +213,8 @@
         }
         .boxPhotoDiary {
             &::before {
-                background: url("/images/common/photo-diary-dandy.webp")
-                    no-repeat center center / contain;
+                background: url("/images/dandy/photo-diary.webp") no-repeat
+                    center center / contain;
             }
             .wrapTitle {
                 @include contents-title(#000000);
@@ -238,6 +238,47 @@
             iframe {
                 width: 100%;
                 aspect-ratio: 1/1.6;
+            }
+        }
+    }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+        .shopLogoWrap {
+            width: 95%;
+            align-self: center;
+            margin-bottom: 1em;
+            @include sp {
+                width: 40vw;
+                margin-bottom: unset;
+            }
+        }
+        .boxPhotoDiary {
+            &::before {
+                background: url("/images/mr_dandy/photo-diary.webp") no-repeat
+                    center center / contain;
+            }
+            .wrapTitle {
+                @include contents-title(#000000);
+            }
+            .titleObject {
+                &::before {
+                    filter: brightness(105%) hue-rotate(206deg) saturate(142%)
+                        drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+                }
+            }
+        }
+        .bottomDandyVanilla01 {
+            margin-top: 2rem;
+            iframe {
+                width: 100%;
+                aspect-ratio: 1/1.6;
+            }
+        }
+        .bottomDandyVanilla02 {
+            margin-top: 2rem;
+            iframe {
+                width: 100%;
+                aspect-ratio: 1/1.2;
             }
         }
     }

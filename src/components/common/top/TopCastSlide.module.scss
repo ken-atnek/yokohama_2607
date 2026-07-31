@@ -98,23 +98,34 @@
         }
     }
     &.mr_dandy {
-        background-color: rgb(255 153 0 / 12%);
-        background-blend-mode: soft-light;
-        .wrapTitle {
-            @include contents-title(#000000);
-        }
         .titleObject {
             &::before {
-                filter: grayscale(15%) hue-rotate(350deg) saturate(120%)
+                filter: brightness(96%) hue-rotate(48deg) saturate(178%)
                     drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+            }
+        }
+        &.pickUp {
+            background-color: hsl(40, 82%, 80%);
+            background-blend-mode: soft-light;
+            .wrapTitle {
+                @include contents-title(#000);
+            }
+        }
+        &.newFace {
+            background-color: rgb(0 0 0 / 50%);
+            background-blend-mode: multiply;
+            .wrapTitle {
+                @include contents-title(#fff);
             }
         }
     }
     &.club_dandy {
-        background-color: rgb(0 204 51 / 10%);
-        background-blend-mode: soft-light;
-        .wrapTitle {
-            @include contents-title(#000000);
+        &.pickUp {
+            background-color: hsl(40, 82%, 80%);
+            background-blend-mode: soft-light;
+            .wrapTitle {
+                @include contents-title(#000);
+            }
         }
     }
 }

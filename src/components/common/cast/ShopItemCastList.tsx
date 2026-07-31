@@ -3,7 +3,7 @@
  * URL: /src/components/common/cast/ShopItemCastList.tsx
  * Referenced in: /src/components/common/cast/ShopCastList.tsx
  * Created: 2025-09-03
- * Last updated: 2026-07-17
+ * Last updated: 2026-07-31
  * ======================================= */
 
 import styles from './ShopItemCastList.module.scss';
@@ -154,7 +154,7 @@ const ItemCastList = ({
           <span className={styles.hip}>{cast.hip}</span>
         </div>
       </div>
-      {showServiceList ? (
+      {showServiceList && shop === 'dandy' ? (
         <ul className={styles.serviceList}>
           <li
             className={clsx(
