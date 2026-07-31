@@ -21,7 +21,7 @@ import { getShopFromPath, getStoreClass } from '@/lib/shopUtils';
 import { convertRemToPx } from '@/lib/convertRemToPx';
 import { trackPageAccess } from '@/lib/accessCounterApi';
 import { trackCastAccess } from '@/lib/accessCastCounterApi';
-import type { CastDetail, RecommendationItem } from '@/types/CastDetails';
+import type { CastDetail } from '@/types/CastDetails';
 import ExternalLink from '@/components/common/ExternalLink';
 import CastSchedule from './CastSchedule';
 import CastBadgeIcons from '@/components/common/cast/CastBadgeIcons';
@@ -42,11 +42,6 @@ const shopNameMap: Record<string, string> = {
 
 type CastProfileDetail = CastDetail & {
   type: string[];
-  recommendations: RecommendationItem[];
-};
-
-type RecommendationCard = RecommendationItem & {
-  castName: string;
 };
 
 function normalizeCastDetail(
@@ -80,7 +75,6 @@ function normalizeCastDetail(
       realTimeComment: '',
       gradeId: 0,
       type: [],
-      recommendations: [],
       badgeType: 'none',
       shopIconRank: null,
       areaIconRank: null,
@@ -102,17 +96,6 @@ function normalizeCastDetail(
         : typeof source.reserveUrl === 'string'
           ? source.reserveUrl
           : undefined,
-    recommendations: Array.isArray(source.recommendations)
-      ? source.recommendations
-          .filter(
-            (item): item is RecommendationItem =>
-              typeof item === 'object' &&
-              item !== null &&
-              typeof item.shopId === 'string' &&
-              typeof item.castId === 'string'
-          )
-          .slice(0, 4)
-      : [],
   };
 }
 
@@ -121,9 +104,6 @@ export default function CastProfile() {
   const searchParams = useSearchParams();
   const castId = searchParams.get('id');
   const [cast, setCast] = useState<CastProfileDetail | null>(null);
-  const [recommendationCards, setRecommendationCards] = useState<
-    RecommendationCard[]
-  >([]);
   const [realTimeData, setRealTimeData] = useState<RealTimeData | null>(null);
   const [error, setError] = useState(false);
 
@@ -292,70 +272,6 @@ export default function CastProfile() {
     fetchRealTimeData();
   }, [castId, shop]);
 
-  useEffect(() => {
-    if (!cast || cast.recommendations.length === 0) {
-      setRecommendationCards([]);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchRecommendations = async () => {
-      const timestamp = Date.now();
-      const shopIds = Array.from(
-        new Set(cast.recommendations.map((item) => item.shopId))
-      );
-
-      try {
-        const listEntries = await Promise.all(
-          shopIds.map(async (shopId) => {
-            const response = await fetch(
-              `/db/contents/${shopId}/CastList.json?t=${timestamp}`
-            );
-            if (!response.ok) {
-              return [shopId, [] as CastDetail[]] as const;
-            }
-
-            const data = (await response.json()) as CastDetail[];
-            return [shopId, data] as const;
-          })
-        );
-
-        if (cancelled) return;
-
-        const listMap = new Map<string, CastDetail[]>(listEntries);
-        const resolved = cast.recommendations
-          .map((item) => {
-            const targetList = listMap.get(item.shopId) ?? [];
-            const targetCast = targetList.find(
-              (target) => target.castId === item.castId
-            );
-            if (!targetCast) {
-              return null;
-            }
-
-            return {
-              ...item,
-              castName: targetCast.castName,
-            } satisfies RecommendationCard;
-          })
-          .filter((item): item is RecommendationCard => item !== null);
-
-        setRecommendationCards(resolved);
-      } catch {
-        if (!cancelled) {
-          setRecommendationCards([]);
-        }
-      }
-    };
-
-    fetchRecommendations();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cast]);
-
   //ページ読み込み時にバックグラウンド処理でユーザーアクセス情報をログに保存する
   useEffect(() => {
     if (!castId) return;
@@ -387,7 +303,6 @@ export default function CastProfile() {
   const hasNewKirakiraBadge = cast.badgeType === 'new_kirakira';
   const hasScheduleBadge =
     Boolean(cast.startTime && cast.endTime) || Boolean(cast.scheduleStatus);
-  const hasRecommendations = recommendationCards.length > 0;
   const showServiceList =
     shop === 'dandy' &&
     (typeof cast.serviceHealth === 'boolean' ||
@@ -660,7 +575,7 @@ export default function CastProfile() {
             </div>
           </div>
         </div>
-        {hasRecommendations ? (
+        {/* {hasRecommendations ? (
           <div className={styles.blockRecommendation}>
             <h2>
               <span>RECOMMENDATION</span>
@@ -680,7 +595,7 @@ export default function CastProfile() {
               ))}
             </nav>
           </div>
-        ) : null}
+        ) : null} */}
         <div className={styles.boxShopComment}>
           <div className={styles.boxInner}>
             <div className={styles.wrapShopComment}>

@@ -11,7 +11,7 @@ import type { Metadata } from 'next';
 import Footer from '@/components/common/Footer';
 import GroupLogo from '/public/images/logo/dandy-g-logo.webp';
 import Image from 'next/image';
-import BlockTelop from '@/components/area/BlockTelop';
+// import BlockTelop from '@/components/area/BlockTelop';
 import BlockPickUp from '@/components/area/BlockPickUp';
 import BannerGroup from '@/components/common/BannerGroup';
 import bannerGroupStyles from '@/components/common/BannerGroup.module.scss';
@@ -44,10 +44,10 @@ export default function AreaTop() {
         <section className={styles.containerPickUp}>
           <BlockPickUp />
         </section>
-        <section className={styles.containerTelop}>
+        {/* <section className={styles.containerTelop}>
           <h2>news</h2>
           <BlockTelop />
-        </section>
+        </section> */}
         <ContainerShopList />
         <section className={styles.containerContents}>
           <article className={styles.innerContainerContents}>
