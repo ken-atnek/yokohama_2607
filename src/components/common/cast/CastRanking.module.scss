@@ -62,6 +62,16 @@
             "fff"
         );
     }
+    &.club_dandy {
+        @include ranking-nav-theme(
+            #fcfbee,
+            #3cac46,
+            "3cac46",
+            #3cac46,
+            "fff",
+            "fff"
+        );
+    }
     .rankingNav {
         display: grid;
         font-size: inherit;

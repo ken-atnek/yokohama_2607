@@ -78,4 +78,10 @@
             width: 16em;
         }
     }
+    &.club_dandy {
+        --shop-color: #{$club-color-rgb};
+        .itemLogo {
+            width: 17em;
+        }
+    }
 }

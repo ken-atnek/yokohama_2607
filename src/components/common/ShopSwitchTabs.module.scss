@@ -35,6 +35,9 @@
     &.mr_dandy {
         --shop-color: #{$mr-color-rgb};
     }
+    &.club_dandy {
+        --shop-color: #{$club-color-rgb};
+    }
     a {
         position: relative;
         font-size: fz(14);

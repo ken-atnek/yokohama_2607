@@ -120,11 +120,24 @@
         }
     }
     &.club_dandy {
+        .titleObject {
+            &::before {
+                filter: brightness(96%) hue-rotate(151deg) saturate(205%)
+                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+            }
+        }
         &.pickUp {
-            background-color: hsl(40, 82%, 80%);
+            background-color: hsl(149, 86%, 41%);
             background-blend-mode: soft-light;
             .wrapTitle {
                 @include contents-title(#000);
+            }
+        }
+        &.newFace {
+            background-color: rgb(0 0 0 / 50%);
+            background-blend-mode: multiply;
+            .wrapTitle {
+                @include contents-title(#fff);
             }
         }
     }

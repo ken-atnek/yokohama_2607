@@ -95,6 +95,9 @@
     &.mr_dandy {
         --shop-color: #{$mr-color-rgb};
     }
+    &.club_dandy {
+        --shop-color: #{$club-color-rgb};
+    }
 }
 
 /* =================================
@@ -112,6 +115,9 @@
     }
     &.mr_dandy {
         --shop-color: #{$mr-color-rgb};
+    }
+    &.club_dandy {
+        --shop-color: #{$club-color-rgb};
     }
     @include sp {
         padding: 0 0 6vw;
