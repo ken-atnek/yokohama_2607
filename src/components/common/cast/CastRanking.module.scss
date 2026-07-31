@@ -144,6 +144,9 @@
             overflow: hidden;
             padding-top: 1rem;
             border-bottom: 1px solid var(--border-color);
+            @include sp {
+                padding-top: unset;
+            }
             .cardLink {
                 position: relative;
                 display: flex;
@@ -153,6 +156,9 @@
                 font-size: inherit;
                 gap: 0 1em;
                 container-type: inline-size;
+                @include sp {
+                    padding: 2vw;
+                }
                 .rankIcon {
                     position: absolute;
                     &.hasRankIcon {
@@ -284,6 +290,10 @@
                 .groupList {
                     grid-template-columns: 55% 1fr;
                     grid-template-rows: repeat(2, 1fr);
+                    @include sp {
+                        display: flex;
+                        flex-direction: column;
+                    }
                     .cardLink {
                         &:nth-of-type(1) {
                             border-right: 1px solid var(--border-color);
@@ -355,33 +365,60 @@
             }
             &:nth-of-type(2) {
                 border-left: 1px solid var(--border-color);
+                @include sp {
+                    border-right: 1px solid var(--border-color);
+                }
                 .groupList {
                     grid-template-columns: repeat(2, 1fr);
                     .cardLink {
+                        @include sp {
+                            display: flex;
+                            flex-direction: column;
+                        }
                         .rankIcon {
                             top: 2cqw;
                             right: 2cqw;
                             width: 28cqw;
                             aspect-ratio: 1;
+                            @include sp {
+                                width: 40cqw;
+                            }
                             span {
                                 font-size: 5cqw;
+                                @include sp {
+                                    font-size: 8cqw;
+                                }
                             }
                         }
                         .wrapPhoto {
                             width: 30cqw;
+                            @include sp {
+                                align-self: center;
+                                width: 60cqw;
+                            }
                             &:not(.grade0) {
                                 .photoFrame {
                                     img {
                                         clip-path: inset(1.2cqw);
+                                        @include sp {
+                                            clip-path: inset(2cqw);
+                                        }
                                     }
                                 }
                             }
                             .gradeLabel {
                                 font-size: min(4.2cqw, 1.6rem);
+                                @include sp {
+                                    font-size: 8cqw;
+                                }
                             }
                         }
                         .textProfile {
                             justify-content: flex-end;
+                            @include sp {
+                                align-self: center;
+                                align-items: center;
+                            }
                         }
                         &:nth-of-type(1) {
                             border-bottom: 1px solid var(--border-color);
@@ -401,6 +438,10 @@
 
                 .groupList {
                     grid-template-columns: repeat(3, 1fr);
+                    @include sp {
+                        display: flex;
+                        flex-direction: column;
+                    }
                     .cardLink {
                         gap: 0 1cqw;
                         .rankIcon {
@@ -408,30 +449,52 @@
                             right: 2cqw;
                             width: 30cqw;
                             aspect-ratio: 1;
+                            @include sp {
+                                width: 20cqw;
+                                top: 4cqw;
+                            }
                             span {
                                 font-size: 6cqw;
+                                @include sp {
+                                    font-size: 4cqw;
+                                }
                             }
                         }
                         .wrapPhoto {
                             width: 45cqw;
+                            @include sp {
+                                width: 25cqw;
+                            }
                             &:not(.grade0) {
                                 .photoFrame {
                                     img {
                                         clip-path: inset(1.6cqw);
+                                        @include sp {
+                                            clip-path: inset(1cqw);
+                                        }
                                     }
                                 }
                             }
                             .gradeLabel {
                                 font-size: min(7cqw, 1.8rem);
+                                @include sp {
+                                    font-size: 4cqw;
+                                }
                             }
                         }
                         .textProfile {
                             justify-content: flex-end;
                             .shopName {
                                 font-size: min(6.6cqw, 2rem);
+                                @include sp {
+                                    font-size: 4vw;
+                                }
                             }
                             .castName {
                                 font-size: min(7.6cqw, 1.8rem);
+                                @include sp {
+                                    font-size: 4cqw;
+                                }
                             }
                             .sizeHead {
                                 .age {
@@ -447,9 +510,16 @@
                         }
                         &:nth-of-type(1) {
                             border-right: 1px solid var(--border-color);
+                            border-bottom: 1px solid var(--border-color);
                         }
                         &:nth-of-type(2) {
+                            border-bottom: 1px solid var(--border-color);
                             border-right: 1px solid var(--border-color);
+                        }
+                        &:nth-of-type(3) {
+                            @include sp {
+                                border-right: 1px solid var(--border-color);
+                            }
                         }
                     }
                 }
@@ -459,8 +529,14 @@
 
                 .groupList {
                     grid-template-columns: repeat(5, 1fr);
+                    @include sp {
+                        grid-template-columns: repeat(3, 1fr);
+                    }
                     .cardLink {
                         flex-direction: column-reverse;
+                        @include sp {
+                            flex-direction: column;
+                        }
                         padding: 0.5em;
                         .rankIcon {
                             top: 4cqw;
@@ -475,6 +551,9 @@
                             width: 60cqw;
                             align-self: center;
                             margin-top: 0.5em;
+                            @include sp {
+                                margin-top: 4vw;
+                            }
                             &:not(.grade0) {
                                 .photoFrame {
                                     img {
@@ -487,13 +566,22 @@
                             }
                         }
                         .textProfile {
+                            @include sp {
+                                order: 1;
+                            }
                             .shopName {
                                 align-self: flex-end;
                                 font-size: min(10cqw, 2rem);
+                                @include sp {
+                                    align-self: center;
+                                }
                             }
                             .castName {
                                 font-size: min(9cqw, 1.8rem);
                                 align-self: center;
+                                @include sp {
+                                    font-size: 3.6vw;
+                                }
                             }
                             .size {
                                 font-size: min(12cqw, 1.8rem);
@@ -504,6 +592,10 @@
                         }
                         &:nth-of-type(-n + 5) {
                             border-bottom: 1px solid var(--border-color);
+                        }
+                        @include sp {
+                            border-bottom: 1px solid var(--border-color);
+                            border-right: 1px solid var(--border-color);
                         }
                     }
                 }
