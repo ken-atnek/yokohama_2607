@@ -29,7 +29,8 @@ const BlockAccess = ({ variant = 'default' }: ShopDetails) => {
   const shopData = Shops.find((s) => s.storeId === shop);
   const mapImageSrc = mapImageSrcMap[shop];
   const googleMapUrl = shopData
-    ? `https://maps.google.com/maps?q=${encodeURIComponent(
+    ? shopData.mapEmbedUrl ||
+      `https://maps.google.com/maps?q=${encodeURIComponent(
         `${shopData.post} ${shopData.address}`
       )}&t=&z=17&ie=UTF8&iwloc=&output=embed`
     : '';

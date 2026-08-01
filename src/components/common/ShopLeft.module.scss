@@ -23,6 +23,7 @@
         flex-direction: column;
         align-items: flex-end;
         padding: 3em 1em 1em;
+        container-type: inline-size;
         @include sp {
             display: none;
         }
@@ -53,7 +54,7 @@
                 aspect-ratio: 56/165;
             }
             .sidebarH2 {
-                font-size: fz(34);
+                font-size: 14cqw;
                 @include bebas-neue;
                 color: var(--baseColor);
                 margin-top: 2rem;

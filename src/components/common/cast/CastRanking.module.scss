@@ -534,10 +534,10 @@
                     }
                     .cardLink {
                         flex-direction: column-reverse;
+                        padding: 0.5em;
                         @include sp {
                             flex-direction: column;
                         }
-                        padding: 0.5em;
                         .rankIcon {
                             top: 4cqw;
                             left: 3cqw;
