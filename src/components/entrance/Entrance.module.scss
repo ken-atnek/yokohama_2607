@@ -106,7 +106,7 @@ $entrance-max-width: 96rem;
                 padding-inline: 1vw;
                 background-color: #313131;
                 img {
-                    width: 100%;
+                    width: 90%;
                 }
             }
         }
@@ -159,10 +159,9 @@ $entrance-max-width: 96rem;
         gap: 0 2em;
         width: 100%;
         @include sp {
-            padding: 6vw 0;
+            padding: 6vw 8vw;
             gap: 0 4vw;
             grid-template-columns: 4.5em 1fr 4.5em;
-            padding-inline: 10vw;
         }
         .boxAnnounce {
             font-size: inherit;
@@ -193,7 +192,7 @@ $entrance-max-width: 96rem;
                 letter-spacing: 0.12em;
                 @include sp {
                     font-size: 1.1rem;
-                    width: fit-content;
+                    width: max-content;
                 }
             }
 
@@ -279,10 +278,9 @@ $entrance-max-width: 96rem;
                 grid-template-columns: repeat(2, 1fr);
             }
             @include sp {
-                padding-inline: 4vw;
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
+                padding-inline: 2vw;
                 margin: 8vw 0;
+                gap: 0 1vw;
             }
             li {
                 position: relative;
@@ -314,22 +312,14 @@ $entrance-max-width: 96rem;
                         margin: auto;
                     }
                 }
-                &.kbVilla {
-                    svg {
-                        width: 85%;
-                        aspect-ratio: 500/161;
-                        stroke: unset;
 
-                        // fill: $shop-villa;
-                    }
-                }
                 h4 {
                     font-size: fz(14);
                     font-weight: 500;
                     letter-spacing: 0.08em;
                     text-align: center;
                     @include sp {
-                        font-size: fz(12);
+                        font-size: 2.6vw;
                     }
                 }
             }

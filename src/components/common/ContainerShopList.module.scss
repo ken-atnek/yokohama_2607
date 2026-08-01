@@ -113,16 +113,25 @@
                 &.club_dandy {
                     img {
                         width: 70%;
+                        @include sp {
+                            width: 80%;
+                        }
                     }
                 }
                 &.dandy {
                     img {
                         width: 40%;
+                        @include sp {
+                            width: 60%;
+                        }
                     }
                 }
                 &.mr_dandy {
                     img {
                         width: 65%;
+                        @include sp {
+                            width: 80%;
+                        }
                     }
                 }
             }
@@ -134,7 +143,7 @@
                 margin-top: 0.5em;
                 display: inline-block;
                 @include sp {
-                    font-size: fz(14);
+                    font-size: 3vw;
                 }
             }
             .itemTel {
