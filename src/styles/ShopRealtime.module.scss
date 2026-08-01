@@ -16,7 +16,7 @@
     z-index: 1;
 
     @include sp {
-        padding: 14vw 0 6vw;
+        padding: 0;
         gap: 0;
     }
     .blockRialTimeDetails {
@@ -31,6 +31,7 @@
         max-width: $article-max-width;
         flex-direction: column;
         gap: 3rem 0;
+
         .boxUpDateTime {
             align-self: center;
             font-size: inherit;
@@ -39,7 +40,7 @@
             align-items: center;
             gap: 0.8em 0;
             @include sp {
-                margin-bottom: 4vw;
+                margin-bottom: 0w;
             }
             .itemTime {
                 font-size: inherit;

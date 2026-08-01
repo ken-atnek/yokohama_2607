@@ -3,7 +3,7 @@
  * URL: /src/app/mr_dandy/system/page.tsx
  * Referenced in: /src/components/mr_dandy/LayoutWrapperMain.tsx
  * Created: 2026-07-31
- * Last updated: 2026-07-31
+ * Last updated: 2026-08-01
  * ======================================= */
 import LayoutWrapperMain from '@/components/mr_dandy/LayoutWrapperMain';
 import SystemMain from '@/components/common/system/SystemMain';
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 export default function MrDandySystemPage() {
   return (
-    <LayoutWrapperMain>
+    <LayoutWrapperMain hideShopLeftOnMobile>
       <SystemMain />
     </LayoutWrapperMain>
   );

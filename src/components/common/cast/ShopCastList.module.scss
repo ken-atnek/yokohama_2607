@@ -216,27 +216,18 @@
     align-items: center;
     font-size: inherit;
     @include sp {
-        padding: 4vw 2vw;
+        padding: 4vw 0;
     }
-    &.dandy {
-        --shop-color: #{$dandy-color-rgb};
-    }
-    &.mr_dandy {
-        --shop-color: #{$mr-color-rgb};
-    }
-    &.club_dandy {
-        --shop-color: #{$club-color-rgb};
-    }
-    // &.kbVilla {
-    //     --shop-color: #{$shop-color-villa-number};
-    // }
+    @include shop-color;
     .groupBlock {
         display: flex;
         flex-direction: column;
         padding-bottom: 4em;
         font-size: inherit;
         padding-inline: 2vw;
-
+        @include sp {
+            padding-bottom: 6vw;
+        }
         h2 {
             position: relative;
             color: $base-white;
@@ -246,6 +237,9 @@
             letter-spacing: 0.04em;
             padding-top: 0.32em;
             padding-bottom: 0.2em;
+            @include sp {
+                font-size: fz(36);
+            }
             &::before {
                 content: "";
                 position: absolute;
@@ -274,6 +268,9 @@
             --grade-color: 99, 99, 99;
             .castList {
                 grid-template-columns: repeat(4, 1fr);
+                @include sp {
+                    grid-template-columns: repeat(2, 1fr);
+                }
             }
         }
 
@@ -285,6 +282,9 @@
             }
             .castList {
                 grid-template-columns: repeat(3, 1fr);
+                @include sp {
+                    grid-template-columns: repeat(2, 1fr);
+                }
             }
         }
         // grade3 : VIP
@@ -307,7 +307,6 @@
         &.grade7 {
             --grade-color: 2, 38, 109;
         }
-
         // grade8 : レジェンド
         &.grade8 {
             --grade-color: 12, 31, 46;
@@ -325,6 +324,9 @@
             --grade-color: 67, 67, 67;
             .castList {
                 grid-template-columns: repeat(4, 1fr);
+                @include sp {
+                    grid-template-columns: repeat(2, 1fr);
+                }
             }
             h2 {
                 color: #999;
@@ -341,10 +343,9 @@
             align-self: center;
             grid-template-rows: auto 1fr auto auto;
             @include sp {
-                grid-template-columns: repeat(2, 1fr);
                 padding-inline: 0;
-                margin-top: unset;
-                gap: 0 2vw;
+                margin-top: 4vw;
+                gap: 4vw 2vw;
             }
         }
     }

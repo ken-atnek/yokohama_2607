@@ -9,7 +9,7 @@
 
     box-shadow: 0.5rem -3rem 3rem rgb(1 1 1 / 10%);
     @include sp {
-        padding: 6vw 2vw;
+        // padding: 6vw 2vw;
     }
 }
 
@@ -30,6 +30,9 @@
     .wrapPricePlan {
         position: relative;
         font-size: inherit;
+        @include sp {
+            padding-inline: 2vw;
+        }
         h3 {
             font-size: fz(20);
             font-weight: 500;
@@ -73,6 +76,9 @@
                         p {
                             @include futura-cyrillic-book;
                             font-size: fz(20);
+                            @include sp {
+                                font-size: fz(16);
+                            }
                         }
                         &:first-of-type {
                             grid-column-start: 2;
@@ -94,9 +100,13 @@
                         padding-inline: 2em;
                         background-color: rgb(var(--shop-color), 0.7);
                         color: #fff;
+                        @include sp {
+                            padding-inline: 2vw;
+                        }
                         span {
                             @include futura-cyrillic-book;
                             font-size: fz(24);
+
                             &::after {
                                 content: "min";
                                 font-size: 0.8em;
@@ -107,6 +117,9 @@
                         span {
                             @include futura-cyrillic-book;
                             font-size: fz(26);
+                            @include sp {
+                                font-size: fz(22);
+                            }
                             &::before {
                                 content: "¥";
                                 font-size: 0.8em;

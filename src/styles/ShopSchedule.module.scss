@@ -110,15 +110,7 @@
     padding-bottom: 3em;
     z-index: 1;
     width: 100%;
-    &.dandy {
-        --shop-color: #{$dandy-color-rgb};
-    }
-    &.mr_dandy {
-        --shop-color: #{$mr-color-rgb};
-    }
-    &.club_dandy {
-        --shop-color: #{$club-color-rgb};
-    }
+    @include shop-color;
     @include sp {
         padding: 0 0 6vw;
     }
@@ -459,9 +451,9 @@
                 grid-template-columns: repeat(4, 1fr);
             }
             @include sp {
-                grid-template-columns: unset;
-                padding: 4vw;
-                gap: 0;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6vw 2vw;
+                padding-top: 4vw;
             }
             li {
                 .realTImeDetail {

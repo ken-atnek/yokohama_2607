@@ -3,7 +3,7 @@
  * URL: /src/components/common/realtime/TopRealTimeCard.tsx
  * Referenced in: /src/components/common/ShopLeft.tsx
  * Created: 2026-07-20
- * Last updated: 2026-07-20
+ * Last updated: 2026-08-01
  * ======================================= */
 'use client';
 
@@ -23,6 +23,12 @@ type Props = {
 
 type TopRealTimeData = CastDetail & {
   availableFrom?: string;
+};
+
+const getAgeLabel = (cast: TopRealTimeData) => {
+  if (cast.ageText) return cast.ageText;
+  if (cast.age !== null) return String(cast.age);
+  return '';
 };
 
 function normalizeTopRealtime(
@@ -132,6 +138,20 @@ export default function TopRealTimeCard({ shop }: Props) {
         </Link>
         <div className={styles.textBlock}>
           <h3 className={styles.castName}>{data.castName}</h3>
+          <div className={styles.sizeHead}>
+            {getAgeLabel(data) ? (
+              <span className={styles.age}>{getAgeLabel(data)}</span>
+            ) : null}
+            {data.cup ? (
+              <span className={styles.cup}>{data.cup} cup</span>
+            ) : null}
+          </div>
+          <div className={styles.size}>
+            <span className={styles.tall}>T.{data.tall}</span>
+            <span className={styles.bust}>B.{data.bust}</span>
+            <span className={styles.waist}>W.{data.waist}</span>
+            <span className={styles.hip}>H.{data.hip}</span>
+          </div>
           <div className={styles.comment}>
             {commentLines.map((line, index) => (
               <p key={`${data.castId}-${index}`}>{line}</p>

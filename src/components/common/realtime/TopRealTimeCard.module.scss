@@ -15,6 +15,9 @@
     font-size: inherit;
     z-index: 2;
     container-type: inline-size;
+    @include sp {
+        padding: 0 4vw 4vw;
+    }
     &::before {
         content: "";
         position: absolute;
@@ -31,6 +34,9 @@
             rgb(var(--shop-color), 1) 90%,
             rgb(var(--shop-color), 1) 100%
         );
+        @include sp {
+            display: none;
+        }
     }
     &::after {
         content: "";
@@ -42,6 +48,9 @@
         height: 1rem;
         background-color: rgba(#000, 0.3);
         mix-blend-mode: multiply;
+        @include sp {
+            display: none;
+        }
     }
     .head {
         position: relative;
@@ -49,6 +58,9 @@
         gap: 0 1rem;
         font-size: inherit;
         align-items: flex-end;
+        @include sp {
+            display: none;
+        }
         .titleEn {
             @include bebas-neue;
             font-size: 13cqw;
@@ -70,6 +82,10 @@
         font-size: inherit;
         position: relative;
         margin-top: 1rem;
+        @include sp {
+            padding: 24vw 0vw 0;
+            grid-template-columns: 40vw 1fr;
+        }
         .wrapPhoto {
             display: block;
             font-size: inherit;
@@ -103,6 +119,9 @@
             }
             .gradeLabel {
                 font-size: fz(14);
+                @include sp {
+                    font-size: 4vw;
+                }
             }
         }
         .textBlock {
@@ -110,11 +129,51 @@
             flex-direction: column;
             gap: 0.6rem 0;
             font-size: inherit;
+            @include sp {
+                color: $font-black;
+                gap: 0;
+                padding-top: 2vw;
+            }
             .castName {
                 font-size: fz(18);
                 font-weight: 500;
                 line-height: 1.2;
                 letter-spacing: 0.04em;
+                @include sp {
+                    font-size: fz(20);
+                }
+            }
+            .sizeHead {
+                display: none;
+                @include sp {
+                    display: flex;
+                    flex-wrap: wrap;
+                    font-weight: 700;
+                    font-size: inherit;
+                    gap: 0 0.89em;
+                    margin-top: 1vw;
+                    .age {
+                        @include futura-condensed-medium;
+                        font-size: fz(18);
+                        &::before {
+                            content: "Age.";
+                        }
+                    }
+                    .cup {
+                        @include futura-condensed-medium;
+                        font-size: fz(18);
+                    }
+                }
+            }
+            .size {
+                display: none;
+                @include sp {
+                    display: flex;
+                    flex-wrap: wrap;
+                    @include futura-condensed-medium;
+                    font-size: fz(18);
+                    gap: 0 0.3em;
+                }
             }
             .comment {
                 display: flex;
@@ -125,6 +184,10 @@
                     font-size: fz(12);
                     line-height: 1.55;
                     letter-spacing: 0.02em;
+                    @include sp {
+                        font-size: fz(14);
+                        margin-top: 2vw;
+                    }
                 }
             }
         }
@@ -142,6 +205,12 @@
         letter-spacing: 0.04em;
         background: $pure-white;
         margin-top: 1.5rem;
+        @include sp {
+            background-color: rgba(var(--shop-color), 1);
+            color: $pure-white;
+            font-size: 3.6vw;
+            margin-top: 2vw;
+        }
         &::before {
             content: "";
             position: absolute;
@@ -151,6 +220,9 @@
             height: 1.2rem;
             background: $pure-white;
             clip-path: polygon(50% 0, 0 100%, 100% 100%);
+            @include sp {
+                background-color: rgba(var(--shop-color), 1);
+            }
         }
     }
     .linkButton {
@@ -163,6 +235,10 @@
         background: #111;
         transition: opacity 0.2s ease;
         margin-top: 1.5rem;
+        @include sp {
+            background-image: linear-gradient(to bottom, #4e4e4e, #000);
+            margin-top: 2vw;
+        }
         span {
             color: $base-white;
             position: relative;
@@ -172,6 +248,9 @@
             display: flex;
             align-items: center;
             gap: 0 2rem;
+            @include sp {
+                font-size: 3vw;
+            }
             svg {
                 fill: $base-white;
                 aspect-ratio: 7/12;

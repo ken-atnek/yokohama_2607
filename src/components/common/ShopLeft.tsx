@@ -3,7 +3,7 @@
  * URL: /src/components/common/ShopLeft.tsx
  * Referenced in: /src/components/dandy/LayoutWrapperMain.tsx
  * Created: 2025-08-22
- * Last updated: 2026-07-20
+ * Last updated: 2026-08-01
  * ======================================= */
 import styles from './ShopLeft.module.scss';
 import BannerGroup from '@/components/common/BannerGroup';
@@ -18,6 +18,7 @@ type ShopLeftProps = {
   photoDiaryUrl?: string;
   shop: string;
   bottomIframes?: ShopLeftIframeItem[];
+  hideOnMobile?: boolean;
 };
 
 export type ShopLeftIframeItem = {
@@ -29,6 +30,7 @@ const ShopLeft = ({
   photoDiaryUrl,
   shop,
   bottomIframes = [],
+  hideOnMobile = false,
 }: ShopLeftProps) => {
   const storeId = shop;
   const activeStoreClass = storeId;
@@ -44,7 +46,11 @@ const ShopLeft = ({
 
   return (
     <section
-      className={clsx(styles.containerShopLeft, styles[activeStoreClass])}
+      className={clsx(
+        styles.containerShopLeft,
+        styles[activeStoreClass],
+        hideOnMobile && styles.hideOnMobile
+      )}
       style={
         {
           '--baseColor': shopData?.shopColor ?? '#e776ad',
@@ -76,6 +82,21 @@ const ShopLeft = ({
         )}
       </div>
       <div className={styles.boxRealTime}>
+        <div className={styles.wrapTitle}>
+          <h2>
+            <span>
+              rial
+              <i>time</i>
+            </span>
+            リアルタイム情報
+          </h2>
+        </div>
+        <div className={styles.titleObject}>
+          <div className={styles.wrapText}>
+            <div className={styles.shopName}>{shopData?.nameEn}</div>
+            <div className={styles.title}>rial time</div>
+          </div>
+        </div>
         <TopRealTimeCard shop={shop} />
       </div>
       <div className={styles.boxPhotoDiary}>
