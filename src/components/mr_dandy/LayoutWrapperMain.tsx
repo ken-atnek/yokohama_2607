@@ -40,10 +40,15 @@ export default function LayoutWrapperMain({
         title="横浜 風俗(ヘルス)｜ミスターダンディー "
         navMenu={navMenu}
         selectedNavIds={[
+          'navCastList',
           'navRealTime',
           'navSchedule',
-          'navCastList',
+          'navReserve',
           'navPhotoBlog',
+          'navReviews',
+          'navSystem',
+          'navRecruit',
+          'navRecruitMen',
         ]}
       />
       <div className={styles.innerMain}>

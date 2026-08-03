@@ -45,7 +45,7 @@ const Footer = ({ className }: FooterProps) => {
       {
         nameJp: '熊本',
         nameEn: 'kumamoto',
-        url: 'https://www.hotpoint.cc/top.html',
+        url: 'https://www.hot-point.jp/',
         shopColor: '#f9d5c0',
       },
     ],

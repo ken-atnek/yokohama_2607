@@ -211,6 +211,8 @@
                     font-size: inherit;
                     .jp {
                         letter-spacing: 0.12em;
+                        letter-spacing: 0.04em;
+                        font-size: min(1.2vw, 1.6rem);
                         @include sp {
                             font-size: fz(14);
                         }
@@ -267,7 +269,10 @@
                     background-color: $base-white;
                     height: 14vw;
                     align-items: center;
-                    &.navTop,
+                    &.navTop {
+                        order: -1;
+                        grid-column: span 2;
+                    }
                     &.navWeeklySchedule {
                         display: none;
                     }
@@ -461,18 +466,22 @@
         .mobileHeadNav {
             font-size: inherit;
             display: flex;
-            justify-content: space-between;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
             padding-inline: 4vw;
             padding-block: 2vw;
             background-color: rgba(var(--shop-color), 1);
+            -webkit-overflow-scrolling: touch;
             a {
-                order: 1;
-                width: 100%;
+                flex: 0 0 auto;
+                padding: 1vw 2vw;
                 font-size: fz(14);
                 display: flex;
                 justify-content: center;
                 border-right: 1px solid #fff;
                 color: #fff;
+                white-space: nowrap;
                 &:first-of-type {
                     border-left: 1px solid #fff;
                 }

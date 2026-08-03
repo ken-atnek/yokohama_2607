@@ -49,6 +49,7 @@
                 letter-spacing: 0.04em;
                 @include sp {
                     font-size: FZ(50);
+                    text-align: center;
                 }
             }
             h1 {
