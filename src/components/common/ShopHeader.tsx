@@ -42,17 +42,13 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
   const activeStoreClass = shop;
   const shopData = getShopData(shop);
 
-  const filteredNavItems = useMemo(() => {
+  const mobileHeadNavItems = useMemo(() => {
     if (!selectedNavIds || selectedNavIds.length === 0) {
       return navMenu;
     }
 
     return navMenu.filter((item) => selectedNavIds.includes(item.id));
   }, [navMenu, selectedNavIds]);
-
-  const mobileHeadNavItems = useMemo(() => {
-    return filteredNavItems;
-  }, [filteredNavItems]);
 
   // navRecruitの項目を取得
   const recruitItem = useMemo(() => {
@@ -188,7 +184,7 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
           </ScrollLink>
         </div>
         <nav>
-          {filteredNavItems.map((item, index) =>
+          {navMenu.map((item, index) =>
             item.target ? (
               <ExternalLink
                 key={index}

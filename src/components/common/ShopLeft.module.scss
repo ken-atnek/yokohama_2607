@@ -313,8 +313,8 @@
         }
         .boxPhotoDiary {
             &::before {
-                filter: brightness(96%) hue-rotate(48deg) saturate(178%)
-                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+                background: url("/images/mr_dandy/photo-diary.webp") no-repeat
+                    center center / contain;
             }
             .wrapTitle {
                 @include contents-title(#000000);
@@ -370,8 +370,8 @@
         }
         .boxPhotoDiary {
             &::before {
-                filter: brightness(96%) hue-rotate(151deg) saturate(205%)
-                    drop-shadow(0.5rem 0.5rem 0.5rem rgb(1 1 1 / 30%));
+                background: url("/images/club_dandy/photo-diary.webp") no-repeat
+                    center center / contain;
             }
             .wrapTitle {
                 @include contents-title(#000000);
