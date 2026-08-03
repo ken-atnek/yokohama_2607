@@ -168,7 +168,7 @@
     position: absolute;
     top: 4em;
     left: 0;
-    font-size: 1em;
+    font-size: inherit;
     &::before,
     &::after {
         content: "";
@@ -205,8 +205,10 @@
         letter-spacing: 0.12em;
         color: rgba($contents-color, 1);
         @include sp {
-            font-size: FZ(21);
-            padding: 0 2em 0 9em;
+            font-size: fz(20);
+            padding: 0.05em 2em 0.05em 9em;
+            gap: 0;
+            letter-spacing: 0;
         }
         span {
             position: relative;
@@ -353,5 +355,19 @@
                 line-height: 0.8em;
             }
         }
+    }
+}
+/* =================================
+ * 	店舗カラー変数定義
+ * ------------------------------ */
+@mixin shop-color {
+    &.dandy {
+        --shop-color: #{$dandy-color-rgb};
+    }
+    &.mr_dandy {
+        --shop-color: #{$mr-color-rgb};
+    }
+    &.club_dandy {
+        --shop-color: #{$club-color-rgb};
     }
 }

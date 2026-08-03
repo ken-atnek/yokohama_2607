@@ -70,10 +70,17 @@
     &.pickUp {
         background: url("/images/common/pickup_bg.webp") no-repeat center
             center / cover;
+        @include sp {
+            order: -7;
+        }
     }
     &.newFace {
         margin-top: 2rem;
         background: url("/images/common/new-face-bg.webp");
+        @include sp {
+            margin-top: unset;
+            order: -5;
+        }
     }
     &.dandy {
         .titleObject {
@@ -130,7 +137,7 @@
             background-color: hsl(149, 86%, 41%);
             background-blend-mode: soft-light;
             .wrapTitle {
-                @include contents-title(#000);
+                @include contents-title(#fff);
             }
         }
         &.newFace {

@@ -29,15 +29,7 @@
     &::after {
         background-color: rgb(var(--shop-color), 0.3);
     }
-    &.dandy {
-        --shop-color: #{$dandy-color-rgb};
-    }
-    &.mr_dandy {
-        --shop-color: #{$mr-color-rgb};
-    }
-    &.club_dandy {
-        --shop-color: #{$club-color-rgb};
-    }
+    @include shop-color;
     a {
         position: relative;
         font-size: fz(14);
@@ -50,7 +42,10 @@
         transition: 0.3s ease-out;
         z-index: 2;
         @include sp {
-            width: 11em;
+            width: 10em;
+            font-size: fz(12);
+            height: 2.6em;
+            translate: 0 1px;
         }
         &::before {
             content: "";

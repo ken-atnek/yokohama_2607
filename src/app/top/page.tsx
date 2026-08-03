@@ -80,9 +80,9 @@ export default function AreaTop() {
                 title="recruit"
                 className={bannerGroupStyles.boxAreaRecruit}
               />
-              <div className={styles.boxVanilla}>
+              {/* <div className={styles.boxVanilla}>
                 <iframe src="https://qzin.jp/1021/widget?d=0" seamless></iframe>
-              </div>
+              </div> */}
             </div>
             <div className={styles.boxMainContents}>
               <BannerGroup

@@ -4,17 +4,18 @@
  * URL: /src/components/common/ShopHeader.tsx
  * Referenced in: /src/components/dandy/LayoutWrapperMain.tsx
  * Created: 2025-08-21
- * Last updated: 2026-07-16
+ * Last updated: 2026-08-01
  * ======================================= */
 import { usePathname } from 'next/navigation';
 import styles from './ShopHeader.module.scss';
 import clsx from 'clsx';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import ExternalLink from '@/components/common/ExternalLink';
 import { getShopFromPath } from '@/lib/shopUtils';
 import { Shops, type Shop } from '@/data/AreaShopData';
-import type { CSSProperties } from 'react';
+import ScrollLink from '@/components/common/ScrollLink';
 
 type NavItem = {
   id: string;
@@ -131,15 +132,15 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
   return (
     <header
       className={clsx(styles.containerHeader, styles[activeStoreClass])}
-      style={
-        {
-          '--baseColor': shopData?.shopColor ?? '#e776ad',
-        } as CSSProperties
-      }
+      // style={
+      //   {
+      //     '--baseColor': shopData?.shopColor ?? '#e776ad',
+      //   } as CSSProperties
+      // }
     >
       <article className={styles.headerTop}>
         <div className={styles.boxHead}>
-          <p>DANDY GROUP YOKOHAMA AREA</p>
+          <p className={styles.areaName}>DANDY GROUP YOKOHAMA AREA</p>
           <p className={styles.pageTitle}>{title}</p>
         </div>
       </article>
@@ -157,22 +158,29 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
           }
         }}
       >
-        <div className={styles.mobileHamburgerHead}>
+        <div
+          className={clsx(styles.mobileHamburgerHead, styles[activeStoreClass])}
+        >
           <div className={styles.shopName}>
-            {/* <svg>
-              <use href={`${shopData?.svgLogo || ''}`} />
-            </svg> */}
+            {shopData?.logo ? (
+              <Image
+                src={shopData.logo}
+                alt={shopData.name}
+                width={240}
+                height={80}
+              />
+            ) : null}
             <span>{shopData?.name}</span>
           </div>
-          <Link
-            href={`/${shop}`}
+          <ScrollLink
+            href={`/${shop}/top/`}
             className={styles.mobileHome}
             onClick={closeMenu}
           >
             <svg>
               <use href="#mobile_home" />
             </svg>
-          </Link>
+          </ScrollLink>
         </div>
         <nav>
           {navMenu.map((item, index) =>
@@ -188,7 +196,7 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
                 </span>
               </ExternalLink>
             ) : (
-              <Link
+              <ScrollLink
                 key={index}
                 href={item.href}
                 onClick={closeMenu}
@@ -201,7 +209,7 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
                   <i className={styles.en}>{item.labelEn}</i>
                   <i className={styles.jp}>{item.label}</i>
                 </span>
-              </Link>
+              </ScrollLink>
             )
           )}
           <ExternalLink
@@ -239,7 +247,7 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
         <span></span>
         <span></span>
       </button>
-      <div className={styles.mobilePageHead}>
+      <div className={clsx(styles.mobilePageHead, styles[activeStoreClass])}>
         <div className={styles.contentsTop}>
           <div className={styles.name}>
             <span className={styles.en}>{shopData?.nameEn}</span>
@@ -257,11 +265,15 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
         <nav className={styles.mobileHeadNav}>
           {mobileHeadNavItems.map((item, index) =>
             item.target ? (
-              <ExternalLink key={index} href={item.href}>
+              <ExternalLink
+                key={index}
+                href={item.href}
+                className={styles[item.id]}
+              >
                 {item.label}
               </ExternalLink>
             ) : (
-              <Link key={index} href={item.href}>
+              <Link key={index} href={item.href} className={styles[item.id]}>
                 {item.label}
               </Link>
             )

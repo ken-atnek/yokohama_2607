@@ -3,7 +3,7 @@
  * URL: /src/components/club_dandy/LayoutWrapperMain.tsx
  * Referenced in: /src/app/club_dandy/top/page.tsx
  * Created: 2026-07-31
- * Last updated: 2026-07-31
+ * Last updated: 2026-08-01
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
 import Footer from '@/components/common/Footer';
@@ -17,8 +17,10 @@ import ShopFooterMenu from '@/components/common/ShopFooterMenu';
 
 export default function LayoutWrapperMain({
   children,
+  hideShopLeftOnMobile = false,
 }: {
   children: React.ReactNode;
+  hideShopLeftOnMobile?: boolean;
 }) {
   const storeId = 'club_dandy';
   const bottomIframes: ShopLeftIframeItem[] = [
@@ -50,6 +52,7 @@ export default function LayoutWrapperMain({
             shop={storeId}
             photoDiaryUrl="https://blogparts.cityheaven.net/widget/?shopId=3887&mode=2&type=14&num=12&col=3&color=2&fontsize=12&width=300"
             bottomIframes={bottomIframes}
+            hideOnMobile={hideShopLeftOnMobile}
           />
           {children}
         </main>

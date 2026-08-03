@@ -805,6 +805,9 @@
                         margin-top: 4vw;
                     }
                     .itemH2 {
+                        @include sp {
+                            order: -1;
+                        }
                         span {
                             &::before {
                                 @include svg-icon-new-face("ff0099");

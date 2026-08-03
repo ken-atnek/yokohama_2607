@@ -38,16 +38,21 @@
             font-size: fz(16);
             @include sp {
                 grid-column: span 2;
+                font-size: fz(14);
             }
         }
         a {
             font-size: fz(16);
             @include sp {
                 text-align: right;
+                font-size: fz(14);
             }
         }
         p {
             font-size: fz(16);
+            @include sp {
+                font-size: fz(14);
+            }
             span {
                 margin-right: 0.5em;
             }
@@ -64,9 +69,7 @@
         }
     }
     &.systemPage {
-        &.dandy {
-            --shop-color: #{$dandy-color-rgb};
-        }
+        @include shop-color;
         .itemH2 {
             @include futura-cyrillic-book;
             text-transform: uppercase;
