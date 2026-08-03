@@ -8,7 +8,7 @@
 import type { Metadata } from 'next';
 import LayoutWrapperMain from '@/components/dandy/LayoutWrapperMain';
 import { isRealProduction } from '@/lib/env';
-import OneDayRanking from './OneDayRanking';
+import OneDayRanking from '@/components/common/oneday/OneDayRanking';
 
 export const metadata: Metadata = {
   title: '横浜ダンディー ワンデイランキング',
@@ -20,7 +20,10 @@ export const metadata: Metadata = {
 export default function DandyOneDayRankingPage() {
   return (
     <LayoutWrapperMain hideShopLeftOnMobile>
-      <OneDayRanking />
+      <OneDayRanking
+        shop="dandy"
+        jsonPath="/db/contents/dandy/OneDayRanking.json"
+      />
     </LayoutWrapperMain>
   );
 }

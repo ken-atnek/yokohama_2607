@@ -1,6 +1,6 @@
 /* =======================================
- * 横浜ダンディー ワンデイランキング
- * URL: /src/app/dandy/oneday_ranking/OneDayRanking.tsx
+ * 横浜ダンディーグループ ワンデイランキング
+ * URL: /src/components/common/oneday/OneDayRanking.tsx
  * Referenced in: /src/app/dandy/oneday_ranking/page.tsx
  * Created: 2026-08-03
  * Last updated: 2026-08-03
@@ -16,10 +16,12 @@ import { CastGradeMap } from '@/data/CastGradeData';
 import ShopPageTitle from '@/components/common/ShopPageTitle';
 import CastBadgeIcons from '@/components/common/cast/CastBadgeIcons';
 
+type ShopId = 'dandy' | 'mr_dandy' | 'club_dandy';
+
 type OneDayRankingCast = {
   rankID?: string;
   rank: number;
-  shopID: 'dandy' | 'mr_dandy' | 'club_dandy';
+  shopID: ShopId;
   gradeId: number;
   castId: string;
   castName: string;
@@ -42,7 +44,11 @@ type OneDayRankingData = {
   casts: OneDayRankingCast[];
 };
 
-const JSON_PATH = '/db/contents/dandy/OneDayRanking.json';
+type OneDayRankingProps = {
+  shop: ShopId;
+  jsonPath: string;
+};
+
 const DEFAULT_DISPLAY_COUNT = 5;
 
 const getAgeLabel = (cast: OneDayRankingCast) => {
@@ -51,14 +57,17 @@ const getAgeLabel = (cast: OneDayRankingCast) => {
   return '';
 };
 
-export default function OneDayRanking() {
+export default function OneDayRanking({
+  shop,
+  jsonPath,
+}: OneDayRankingProps) {
   const [rankingData, setRankingData] = useState<OneDayRankingData | null>(
     null
   );
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    fetch(`${JSON_PATH}?t=${Date.now()}`, { cache: 'no-store' })
+    fetch(`${jsonPath}?t=${Date.now()}`, { cache: 'no-store' })
       .then((res) => {
         if (!res.ok) throw new Error('fetch failed');
         return res.json();
@@ -68,7 +77,7 @@ export default function OneDayRanking() {
         setIsError(false);
       })
       .catch(() => setIsError(true));
-  }, []);
+  }, [jsonPath]);
 
   if (isError) {
     return (
@@ -93,7 +102,7 @@ export default function OneDayRanking() {
       <ShopPageTitle
         titleJp="ワンデイランキング"
         titleEn="one day ranking"
-        shop="dandy"
+        shop={shop}
         variant="noLogo"
       />
       <ol className={styles.rankingList}>
