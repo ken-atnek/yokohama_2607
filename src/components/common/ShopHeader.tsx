@@ -42,21 +42,26 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
   const activeStoreClass = shop;
   const shopData = getShopData(shop);
 
-  // mobileHeadNav用の4つの項目を選択（デフォルトまたは指定された項目）
-  const mobileHeadNavItems = useMemo(() => {
-    const ids = selectedNavIds?.slice(0, 4) || [
-      'navRealTime',
-      'navSchedule',
-      'navCastList',
-      'navSystem',
-    ];
-    return navMenu.filter((item) => ids.includes(item.id));
+  const filteredNavItems = useMemo(() => {
+    if (!selectedNavIds || selectedNavIds.length === 0) {
+      return navMenu;
+    }
+
+    return navMenu.filter((item) => selectedNavIds.includes(item.id));
   }, [navMenu, selectedNavIds]);
+
+  const mobileHeadNavItems = useMemo(() => {
+    return filteredNavItems;
+  }, [filteredNavItems]);
 
   // navRecruitの項目を取得
   const recruitItem = useMemo(() => {
+    if (mobileHeadNavItems.some((item) => item.id === 'navRecruit')) {
+      return null;
+    }
+
     return navMenu.find((item) => item.id === 'navRecruit');
-  }, [navMenu]);
+  }, [mobileHeadNavItems, navMenu]);
 
   const [telop, setTelop] = useState<string>('');
 
@@ -183,7 +188,7 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
           </ScrollLink>
         </div>
         <nav>
-          {navMenu.map((item, index) =>
+          {filteredNavItems.map((item, index) =>
             item.target ? (
               <ExternalLink
                 key={index}

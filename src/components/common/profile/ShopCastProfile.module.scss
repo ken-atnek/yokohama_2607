@@ -16,6 +16,9 @@
     flex-direction: column;
     padding-inline: 2vw;
     align-items: center;
+    @include sp {
+        padding: 2vw 0 0;
+    }
     &.dandy {
         --shop-color: #{$dandy-color-rgb};
     }
@@ -37,7 +40,9 @@
     width: 100%;
     padding-top: 3rem;
     padding-bottom: 5rem;
-
+    @include sp {
+        display: contents;
+    }
     // スライド画像
     .boxCastImage {
         position: relative;
@@ -45,8 +50,11 @@
         min-width: 0;
         container-type: inline-size;
         padding-right: 3rem;
+
         @include sp {
-            order: -8;
+            width: 100%;
+            padding-right: unset;
+            padding: 2vw;
         }
         .wrapBadge {
             position: absolute;
@@ -56,15 +64,15 @@
             gap: 0.5rem;
             z-index: 3;
             @include sp {
-                right: 2vw;
-                top: 2vw;
+                right: 4vw;
+                top: 4vw;
                 gap: 1vw;
             }
             .badgeImage {
                 width: 5.6rem;
                 height: auto;
                 @include sp {
-                    width: 16vw;
+                    width: 12vw;
                 }
             }
         }
@@ -148,7 +156,9 @@
                 left: -3cqw;
                 bottom: -3cqw;
                 @include sp {
-                    width: 12vw;
+                    width: 20vw;
+                    left: 0;
+                    bottom: 0;
                 }
                 img {
                     width: 100%;
@@ -163,6 +173,9 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        @include sp {
+            display: contents;
+        }
         .linkList {
             color: rgb(var(--shop-color));
             font-size: fz(14);
@@ -177,8 +190,10 @@
             background-color: #fff;
             box-shadow: 0 2px 5px rgba(#242424, 0.2);
             @include sp {
-                width: 10em;
-                height: 10vw;
+                order: -2;
+                align-self: center;
+                height: 9vw;
+                width: 12em;
             }
         }
         .listType {
@@ -188,6 +203,13 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 4px;
             margin-top: 1em;
+            @include sp {
+                order: -1;
+                width: 100%;
+                padding-inline: 2vw;
+                gap: 0 1vw;
+                margin-top: 2vw;
+            }
             li {
                 font-size: fz(14);
                 @include flex-center;
@@ -196,15 +218,23 @@
                 border-radius: 0.5rem;
                 color: $pure-white;
                 letter-spacing: 0.12em;
+                @include sp {
+                    height: 10vw;
+                    border-radius: 2px;
+                }
             }
         }
-
         .innerProfile {
             flex: 1;
             display: flex;
             flex-direction: column;
             font-size: inherit;
             justify-content: space-between;
+            @include sp {
+                order: -2;
+                padding-inline: 2vw;
+                padding-top: 4vw;
+            }
             .castName {
                 display: flex;
                 flex-direction: column;
@@ -214,6 +244,9 @@
                 flex: 1;
                 justify-content: center;
                 gap: 0.1em 0;
+                @include sp {
+                    font-size: fz(56);
+                }
                 span {
                     font-size: 0.26em;
                     @include futura-cyrillic-book;
@@ -288,12 +321,21 @@
                 gap: 0 2px;
                 justify-content: center;
                 margin-top: 2rem;
+                @include sp {
+                    width: 100%;
+                    margin-top: 2vw;
+                }
                 li {
                     font-size: fz(14);
                     text-align: center;
                     padding-block: 1em;
                     letter-spacing: 0.08em;
                     max-width: 22rem;
+                    @include sp {
+                        height: 8vw;
+                        max-width: unset;
+                        @include flex-center;
+                    }
                     &.isActive {
                         background-color: #8ee786;
                         color: #2b2b2b;
@@ -322,6 +364,10 @@
             border-radius: 1rem 1rem 0 0;
             font-size: inherit;
             margin-top: 2rem;
+            @include sp {
+                margin-top: 10vw;
+                width: 96vw;
+            }
             .headRealTime {
                 display: flex;
                 align-items: center;
@@ -396,6 +442,9 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             margin-top: 1rem;
+            @include sp {
+                width: 100%;
+            }
             .linkPhotoBlog,
             .linkReservation {
                 position: relative;
@@ -468,9 +517,17 @@
             border-radius: 1rem;
             padding-inline: 2em;
             margin-top: 1rem;
+            @include sp {
+                width: 96vw;
+                min-height: unset;
+                height: 12vw;
+            }
             .iconBell {
                 width: 5.5rem;
                 flex-shrink: 0;
+                @include sp {
+                    width: 8vw;
+                }
                 svg {
                     display: block;
                     width: 100%;
@@ -481,6 +538,9 @@
             }
             span {
                 font-size: fz(20);
+                @include sp {
+                    font-size: fz(16);
+                }
             }
             .arrow {
                 fill: rgba(var(--shop-color), 1);
@@ -514,6 +574,11 @@
     padding-inline: 2vw;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    @include sp {
+        margin-top: 2vw;
+        overflow: hidden;
+        width: 100vw;
+    }
     &::before {
         content: "";
         position: absolute;
@@ -542,6 +607,9 @@
     flex-direction: column;
     align-items: center;
     padding-block: 2em;
+    @include sp {
+        grid-column: unset;
+    }
     &::before {
         content: "";
         position: absolute;
@@ -576,6 +644,7 @@
             grid-template-columns: auto 1fr;
             gap: 1vw 0;
             margin-top: 4vw;
+            padding-inline: 4vw;
         }
         li {
             position: relative;
@@ -610,7 +679,7 @@
                     font-size: fz(36);
                     letter-spacing: 0.01em;
                     @include sp {
-                        font-size: fz(36);
+                        font-size: fz(30);
                     }
                 }
                 .itemWeek {
@@ -717,6 +786,9 @@
         font-size: inherit;
         display: flex;
         flex-direction: column;
+        @include sp {
+            padding-inline: 4vw;
+        }
         .linkReservation {
             position: relative;
             font-size: inherit;
@@ -727,6 +799,10 @@
             border-radius: 1rem;
             box-shadow: 0 2px 5px rgba(#242424, 0.2);
             margin-top: 2em;
+            @include sp {
+                flex-direction: column;
+                border-radius: 2px;
+            }
             h3 {
                 background-color: #f8f8f8;
                 color: rgba(var(--shop-color), 1);
@@ -735,6 +811,12 @@
                 font-size: fz(16);
                 padding: 1.4em 4em 1.4em 2em;
                 clip-path: polygon(0 0, 100% 0, 80% 100%, 0 100%);
+                @include sp {
+                    clip-path: unset;
+                    padding: 0.5em 0;
+                    text-align: center;
+                    border-radius: 2px 2px 0 0;
+                }
             }
             p {
                 font-size: fz(16);
@@ -746,6 +828,9 @@
                 @include sp {
                     padding: 0;
                     letter-spacing: 0.12em;
+                    border-radius: 0 0 2px 2px;
+                    text-align: center;
+                    padding-block: 1em;
                 }
             }
         }
@@ -755,6 +840,10 @@
         }
         p {
             font-size: fz(12);
+            @include sp {
+                width: 100%;
+                font-size: 1rem;
+            }
         }
         .wrapTel {
             border-top: 1px solid;
@@ -764,13 +853,25 @@
             align-items: center;
             justify-content: center;
             padding-top: 1rem;
+            @include sp {
+                padding: 2vw 4vw;
+                background-color: #fff;
+                border-radius: 2px;
+                border-top: unset;
+            }
             h5 {
                 font-size: fz(16);
+                @include sp {
+                    font-size: fz(14);
+                }
             }
             span {
                 @include futura-cyrillic-book;
                 font-size: fz(36);
                 display: inline-block;
+                @include sp {
+                    font-size: fz(32);
+                }
                 &::before {
                     content: "tel.";
                 }
@@ -781,74 +882,74 @@
 /* =================================
  *  このキャストを見た方におすすめのキャスト
  * ------------------------------ */
-.blockRecommendation {
-    position: relative;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    font-size: inherit;
-    &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        width: 100vw;
-        left: 50%;
-        translate: -50%;
-        height: 100%;
-        background-color: rgba(var(--shop-color), 1);
-        z-index: -1;
-    }
-    h2 {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0 1.2rem;
-        font-size: fz(14);
-        color: $bg-black;
-        span {
-            @include futura-cyrillic-book;
-            color: $base-white;
-            font-size: 2em;
-            line-height: 1;
-        }
-    }
-    nav {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0 0.7rem;
-        margin-top: 0.6rem;
-        font-size: inherit;
-        a {
-            min-height: 7.6rem;
-            @include flex-center(row);
-            border-radius: 1.5rem;
-            background-color: rgba(var(--shop-color), 0.2);
-            font-size: inherit;
-            color: rgba(var(--shop-color), 1);
-            position: relative;
-            &::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                background-color: $base-white;
-                z-index: -1;
-                border-radius: 1.5rem;
-            }
-            svg {
-                fill: rgba(var(--shop-color), 1);
-                aspect-ratio: 7/12;
-                width: 8px;
-            }
-            span {
-                color: $font-black;
-                font-size: fz(14);
-                line-height: 1.4;
-                display: inline-block;
-                margin-left: 0.5em;
-                transform: 0 -0.2em;
-            }
-        }
-    }
-}
+// .blockRecommendation {
+//     position: relative;
+//     padding-top: 2rem;
+//     padding-bottom: 2rem;
+//     font-size: inherit;
+//     &::before {
+//         content: "";
+//         position: absolute;
+//         top: 0;
+//         width: 100vw;
+//         left: 50%;
+//         translate: -50%;
+//         height: 100%;
+//         background-color: rgba(var(--shop-color), 1);
+//         z-index: -1;
+//     }
+//     h2 {
+//         display: flex;
+//         flex-wrap: wrap;
+//         align-items: center;
+//         gap: 0 1.2rem;
+//         font-size: fz(14);
+//         color: $bg-black;
+//         span {
+//             @include futura-cyrillic-book;
+//             color: $base-white;
+//             font-size: 2em;
+//             line-height: 1;
+//         }
+//     }
+//     nav {
+//         display: grid;
+//         grid-template-columns: repeat(4, 1fr);
+//         gap: 0 0.7rem;
+//         margin-top: 0.6rem;
+//         font-size: inherit;
+//         a {
+//             min-height: 7.6rem;
+//             @include flex-center(row);
+//             border-radius: 1.5rem;
+//             background-color: rgba(var(--shop-color), 0.2);
+//             font-size: inherit;
+//             color: rgba(var(--shop-color), 1);
+//             position: relative;
+//             &::before {
+//                 content: "";
+//                 position: absolute;
+//                 inset: 0;
+//                 background-color: $base-white;
+//                 z-index: -1;
+//                 border-radius: 1.5rem;
+//             }
+//             svg {
+//                 fill: rgba(var(--shop-color), 1);
+//                 aspect-ratio: 7/12;
+//                 width: 8px;
+//             }
+//             span {
+//                 color: $font-black;
+//                 font-size: fz(14);
+//                 line-height: 1.4;
+//                 display: inline-block;
+//                 margin-left: 0.5em;
+//                 transform: 0 -0.2em;
+//             }
+//         }
+//     }
+// }
 /* =================================
  * ショップコメント
  * ------------------------------ */
@@ -857,6 +958,10 @@
     display: flex;
     justify-content: flex-end;
     padding-block: 2em;
+    @include sp {
+        width: 100%;
+        padding: 2vw 4vw 6vw;
+    }
     .boxInner {
         width: 100%;
         display: flex;
@@ -898,6 +1003,9 @@
     display: flex;
     justify-content: center;
     padding-block: 2em;
+    @include sp {
+        margin-bottom: 2vw;
+    }
     &::before {
         content: "";
         position: absolute;

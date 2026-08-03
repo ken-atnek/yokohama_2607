@@ -1,0 +1,201 @@
+@use "../../../styles/foundation/" as *;
+
+/* =======================================
+ * 横浜ダンディー ワンデイランキングページ スタイル
+ * URL: /src/app/dandy/oneday_ranking/OneDayRanking.module.scss
+ * Referenced in: /src/app/dandy/oneday_ranking/page.tsx
+ * Created: 2026-08-03
+ * Last updated: 2026-08-03
+ * ======================================= */
+.oneDayRanking {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    @include sp {
+        display: contents;
+    }
+}
+.rankingList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4rem 1rem;
+    width: 100%;
+    padding-top: 1em;
+    padding-inline: 2vw;
+    @include sp {
+        gap: 8vw 2vw;
+        padding-bottom: 10vw;
+    }
+    .boxCast {
+        position: relative;
+        display: grid;
+        grid-row: span 3;
+        grid-template-rows: subgrid;
+        background-color: #fff;
+        box-shadow: 1px 1px 5px rgba(#6a6a6a, 0.2);
+        color: $font-black;
+        container-type: inline-size;
+        font-size: inherit;
+        padding-bottom: 0.2em;
+        &:first-of-type {
+            grid-column: span 2;
+            width: 100%;
+            max-width: 64rem;
+            justify-self: center;
+            @include sp {
+                max-width: 80vw;
+            }
+        }
+        .cardLink {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            color: inherit;
+            font-size: inherit;
+            .wrapBadge {
+                position: absolute;
+                right: 1cqw;
+                top: 4cqw;
+                display: grid;
+                grid-auto-flow: row;
+                gap: 5px 0;
+                font-size: inherit;
+                z-index: 1;
+                @include sp {
+                    top: 2vw;
+                    gap: 1vw 0;
+                }
+                .badgeImage {
+                    width: max(5rem, 9cqw);
+                    @include sp {
+                        width: 4.8em;
+                    }
+                }
+            }
+            .itemRanking {
+                position: absolute;
+                left: -1cqw;
+                bottom: -1cqw;
+                width: max(8rem, 25cqw);
+                font-size: inherit;
+                @include sp {
+                    width: 25cqw;
+                }
+                img {
+                    width: 100%;
+                    height: auto;
+                }
+            }
+            .wrapPhoto {
+                @include cast-list-box-image;
+                &.hasNewBadge {
+                    border: solid 6px #03c275;
+                }
+                &.hasNewKirakira {
+                    .photoFrame {
+                        img {
+                            clip-path: inset(max(1rem, 3cqw));
+                            @include sp {
+                                clip-path: inset(2.4cqw);
+                            }
+                        }
+                    }
+                }
+                &:not(.grade0, .grade8) {
+                    .photoFrame {
+                        img {
+                            clip-path: inset(max(1rem, 3cqw));
+                            @include sp {
+                                clip-path: inset(2.4cqw);
+                            }
+                        }
+                    }
+                }
+                .gradeLabel {
+                    font-size: min(10cqw, 3.6rem);
+                }
+            }
+        }
+        .castProfile {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.5em;
+            gap: 0.2em 0;
+            font-size: inherit;
+            .wrapName {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: inherit;
+                .castName {
+                    font-size: max(4.4cqw, 2rem);
+                    letter-spacing: 0.12em;
+                }
+                .age {
+                    @include futura-cyrillic-book;
+                    font-size: max(4.4cqw, 2rem);
+                    &::before {
+                        content: "Age.";
+                        font-size: 0.8em;
+                    }
+                }
+            }
+            .castSize {
+                display: flex;
+                align-items: center;
+                gap: 0 0.1em;
+                font-size: inherit;
+                span {
+                    @include futura-cyrillic-book;
+                    font-size: max(4cqw, 1.8rem);
+                    @include sp {
+                        font-size: fz(18);
+                    }
+                    &.tall {
+                        &::before {
+                            content: "T.";
+                        }
+                    }
+                    &.bust {
+                        &::before {
+                            content: "B.";
+                        }
+                        i {
+                            margin-left: 0.05em;
+                            font-size: inherit;
+                            text-transform: uppercase;
+                            &::before,
+                            &::after {
+                                display: inline-block;
+                                translate: 0 -0.08em;
+                            }
+                            &::before {
+                                content: "[";
+                                margin-right: 0.1em;
+                            }
+                            &::after {
+                                content: "]";
+                                margin-left: 0.05em;
+                            }
+                        }
+                    }
+                    &.waist {
+                        &::before {
+                            content: "W.";
+                        }
+                    }
+                    &.hip {
+                        &::before {
+                            content: "H.";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+.itemError {
+    color: #d60000;
+    font-size: fz(14);
+}
