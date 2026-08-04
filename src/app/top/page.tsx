@@ -3,7 +3,7 @@
  * URL: /src/app/top/page.tsx
  * Referenced in: /src/app/top/page.tsx
  * Created: 2026-07-09
- * Last updated: 2026-07-09
+ * Last updated: 2026-08-04
  * ======================================= */
 
 import styles from '@/styles/AreaTop.module.scss';
@@ -98,11 +98,12 @@ export default function AreaTop() {
                 <BlockNewFace />
               </div>
               <div className={styles.wrapRanking}>
-                <h2 className={styles.itemH2}>6月度指名ランキング</h2>
                 <CastRanking
                   jsonPath="/db/contents/area/areaMainRanking.json"
                   showShopName={true}
                   rankIconType="area"
+                  showCurrentTitle={true}
+                  titleClassName={styles.itemH2}
                 />
               </div>
               <div className={styles.wrapBanInformation}>

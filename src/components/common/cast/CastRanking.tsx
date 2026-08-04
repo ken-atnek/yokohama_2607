@@ -55,6 +55,8 @@ type CastRankingProps = {
   showShopName?: boolean;
   rankIconType?: 'area' | 'dandy' | 'mr' | 'club';
   className?: string;
+  showCurrentTitle?: boolean;
+  titleClassName?: string;
 };
 
 const shopColorMap = Object.fromEntries(
@@ -120,6 +122,8 @@ export default function CastRanking({
   showShopName = false,
   rankIconType = 'area',
   className,
+  showCurrentTitle = false,
+  titleClassName,
 }: CastRankingProps) {
   const [rankingData, setRankingData] = useState<RankingTab[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -272,6 +276,9 @@ export default function CastRanking({
       ref={rankingRef}
       className={clsx(styles.containerRanking, className && styles[className])}
     >
+      {showCurrentTitle ? (
+        <h2 className={titleClassName}>{selectedRanking.title}</h2>
+      ) : null}
       {rankingData.length > 1 ? (
         <nav
           className={clsx(
