@@ -53,7 +53,9 @@ function normalizeTopRealtime(
   };
 }
 
-export default function TopRealTimeCard({ shop }: Props) {
+export default function TopRealTimeCard({
+  shop,
+}: Props) {
   const [data, setData] = useState<TopRealTimeData | null>(null);
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function TopRealTimeCard({ shop }: Props) {
   const grade = CastGradeMap[data.gradeId];
 
   return (
-    <article className={styles.topRealTimeCard}>
+    <article className={styles.topRealTimeCard} data-top-realtime-card>
       <div className={styles.head}>
         <h2 className={styles.titleEn}>REAL TIME</h2>
         <p className={styles.titleJp}>リアルタイム情報</p>
