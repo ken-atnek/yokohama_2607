@@ -3,18 +3,24 @@
  * URL: /src/components/common/ContainerShopList.tsx
  * Referenced in: /src/app/top/page.tsx
  * Created: 2025-08-19
- * Last updated: 2026-07-16
+ * Last updated: 2026-08-04
  * ======================================= */
 import styles from './ContainerShopList.module.scss';
 import { Shops } from '@/data/AreaShopData';
-import Image from 'next/image';
 import Link from 'next/link';
 import ExternalLink from '@/components/common/ExternalLink';
 import clsx from 'clsx';
 import ScrollLink from '@/components/common/ScrollLink';
+import type { CSSProperties } from 'react';
 
 type ContainerShopListProps = {
   activeStoreClass?: string;
+};
+
+const shopLogoImageMap: Record<string, string> = {
+  dandy: '/images/logo/logo-y-dandy-shop-list.png',
+  mr_dandy: '/images/logo/logo-mr-dandy-shop-list.png',
+  club_dandy: '/images/logo/logo-club-dandy-shop-list.png',
 };
 
 const ContainerShopList = ({ activeStoreClass }: ContainerShopListProps) => {
@@ -26,7 +32,7 @@ const ContainerShopList = ({ activeStoreClass }: ContainerShopListProps) => {
       )}
     >
       <h2>dandy group shop link</h2>
-      <ScrollLink href="/" className={styles.pageTop}>
+      <ScrollLink href="#" className={styles.pageTop}>
         <span>page top</span>
       </ScrollLink>
       <ul>
@@ -38,14 +44,14 @@ const ContainerShopList = ({ activeStoreClass }: ContainerShopListProps) => {
               <Link
                 href={shopItem.url}
                 className={clsx(styles.itemLogo, styles[shopItem.storeId])}
-                style={{ borderColor: shopItem.shopColor }}
+                style={
+                  {
+                    borderColor: shopItem.shopColor,
+                    '--shop-logo': `url("${shopLogoImageMap[shopItem.storeId]}")`,
+                  } as CSSProperties
+                }
               >
-                <Image
-                  src={shopItem.logo}
-                  alt={shopItem.name}
-                  width={200}
-                  height={50}
-                />
+                <span className={styles.logoText}>{shopItem.name}</span>
               </Link>
               <p>{shopItem.name}</p>
               <ExternalLink

@@ -5,7 +5,7 @@
  * URL: /src/components/common/profile/ShopCastProfile.module.scss
  * Referenced in: /src/components/common/profile/CastProfile.tsx
  * Created: 2025-09-06
- * Last updated: 2026-07-20
+ * Last updated: 2026-08-04
  * ======================================= */
 /* stylelint-disable no-descending-specificity */
 /* stylelint-disable keyframes-name-pattern */
@@ -35,7 +35,7 @@
  * ------------------------------ */
 .blockDetails {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: $article-max-width;
     width: 100%;
     padding-top: 3rem;
@@ -55,6 +55,7 @@
             width: 100%;
             padding-right: unset;
             padding: 2vw;
+            margin-bottom: 6vw;
         }
         .wrapBadge {
             position: absolute;
@@ -94,6 +95,18 @@
                 .photoFrame {
                     .imageClip {
                         clip-path: inset(2.5cqw);
+                    }
+                }
+            }
+            &.grade8 {
+                .photoFrame {
+                    .profileSplide {
+                        :global(.splide__pagination) {
+                            bottom: -10.5rem;
+                            @include sp {
+                                bottom: -18vw;
+                            }
+                        }
                     }
                 }
             }
@@ -173,6 +186,7 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        min-width: 0;
         @include sp {
             display: contents;
         }
@@ -365,7 +379,7 @@
             font-size: inherit;
             margin-top: 2rem;
             @include sp {
-                margin-top: 10vw;
+                margin-top: 2vw;
                 width: 96vw;
             }
             .headRealTime {
@@ -574,9 +588,10 @@
     padding-inline: 2vw;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    // display: none;
+    // overflow: hidden;
     @include sp {
         margin-top: 2vw;
-        overflow: hidden;
         width: 100vw;
     }
     &::before {
@@ -590,10 +605,19 @@
         z-index: -1;
         background-color: rgba(var(--shop-color), 1);
     }
-    span {
-        display: inline-block;
-        padding-left: 100%;
-        animation: telop-marquee 16s linear infinite;
+
+    .boxTelop {
+        font-size: inherit;
+        overflow: hidden;
+        width: 90vw;
+        @include sp {
+            width: 100vw;
+        }
+        span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: telop-marquee 16s linear infinite;
+        }
     }
 }
 /* =================================
@@ -601,7 +625,7 @@
  * ------------------------------ */
 .boxSchedule {
     position: relative;
-    grid-column: span 2;
+    // grid-column: span 2;
     font-size: inherit;
     display: flex;
     flex-direction: column;
@@ -979,6 +1003,9 @@
             .shopComment {
                 width: 100%;
                 font-size: inherit;
+                * {
+                    font-size: 1.6rem;
+                }
                 b {
                     line-height: 1.6em;
                     font-weight: 500;

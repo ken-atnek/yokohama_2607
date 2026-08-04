@@ -3,7 +3,7 @@
  * URL: /src/components/common/cast/CastRanking.tsx
  * Referenced in: /src/app/top/page.tsx, /src/components/common/top/TopCastRanking.tsx
  * Created: 2026-07-09
- * Last updated: 2026-07-17
+ * Last updated: 2026-08-04
  * ======================================= */
 
 'use client';
@@ -128,7 +128,7 @@ export default function CastRanking({
   const rankingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const path = `${jsonPath}?t=${Date.now()}`;
+    const path = `${jsonPath}${jsonPath.includes('?') ? '&' : '?'}t=${Date.now()}`;
 
     fetch(path, { cache: 'no-store' })
       .then((res) => {

@@ -14,13 +14,15 @@
     background-color: #000;
     padding: 2em 0;
     overflow: hidden;
+    margin-top: 2rem;
     &.dandy {
         background-color: #e776ad;
     }
     @include sp {
         order: -8;
         background: transparent;
-        padding: 0;
+        padding: 2vw 0;
+        margin-top: unset;
     }
     .wrapImageList {
         position: relative;
