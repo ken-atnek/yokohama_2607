@@ -19,7 +19,9 @@ type ShopDetails = {
 };
 
 const mapImageSrcMap: Record<string, string> = {
+  club_dandy: '/images/club_dandy/map.webp',
   dandy: '/images/dandy/map.webp',
+  mr_dandy: '/images/mr_dandy/map.webp',
 };
 
 const BlockAccess = ({ variant = 'default' }: ShopDetails) => {
