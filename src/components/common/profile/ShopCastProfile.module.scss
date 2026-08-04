@@ -98,18 +98,18 @@
                     }
                 }
             }
-            &.grade8 {
-                .photoFrame {
-                    .profileSplide {
-                        :global(.splide__pagination) {
-                            bottom: -10.5rem;
-                            @include sp {
-                                bottom: -18vw;
-                            }
-                        }
-                    }
-                }
-            }
+            // &.grade8 {
+            //     .photoFrame {
+            //         .profileSplide {
+            //             :global(.splide__pagination) {
+            //                 bottom: -10.5rem;
+            //                 @include sp {
+            //                     bottom: -18vw;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
             .gradeLabel {
                 font-size: min(10cqw, 3.2rem);
             }

@@ -129,26 +129,28 @@
             display: none;
         }
         .photoFrame {
-            padding: 12.5cqw;
-            &::before,
-            &::after {
-                content: "";
-                position: absolute;
-                z-index: 1;
-            }
-            &::before {
-                inset: 0;
-                background: url(/images/common/legend-frame.webp) no-repeat
-                    center center/cover;
-            }
-            &::after {
-                bottom: 0;
-                left: 50%;
-                translate: -50%;
-                width: 45cqw;
-                background: url(/images/common/icon_legend.gif) no-repeat center
-                    center/contain;
-                aspect-ratio: 400/95;
+            .imageClip {
+                padding: 12.5cqw;
+                &::before,
+                &::after {
+                    content: "";
+                    position: absolute;
+                    z-index: 1;
+                }
+                &::before {
+                    inset: 0;
+                    background: url(/images/common/legend-frame.webp) no-repeat
+                        center center/cover;
+                }
+                &::after {
+                    bottom: 0;
+                    left: 50%;
+                    translate: -50%;
+                    width: 45cqw;
+                    background: url(/images/common/icon_legend.gif) no-repeat
+                        center center/contain;
+                    aspect-ratio: 400/95;
+                }
             }
         }
     }
