@@ -37,6 +37,14 @@ type RealTimeResponseItem = {
   castData?: Array<Partial<CastDetail> & Record<string, unknown>>;
 };
 
+const DANDY_REALTIME_STATUS_ORDER: Record<number, number> = {
+  3: 0,
+  2: 1,
+  1: 2,
+  4: 3,
+  5: 4,
+};
+
 function normalizeRealtimeCast(
   source: Partial<CastDetail> & Record<string, unknown>,
   shop: string
@@ -135,7 +143,23 @@ const ContainerRealtime = () => {
   }, [realtimeList]);
 
   const statusEntries = Object.entries(groupedByStatus).sort(
-    ([statusA], [statusB]) => Number(statusA) - Number(statusB)
+    ([statusA], [statusB]) => {
+      const orderA = Number(statusA);
+      const orderB = Number(statusB);
+
+      if (shop === 'dandy') {
+        const priorityA =
+          DANDY_REALTIME_STATUS_ORDER[orderA] ?? Number.MAX_SAFE_INTEGER;
+        const priorityB =
+          DANDY_REALTIME_STATUS_ORDER[orderB] ?? Number.MAX_SAFE_INTEGER;
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+      }
+
+      return orderA - orderB;
+    }
   );
 
   const getValidTimeSlots = (cast: CastWithStatus) => {
