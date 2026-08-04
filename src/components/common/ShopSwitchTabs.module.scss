@@ -42,8 +42,8 @@
         transition: 0.3s ease-out;
         z-index: 2;
         @include sp {
-            width: 10em;
-            font-size: fz(12);
+            width: 28vw;
+            font-size: 3vw;
             height: 2.6em;
             translate: 0 1px;
         }
