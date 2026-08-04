@@ -19,14 +19,15 @@ import BlockNewFace from '@/components/area/BlockNewFace';
 import CastRanking from '@/components/common/cast/CastRanking';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import { isRealProduction } from '@/lib/env';
+import { withCanonical } from '@/lib/seo';
 
 export const generateMetadata = (): Metadata => {
-  return {
+  return withCanonical('/top/', {
     title: '横浜の風俗｜ファッションヘルス:横浜ダンディーグループ',
     description: isRealProduction
       ? '横浜 風俗の横浜ダンディーグループは横浜エリアのファッションヘルスです。横浜で魅力的な女性たちとの特別なお時間をお過ごしください。'
       : undefined,
-  };
+  });
 };
 
 export default function AreaTop() {

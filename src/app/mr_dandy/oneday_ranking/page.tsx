@@ -9,13 +9,14 @@ import type { Metadata } from 'next';
 import LayoutWrapperMain from '@/components/mr_dandy/LayoutWrapperMain';
 import { isRealProduction } from '@/lib/env';
 import OneDayRanking from '@/components/common/oneday/OneDayRanking';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/mr_dandy/oneday_ranking/', {
   title: 'ミスターダンディー ワンデイランキング',
   description: isRealProduction
     ? 'ミスターダンディーのワンデイランキングページです。店舗キャストのデイリーランキングを掲載しています。'
     : undefined,
-};
+});
 
 export default function MrDandyOneDayRankingPage() {
   return (

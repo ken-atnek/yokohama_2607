@@ -9,12 +9,13 @@
 import type { Metadata } from 'next';
 import ShopTopMain from '@/components/common/top/ShopTopMain';
 import LayoutWrapperMain from '@/components/dandy/LayoutWrapperMain';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/dandy/top/', {
   title: '横浜ダンディー TOP',
   description:
     '横浜ダンディーの店舗TOPページです。店舗コンセプト、お知らせ、アクセス情報を掲載しています。',
-};
+});
 
 export default function DandyTopPage() {
   return (

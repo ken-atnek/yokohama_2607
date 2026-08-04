@@ -3,7 +3,7 @@
  * URL: /src/app/layout.tsx
  * Referenced in: /src/app/layout.tsx
  * Created: 2026-07-08
- * Last updated: 2026-07-14
+ * Last updated: 2026-08-04
  * ======================================= */
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/favicon/favicon-dark.svg',
+        url: '/favicon/favicon-light.svg',
         type: 'image/svg+xml',
         media: '(prefers-color-scheme: dark)',
       },
@@ -77,9 +77,6 @@ export const metadata: Metadata = {
   },
   ...(isRealProduction && {
     metadataBase,
-    alternates: {
-      canonical: '/',
-    },
     openGraph: {
       title: siteTitle,
       description: siteDescription,

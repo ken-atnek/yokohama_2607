@@ -10,13 +10,14 @@ import type { Metadata } from 'next';
 import { isRealProduction } from '@/lib/env';
 import ShopPageTitle from '@/components/common/ShopPageTitle';
 import ContainerRealtime from '@/components/common/realtime/ContainerRealTime';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/club_dandy/realtime/', {
   title: 'クラブダンディー リアルタイム',
   description: isRealProduction
     ? 'クラブダンディーのリアルタイム情報ページです。現在のご案内状況や出勤中キャストの最新情報を掲載しています。'
     : undefined,
-};
+});
 
 export default function ClubDandyRealTimePage() {
   return (
