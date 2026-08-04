@@ -51,3 +51,7 @@ env.production
 google*.html
 .vscode/settings.json
 
+# sakaguchi local
+docs/specification/
+public/sys/
+tests/

@@ -343,17 +343,111 @@ $entrance-max-width: 96rem;
                 position: relative;
                 display: flex;
                 font-size: inherit;
-                &.reciprocalBlock--1 {
+                &.reciprocalBlock--1,
+                &.reciprocalBlock--3,
+                &.reciprocalBlock--6,
+                &.reciprocalBlock--7,
+                &.reciprocalBlock--8 {
                     flex-direction: column;
-                    gap: 0.5em 0;
+                    gap: 0.5em;
                     align-items: center;
                 }
-                &.reciprocalBlock--2 {
+                &.reciprocalBlock--heaven-list,
+                &.reciprocalBlock--5 {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
                     gap: 0.5em;
                     justify-content: center;
                     align-self: center;
-                    flex-wrap: wrap;
                     max-width: $entrance-max-width;
+                    @include sp {
+                        display: flex;
+                        grid-template-columns: unset;
+                        flex-direction: column;
+                    }
+                }
+                &.reciprocalBlock--heaven-list2 {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 0.5em;
+                    justify-content: center;
+                    align-self: center;
+                    padding: 0.5em;
+                    border: 0.3em solid #f32256;
+                    max-width: $entrance-max-width;
+                    &::before {
+                        content: "相互リンク";
+                        color: #222222;
+                        font-size: fz(16);
+                        grid-column: span 3;
+                        justify-self: center;
+                    }
+                    @include sp {
+                        display: flex;
+                        grid-template-columns: unset;
+                        flex-direction: column;
+                        align-items: center;
+                        width: 100%;
+                        li {
+                            width: 100%;
+                            img {
+                                width: 100%;
+                            }
+                        }
+                    }
+                }
+                &.reciprocalBlock--4 {
+                    gap: 0.5em;
+                    justify-content: center;
+                    align-self: center;
+                    max-width: $entrance-max-width;
+                }
+                &.reciprocalBlock--9 {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 0.5em;
+                    justify-content: center;
+                    align-self: center;
+                    width: 100%;
+                    max-width: $entrance-max-width;
+                    @include sp {
+                        display: flex;
+                        grid-template-columns: unset;
+                        flex-direction: column;
+                        align-items: center;
+                        width: 100%;
+                        li {
+                            width: 100%;
+                            img {
+                                width: 100%;
+                            }
+                        }
+                    }
+                }
+                &.reciprocalBlock--text-link {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 0.5em;
+                    justify-content: center;
+                    align-self: center;
+                    width: 100%;
+                    max-width: $entrance-max-width;
+                    @include sp {
+                        display: flex;
+                        grid-template-columns: unset;
+                        flex-direction: column;
+                    }
+                    li {
+                        font-size: inherit;
+                        display: flex;
+                        justify-content: center;
+                        padding-block: 0.5em;
+                        background-color: $base-white;
+                        border: solid 1px #262525;
+                        a {
+                            font-size: fz(16);
+                        }
+                    }
                 }
             }
         }
