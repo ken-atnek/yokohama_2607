@@ -4,13 +4,13 @@
  * URL: /src/components/common/top/ShopTopMain.tsx
  * Referenced in: /src/app/dandy/top/page.tsx
  * Created: 2025-08-22
- * Last updated: 2026-07-16
+ * Last updated: 2026-08-04
  * ======================================= */
 import styles from '@/styles/ShopCommon.module.scss';
 // import TopPickUp from '@/components/Shop/TopPickUp';
 import CastSlide from '@/components/common/top/TopCastSlide';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import TopPickUpBan from '@/components/common/top/TopPickUpBan';
 import CastRanking from '@/components/common/top/TopCastRanking';
@@ -36,7 +36,7 @@ const ShopTopMain = () => {
   //ページ読み込み時にバックグラウンド処理でユーザーアクセス情報をログに保存する
 
   // 🔽 タイムスタンプでキャッシュバスティング
-  const timestamp = Date.now();
+  const timestamp = useRef(Date.now()).current;
 
   // 🔽 JSON パスを店舗別に切り替え（タイムスタンプ付き）
   const jsonBasePath = `/db/contents/${shop}`;

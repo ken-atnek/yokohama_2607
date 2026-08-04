@@ -4,7 +4,7 @@
  * URL: /src/components/common/ContainerShopList.module.scss
  * Referenced in: /src/components/common/ContainerShopList.tsx, /src/app/top/page.tsx
  * Created: 2026-07-09
- * Last updated: 2026-07-09
+ * Last updated: 2026-08-04
  * ======================================= */
 /* =================================
  * 	店舗リスト
@@ -103,38 +103,46 @@
                 position: relative;
                 width: 100%;
                 background-color: $base-white;
-                display: flex;
-                justify-content: center;
+                background-image: var(--shop-logo);
+                background-repeat: no-repeat;
+                background-position: center;
+                background-size: 65% auto;
+                display: block;
+                min-height: 5.2em;
                 padding-block: 1em;
                 font-size: inherit;
                 border: 1px solid transparent;
+                min-height: 11rem;
                 @include sp {
                     height: 20vw;
+                    min-height: unset;
                 }
                 &.club_dandy {
-                    img {
-                        width: 70%;
-                        @include sp {
-                            width: 80%;
-                        }
+                    background-size: 70% auto;
+                    @include sp {
+                        background-size: 80% auto;
                     }
                 }
                 &.dandy {
-                    img {
-                        width: 40%;
-                        @include sp {
-                            width: 60%;
-                        }
+                    background-size: 40% auto;
+                    @include sp {
+                        background-size: 60% auto;
                     }
                 }
                 &.mr_dandy {
-                    img {
-                        width: 65%;
-                        @include sp {
-                            width: 80%;
-                        }
+                    background-size: 65% auto;
+                    @include sp {
+                        background-size: 80% auto;
                     }
                 }
+            }
+            .logoText {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                white-space: nowrap;
             }
             p {
                 font-size: fz(18);

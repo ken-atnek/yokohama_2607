@@ -541,7 +541,9 @@ export default function CastProfile() {
         </article>
         {cast.telop ? (
           <div className={styles.blockTelop}>
-            <span>{cast.telop}</span>
+            <div className={styles.boxTelop}>
+              <span>{cast.telop}</span>
+            </div>
           </div>
         ) : null}
         <div className={styles.boxSchedule}>
