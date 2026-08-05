@@ -9,12 +9,13 @@
 import type { Metadata } from 'next';
 import ShopTopMain from '@/components/common/top/ShopTopMain';
 import LayoutWrapperMain from '@/components/mr_dandy/LayoutWrapperMain';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/mr_dandy/top/', {
   title: 'ミスターダンディー TOP',
   description:
     'ミスターダンディーの店舗TOPページです。店舗コンセプト、お知らせ、アクセス情報を掲載しています。',
-};
+});
 
 export default function MrDandyTopPage() {
   return (

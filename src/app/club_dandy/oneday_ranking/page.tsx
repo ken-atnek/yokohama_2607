@@ -9,13 +9,14 @@ import type { Metadata } from 'next';
 import LayoutWrapperMain from '@/components/club_dandy/LayoutWrapperMain';
 import { isRealProduction } from '@/lib/env';
 import OneDayRanking from '@/components/common/oneday/OneDayRanking';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/club_dandy/oneday_ranking/', {
   title: 'クラブダンディー ワンデイランキング',
   description: isRealProduction
     ? 'クラブダンディーのワンデイランキングページです。店舗キャストのデイリーランキングを掲載しています。'
     : undefined,
-};
+});
 
 export default function ClubDandyOneDayRankingPage() {
   return (

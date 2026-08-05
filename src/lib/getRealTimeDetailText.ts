@@ -21,7 +21,7 @@ export const getRealTimeDetailText = ({
 }: GetRealTimeDetailTextParams) => {
   if (!shouldCompareTime || !availableFrom) return detail;
 
-  const match = availableFrom.match(/^(\d{2}):(\d{2})$/);
+  const match = availableFrom.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return detail;
 
   const [, hourText, minuteText] = match;

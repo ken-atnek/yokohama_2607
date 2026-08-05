@@ -9,12 +9,13 @@ import LayoutWrapperMain from '@/components/mr_dandy/LayoutWrapperMain';
 import SystemMain from '@/components/common/system/SystemMain';
 import type { Metadata } from 'next';
 import { isRealProduction } from '@/lib/env';
-export const metadata: Metadata = {
+import { withCanonical } from '@/lib/seo';
+export const metadata: Metadata = withCanonical('/mr_dandy/system/', {
   title: 'ミスターダンディー 料金システム',
   description: isRealProduction
     ? 'ミスターダンディーの料金システムページです。コース料金・指名料・アクセス情報を掲載しています。'
     : undefined,
-};
+});
 export default function MrDandySystemPage() {
   return (
     <LayoutWrapperMain hideShopLeftOnMobile>

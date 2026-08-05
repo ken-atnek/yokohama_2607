@@ -9,12 +9,13 @@ import LayoutWrapperMain from '@/components/club_dandy/LayoutWrapperMain';
 import SystemMain from '@/components/common/system/SystemMain';
 import type { Metadata } from 'next';
 import { isRealProduction } from '@/lib/env';
-export const metadata: Metadata = {
+import { withCanonical } from '@/lib/seo';
+export const metadata: Metadata = withCanonical('/club_dandy/system/', {
   title: 'クラブダンディー 料金システム',
   description: isRealProduction
     ? 'クラブダンディーの料金システムページです。コース料金・指名料・アクセス情報を掲載しています。'
     : undefined,
-};
+});
 export default function ClubDandySystemPage() {
   return (
     <LayoutWrapperMain hideShopLeftOnMobile>

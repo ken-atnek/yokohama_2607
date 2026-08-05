@@ -10,13 +10,14 @@ import type { Metadata } from 'next';
 import { isRealProduction } from '@/lib/env';
 import ShopPageTitle from '@/components/common/ShopPageTitle';
 import ContainerRealtime from '@/components/common/realtime/ContainerRealTime';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/mr_dandy/realtime/', {
   title: 'ミスターダンディー リアルタイム',
   description: isRealProduction
     ? 'ミスターダンディーのリアルタイム情報ページです。現在のご案内状況や出勤中キャストの最新情報を掲載しています。'
     : undefined,
-};
+});
 
 export default function MrDandyRealTimePage() {
   return (

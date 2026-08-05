@@ -10,13 +10,14 @@ import type { Metadata } from 'next';
 import { isRealProduction } from '@/lib/env';
 import ShopPageTitle from '@/components/common/ShopPageTitle';
 import CastScheduleByDay from '@/components/common/schedule/CastScheduleByDay';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/mr_dandy/schedule/', {
   title: 'ミスターダンディー 出勤情報',
   description: isRealProduction
     ? 'ミスターダンディーの出勤情報ページです。店舗在籍キャストの当日出勤情報を掲載しています。'
     : undefined,
-};
+});
 
 export default function MrDandySchedulePage() {
   return (

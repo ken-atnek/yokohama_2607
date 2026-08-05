@@ -9,13 +9,14 @@ import type { Metadata } from 'next';
 import LayoutWrapperMain from '@/components/dandy/LayoutWrapperMain';
 import { isRealProduction } from '@/lib/env';
 import OneDayRanking from '@/components/common/oneday/OneDayRanking';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/dandy/oneday_ranking/', {
   title: '横浜ダンディー ワンデイランキング',
   description: isRealProduction
     ? '横浜ダンディーのワンデイランキングページです。店舗キャストのデイリーランキングを掲載しています。'
     : undefined,
-};
+});
 
 export default function DandyOneDayRankingPage() {
   return (

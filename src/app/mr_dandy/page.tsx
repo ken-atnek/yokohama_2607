@@ -9,12 +9,13 @@
 import type { Metadata } from 'next';
 import Entrance from '@/components/entrance/Entrance';
 import styles from '@/components/entrance/Entrance.module.scss';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/mr_dandy/', {
   title: 'ミスターダンディー エントランス',
   description:
     'ミスターダンディーの店舗TOPへ進むための年齢確認ページです。18歳以上の方のみご利用ください。',
-};
+});
 
 export default function MrDandyEntrancePage() {
   return (

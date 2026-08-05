@@ -3,7 +3,7 @@
  * URL: /src/app/top/page.tsx
  * Referenced in: /src/app/top/page.tsx
  * Created: 2026-07-09
- * Last updated: 2026-07-09
+ * Last updated: 2026-08-04
  * ======================================= */
 
 import styles from '@/styles/AreaTop.module.scss';
@@ -19,14 +19,15 @@ import BlockNewFace from '@/components/area/BlockNewFace';
 import CastRanking from '@/components/common/cast/CastRanking';
 import ContainerShopList from '@/components/common/ContainerShopList';
 import { isRealProduction } from '@/lib/env';
+import { withCanonical } from '@/lib/seo';
 
 export const generateMetadata = (): Metadata => {
-  return {
+  return withCanonical('/top/', {
     title: '横浜の風俗｜ファッションヘルス:横浜ダンディーグループ',
     description: isRealProduction
       ? '横浜 風俗の横浜ダンディーグループは横浜エリアのファッションヘルスです。横浜で魅力的な女性たちとの特別なお時間をお過ごしください。'
       : undefined,
-  };
+  });
 };
 
 export default function AreaTop() {
@@ -97,11 +98,12 @@ export default function AreaTop() {
                 <BlockNewFace />
               </div>
               <div className={styles.wrapRanking}>
-                <h2 className={styles.itemH2}>6月度指名ランキング</h2>
                 <CastRanking
                   jsonPath="/db/contents/area/areaMainRanking.json"
                   showShopName={true}
                   rankIconType="area"
+                  showCurrentTitle={true}
+                  titleClassName={styles.itemH2}
                 />
               </div>
               <div className={styles.wrapBanInformation}>

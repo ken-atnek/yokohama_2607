@@ -10,13 +10,14 @@ import type { Metadata } from 'next';
 import { isRealProduction } from '@/lib/env';
 import ShopPageTitle from '@/components/common/ShopPageTitle';
 import CastList from '@/components/common/cast/ShopCastList';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/mr_dandy/cast/', {
   title: 'ミスターダンディー 在籍一覧',
   description: isRealProduction
     ? 'ミスターダンディーの在籍一覧ページです。店舗在籍キャストのプロフィール情報を掲載しています。'
     : undefined,
-};
+});
 
 export default function MrDandyCastPage() {
   return (
