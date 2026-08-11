@@ -3,7 +3,7 @@
  * URL: /src/app/mr_dandy/cast/page.tsx
  * Referenced in: /src/components/mr_dandy/LayoutWrapperSub.tsx
  * Created: 2026-07-31
- * Last updated: 2026-07-31
+ * Last updated: 2026-08-11
  * ======================================= */
 import LayoutWrapperSub from '@/components/mr_dandy/LayoutWrapperSub';
 import type { Metadata } from 'next';
@@ -13,7 +13,7 @@ import CastList from '@/components/common/cast/ShopCastList';
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/mr_dandy/cast/', {
-  title: 'ミスターダンディー 在籍一覧',
+  title: '横浜 風俗(ヘルス) 在籍一覧｜ミスターダンディー(関内・末吉町)',
   description: isRealProduction
     ? 'ミスターダンディーの在籍一覧ページです。店舗在籍キャストのプロフィール情報を掲載しています。'
     : undefined,

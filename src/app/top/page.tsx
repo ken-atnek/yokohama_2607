@@ -3,7 +3,7 @@
  * URL: /src/app/top/page.tsx
  * Referenced in: /src/app/top/page.tsx
  * Created: 2026-07-09
- * Last updated: 2026-08-04
+ * Last updated: 2026-08-11
  * ======================================= */
 
 import styles from '@/styles/AreaTop.module.scss';
@@ -23,7 +23,7 @@ import { withCanonical } from '@/lib/seo';
 
 export const generateMetadata = (): Metadata => {
   return withCanonical('/top/', {
-    title: '横浜の風俗｜ファッションヘルス:横浜ダンディーグループ',
+    title: '横浜 風俗(ヘルス)｜横浜ダンディーグループ',
     description: isRealProduction
       ? '横浜 風俗の横浜ダンディーグループは横浜エリアのファッションヘルスです。横浜で魅力的な女性たちとの特別なお時間をお過ごしください。'
       : undefined,
@@ -37,7 +37,7 @@ export default function AreaTop() {
   return (
     <>
       <main className={styles.areaTop}>
-        <h1>横浜の風俗｜ファッションヘルス:横浜ダンディーグループ</h1>
+        <h1>横浜 風俗(ヘルス)｜横浜ダンディーグループ</h1>
         <section className={styles.containerHeadTitle}>
           <Image src={GroupLogo} alt="横浜ダンディーグループ" priority />
           <p>横浜ダンディーグループ</p>

@@ -3,7 +3,7 @@
  * URL: /src/app/mr_dandy/weekly-schedule/page.tsx
  * Referenced in: /src/components/mr_dandy/LayoutWrapperSub.tsx
  * Created: 2026-07-31
- * Last updated: 2026-07-31
+ * Last updated: 2026-08-11
  * ======================================= */
 import LayoutWrapperSub from '@/components/mr_dandy/LayoutWrapperSub';
 import type { Metadata } from 'next';
@@ -13,7 +13,7 @@ import CastScheduleByPeriod from '@/components/common/schedule/CastScheduleByPer
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/mr_dandy/weekly-schedule/', {
-  title: 'ミスターダンディー 週間出勤表',
+  title: '横浜 風俗(ヘルス) 週間出勤表｜ミスターダンディー(関内・末吉町)',
   description: isRealProduction
     ? 'ミスターダンディーの週間出勤表ページです。在籍キャストの出勤予定を一覧で掲載しています。'
     : undefined,
