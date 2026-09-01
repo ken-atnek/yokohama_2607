@@ -46,18 +46,18 @@ const creditCards = [
     width: 338,
     height: 104,
   },
-  {
-    src: '/images/common/credit-card/amex.webp',
-    alt: 'American Express',
-    width: 213,
-    height: 74,
-  },
-  {
-    src: '/images/common/credit-card/jcb.webp',
-    alt: 'JCB',
-    width: 244,
-    height: 183,
-  },
+  // {
+  //   src: '/images/common/credit-card/amex.webp',
+  //   alt: 'American Express',
+  //   width: 213,
+  //   height: 74,
+  // },
+  // {
+  //   src: '/images/common/credit-card/jcb.webp',
+  //   alt: 'JCB',
+  //   width: 244,
+  //   height: 183,
+  // },
 ];
 
 const BlockPriceList = ({ jsonPath }: ContentsProps) => {

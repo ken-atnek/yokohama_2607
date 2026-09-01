@@ -3,7 +3,7 @@
  * URL: /src/app/mr_dandy/page.tsx
  * Referenced in: /src/data/AreaShopData.ts
  * Created: 2026-07-31
- * Last updated: 2026-07-31
+ * Last updated: 2026-08-11
  * ======================================= */
 
 import type { Metadata } from 'next';
@@ -12,7 +12,7 @@ import styles from '@/components/entrance/Entrance.module.scss';
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/mr_dandy/', {
-  title: 'ミスターダンディー エントランス',
+  title: '横浜 風俗(ヘルス)｜ミスターダンディー(関内・末吉町)',
   description:
     'ミスターダンディーの店舗TOPへ進むための年齢確認ページです。18歳以上の方のみご利用ください。',
 });

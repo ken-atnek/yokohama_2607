@@ -3,7 +3,7 @@
  * URL: /src/app/dandy/weekly-schedule/page.tsx
  * Referenced in: /src/components/dandy/LayoutWrapperSub.tsx
  * Created: 2025-09-18
- * Last updated: 2026-07-18
+ * Last updated: 2026-08-11
  * ======================================= */
 import LayoutWrapperSub from '@/components/dandy/LayoutWrapperSub';
 import type { Metadata } from 'next';
@@ -13,7 +13,7 @@ import CastScheduleByPeriod from '@/components/common/schedule/CastScheduleByPer
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/dandy/weekly-schedule/', {
-  title: '横浜ダンディー 週間出勤表',
+  title: '横浜 風俗(ヘルス) 週間出勤表｜横浜ダンディー(関内・曙町)',
   description: isRealProduction
     ? '横浜ダンディーの週間出勤表ページです。在籍キャストの出勤予定を一覧で掲載しています。'
     : undefined,

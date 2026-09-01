@@ -147,7 +147,7 @@ const ContainerRealtime = () => {
       const orderA = Number(statusA);
       const orderB = Number(statusB);
 
-      if (shop === 'dandy') {
+      if (shop === 'dandy' || shop === 'club_dandy') {
         const priorityA =
           DANDY_REALTIME_STATUS_ORDER[orderA] ?? Number.MAX_SAFE_INTEGER;
         const priorityB =
