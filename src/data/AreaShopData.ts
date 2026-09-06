@@ -34,7 +34,7 @@ export const Shops = [
     logo: LogoClub,
     post: '〒231-0057',
     address: '神奈川県横浜市中区曙町２丁目２５番地 中山ビル １階',
-    phone: '045-243-2468',
+    phone: '045-251-2444',
     noticeMailAddress: '',
     url: '/club_dandy/top/',
     businessHours: '6:00～24:00',
