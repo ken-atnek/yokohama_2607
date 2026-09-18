@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:demo": "cross-env NEXT_PUBLIC_IS_REAL_PROD=false NEXT_PUBLIC_METADATA_BASE=https://demo-yokohama.dandy-g.jp/ next build && rimraf out/db",
-    "build:prod": "cross-env NEXT_PUBLIC_IS_REAL_PROD=true NEXT_PUBLIC_METADATA_BASE=https://www.dandy-g.jp/ next build && rimraf out/db",
+    "build": "next build && rimraf out/db out/sys",
+    "build:demo": "cross-env NEXT_PUBLIC_IS_REAL_PROD=false NEXT_PUBLIC_METADATA_BASE=https://demo-yokohama.dandy-g.jp/ next build && rimraf out/db  out/sys",
+    "build:prod": "cross-env NEXT_PUBLIC_IS_REAL_PROD=true NEXT_PUBLIC_METADATA_BASE=https://www.dandy-g.jp/ next build && rimraf out/db  out/sys",
     "start": "next start",
     "lint": "eslint .",
     "lint:style": "stylelint \"src/**/*.scss\"",

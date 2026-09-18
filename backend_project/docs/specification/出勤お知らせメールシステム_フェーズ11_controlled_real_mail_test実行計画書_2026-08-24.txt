@@ -1,0 +1,1119 @@
+横浜ダンディーグループ
+出勤お知らせメールシステム
+Phase11 controlled real mail test 実行計画書
+
+作成日:
+2026-08-24
+
+状態:
+Execution Status: COMPLETE / PASS
+
+2026-09-07 Production Go-Live representative smokeまで実施済み。
+本書作成時点の計画、STOP/HOLD履歴、安全手順はhistorical recordとして維持し、最終結果を本書末尾へ追記する。
+
+==================================================
+1. 目的
+==================================================
+
+Phase11「本番メール送信経路・認証・運用開始」に向けて、管理された1件の実メール送信テストを安全に実施するための実行計画を定義する。
+
+この文書は実行計画であり、本書作成時点では以下を行わない。
+
+- production code変更
+- test code変更
+- DB接続
+- SQL実行
+- config変更
+- cron変更
+- .procmailrc変更
+- Postfix設定変更
+- DNS変更
+- public/sys/pop3.php実行
+- public/sys/cli/send-deliveries.php実行
+- mail()実行
+- SMTP接続
+- 実メール送信
+- Git add / commit / push
+
+==================================================
+2. 参照正本
+==================================================
+
+本計画は以下の正本仕様を前提とする。
+
+- backend_project/docs/specification/出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt
+- backend_project/docs/specification/出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt
+- backend_project/docs/specification/出勤お知らせメールシステム_フェーズ10メールテンプレート・送信ワーカー追加確定仕様書_2026-08-19.txt
+- backend_project/docs/specification/出勤お知らせメールシステム_フェーズ11本番メール送信経路・認証・運用開始追加確定仕様書_2026-08-21.txt
+
+Phase8 / Phase9 / Phase10 は FROZEN 済みとして扱う。
+
+Phase11 は、本書作成時点では DONE / FROZEN ではない。
+2026-09-07時点ではGo-Live active / runtime validation PASSであり、Phase11 FROZENは最終docs / tracker review後に別途判定する。
+
+==================================================
+3. controlled real mail test の基本方針
+==================================================
+
+テスト対象メール:
+subscription_added
+
+送信件数:
+1件のみ
+
+送信先:
+管理されたテスト用受信者1件のみ
+
+生成方式:
+public/sys/pop3.php に管理済み raw mail を標準入力で1回だけ渡し、既存Phase4本番処理で subscription_added delivery を生成する。
+
+採用方式:
+C方式
+
+送信方式:
+public/sys/cli/send-deliveries.php を手動で1回だけ実行し、Phase10本番ワーカーで送信する。
+
+禁止:
+
+- direct INSERT で delivery を作成しない
+- test-only code を追加しない
+- delivery_id / recipient / mail_type 指定引数を追加しない
+- token付きメールを今回の必須対象にしない
+- .procmailrc経由の受信を今回の検証対象にしない
+- cron経由の送信を今回の検証対象にしない
+
+このテストで検証すること:
+
+- Phase4の既存CLI処理で subscription_added delivery が生成できること
+- Phase10の本番送信ワーカーで1通だけ実メール送信できること
+- Return-Path / Envelope Sender / MAIL FROM相当 / send IP / SPF / DKIM / DMARC の実受信結果を確認できること
+
+このテストで検証しないこと:
+
+- 外部メール受信経路
+- KAGOYA mailbox受信
+- .procmailrc自動起動
+- cron自動実行
+- verify_email / settings_link のtoken付き送信
+- Phase11本番運用開始
+
+==================================================
+4. 現在の本番送信経路前提
+==================================================
+
+Phase11追加確定仕様書の実環境調査結果に基づく本番候補経路は以下。
+
+- PHP CLI: /usr/local/bin/php
+- PHP CLI version: PHP 8.4.24
+- sendmail_path: /usr/sbin/sendmail -t -i
+- MTA: Postfix 3.5.25
+- Postfix default_transport: smtp
+- 明示SMTP relayhost: 未設定
+- 候補IPv4: 133.18.103.245
+- 候補IPv6: 確認対象
+- PTR候補: o6021v-888.kagoya.net
+- SPF: kagoya include 系を含むが、実送信結果で最終確認する
+- DKIM: 本番実送信結果で確認する
+- DMARC: dandy-g.jp は _dmarc NXDOMAIN のため、実送信後に方針判断する
+
+Return-Path / Envelope Sender / MAIL FROM相当は Phase10 P0 で -f を指定しない。
+実際のEnvelope Sender / MAIL FROM相当は、受信raw message上のReturn-Path、Authentication-Results smtp.mailfrom、Received-SPF envelope-from（存在時）などで確認する。
+
+==================================================
+5. feature flag 運用
+==================================================
+
+通常安全状態:
+
+- notification_empty_mail_receive_enabled=false
+- notification_delivery_create_enabled=false
+- notification_event_enqueue_enabled=false
+- notification_confirmation_enabled=false
+- notification_settings_enabled=false
+- notification_legacy_migration_enabled=false
+- notification_admin_enabled=false
+- notification_public_state_sync_enabled=false
+- notification_public_state_reconciliation_enabled=false
+- notification_send_enabled=false
+- notification_dry_run=true
+
+実際の通常値が上記と異なる場合は、実行前read-only確認で正式値を記録し、推測で書き換えない。
+
+delivery生成時の一時状態:
+
+- notification_empty_mail_receive_enabled=true
+- notification_delivery_create_enabled=true
+- notification_event_enqueue_enabled=false
+- notification_confirmation_enabled=false
+- notification_settings_enabled=false
+- notification_legacy_migration_enabled=false
+- notification_admin_enabled=false
+- notification_public_state_sync_enabled=false
+- notification_public_state_reconciliation_enabled=false
+- notification_send_enabled=false
+- notification_dry_run=true
+
+delivery生成直後の即時復旧状態:
+
+- notification_empty_mail_receive_enabled=false
+- notification_delivery_create_enabled=false
+- notification_event_enqueue_enabled=false
+- notification_confirmation_enabled=false
+- notification_settings_enabled=false
+- notification_legacy_migration_enabled=false
+- notification_admin_enabled=false
+- notification_public_state_sync_enabled=false
+- notification_public_state_reconciliation_enabled=false
+- notification_send_enabled=false
+- notification_dry_run=true
+
+送信直前の一時状態:
+
+- notification_empty_mail_receive_enabled=false
+- notification_delivery_create_enabled=false
+- notification_event_enqueue_enabled=false
+- notification_confirmation_enabled=false
+- notification_settings_enabled=false
+- notification_legacy_migration_enabled=false
+- notification_admin_enabled=false
+- notification_public_state_sync_enabled=false
+- notification_public_state_reconciliation_enabled=false
+- notification_send_enabled=true
+- notification_dry_run=false
+
+送信後の即時復旧状態:
+
+- notification_empty_mail_receive_enabled=false
+- notification_delivery_create_enabled=false
+- notification_event_enqueue_enabled=false
+- notification_confirmation_enabled=false
+- notification_settings_enabled=false
+- notification_legacy_migration_enabled=false
+- notification_admin_enabled=false
+- notification_public_state_sync_enabled=false
+- notification_public_state_reconciliation_enabled=false
+- notification_send_enabled=false
+- notification_dry_run=true
+
+controlled test critical windowでONにしてよい入口:
+
+- generation時: notification_empty_mail_receive_enabled / notification_delivery_create_enabled のみ
+- send時: notification_send_enabled のみ
+
+subscription_added生成に不要な入口:
+
+- notification_event_enqueue_enabled
+- notification_confirmation_enabled
+- notification_settings_enabled
+- notification_legacy_migration_enabled
+- notification_admin_enabled
+- notification_public_state_sync_enabled
+- notification_public_state_reconciliation_enabled
+
+既存実装上、subscription_added は verify_email / settings_link と異なりtokenを必要としない。
+また、Phase8 event enqueue、Phase5 confirmation、Phase6 settings APIは今回の1通送信testには不要である。
+
+重要:
+
+- actual config の変更は本書作成時点では行わない
+- execution時も、成功 / 失敗 / exception / unexpected exit に関係なく即時復旧する
+- send=true / dry=false は controlled real mail test の1回だけに限定する
+- config全文diffは記録しない
+- 記録対象は原則として、上記feature flagのON/OFF値だけに限定する
+- DB password / secret / private key / その他config値全文をレビュー記録へ出さない
+- 存在しないfeature flagを新設しない
+
+==================================================
+6. execution前 preflight
+==================================================
+
+以下をすべて確認できない場合、controlled real mail test を開始しない。
+
+1. Phase8 / Phase9 / Phase10 が FROZEN 済みである
+2. Phase11 は DONE / FROZEN ではない
+3. 対象production project pathが再確認済みである
+4. public/sys/pop3.php がproductionへ配置済みである
+5. public/sys/cli/send-deliveries.php がproductionへ配置済みである
+6. DANDY_NOTIFICATION_CONFIG がproduction用configを指す
+7. notification_send_enabled=false である
+8. notification_dry_run=true である
+9. confirmation_base_url がabsolute URLである
+10. settings_base_url がabsolute URLである
+11. app.environment が実行対象として妥当である
+12. notification_empty_mail_receive_enabled=false である
+13. notification_delivery_create_enabled=false である
+14. notification_event_enqueue_enabled=false である
+15. notification_confirmation_enabled=false である
+16. notification_settings_enabled=false である
+17. notification_legacy_migration_enabled=false である
+18. notification_admin_enabled=false である
+19. notification_public_state_sync_enabled=false である
+20. notification_public_state_reconciliation_enabled=false である
+21. sender_email / sender_name相当のFrom情報が実装またはactual configで確認済みである
+22. log.path が設定済みで公開ディレクトリ外である
+23. database host / port / name / user / password / charset の必要keyが存在する
+24. notification_send_batch_size が設定済みである
+25. notification_send_stale_threshold_seconds が設定済みである
+26. empty_mail.allowed_shop_ids がactual config上で確認済みである
+27. DB backupまたはrollback方針が確認済みである
+28. 対象test subscriberが管理下の受信者である
+29. 対象test castが実在し、subscription_addedを生成できる状態である
+
+Phase10 P0実装では sender_email / sender_name 専用config keyは確認されていない。
+現時点のFrom情報は NativeMailTransport の FROM_ADDRESS / FROM_DISPLAY_NAME を実装値として確認し、実受信headerでも確認する。
+将来actual configにsender keyが追加されている場合は、値そのものではなく「設定済み / 未設定」として記録する。
+
+generation前DB read-only preflight:
+
+1. eligible mail unit総数 = 0
+2. schedule_update eligible group = 0
+3. stale sending = 0
+4. 対象test subscriberがactive
+5. recipient SHA-256が管理下test recipientと一致
+6. 対象castが t_girl_master2 に存在する
+7. 対象castの view = '1'
+8. 対象castの att_shop が空ではない
+9. 対象castの att_shop が actual config の empty_mail.allowed_shop_ids に含まれる
+10. 対象subscriptionがactiveではない
+11. 既存のtest対象subscription_added queued / deferred がない
+
+preflightで不足がある場合:
+
+- configを推測しない
+- DBを変更しない
+- deliveryを生成しない
+- raw mailを作成/投入しない
+- generation flagsをONにしない
+- send flagsを変更しない
+- pop3.phpを実行しない
+- send-deliveries.phpを実行しない
+- mail()を実行しない
+
+==================================================
+7. raw mail 生成計画
+==================================================
+
+Phase4 parserの対象は、From と Subject のみを正式入力として扱う。
+
+Subject:
+add:<castId>
+
+From:
+管理されたテスト用受信者のメールアドレス
+
+raw mail例:
+
+From: controlled-test-subscriber@example.invalid
+To: workgmail_dy72gu0x@hot-point.jp
+Subject: add:12345
+Date: Mon, 24 Aug 2026 00:00:00 +0900
+Message-ID: <controlled-phase11-20260824@example.invalid>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+controlled real mail test
+
+注意:
+
+- 上記は形式例であり、実メールアドレスと実castIdは実行時に管理者が指定する
+- 実受信者メールアドレスは文書・ログに平文で残さない
+- raw mailファイルは公開ディレクトリ外に一時配置する
+- raw mailファイルは実行後、管理者判断で保全または削除する
+
+==================================================
+8. delivery生成手順
+==================================================
+
+実行前確認:
+
+- notification_send_enabled=false
+- notification_dry_run=true
+- notification_empty_mail_receive_enabled=true
+- notification_delivery_create_enabled=true
+- generation前DB read-only preflightがPASSしている
+
+想定コマンド:
+
+DANDY_NOTIFICATION_CONFIG=/path/to/production/dandy_notification_config.php \
+/usr/local/bin/php /home/hpg-kobe/public_html/dandy/yokohama_2607/sys/pop3.php \
+  < /path/to/private/controlled-test.eml
+
+注意:
+
+- 上記pathは実行前にproduction実配置で再確認する
+- 本書作成時点では実行しない
+- .procmailrcは使用しない
+- 外部メール受信経路は使用しない
+- 生成後は最優先で notification_empty_mail_receive_enabled=false / notification_delivery_create_enabled=false / notification_send_enabled=false / notification_dry_run=true へ戻す
+- safe flags復旧確認より前にDB調査、受信確認、header確認へ進まない
+
+==================================================
+9. 送信前DB確認SQL
+==================================================
+
+以下は実行計画用のread-only SQLである。
+本書作成時点では実行しない。
+
+個人情報を出力しないため、メールアドレスはSHA-256 hashで照合・表示する。
+実行時は、実メールアドレス全文ではなく事前計算したhashをセッション変数として指定する。
+
+SET @expected_recipient_sha256 = '事前計算したlowercase emailのSHA-256 hex';
+SET @test_cast_id = 12345;
+SET @allowed_shop_ids_csv = 'actual config empty_mail.allowed_shop_ids をカンマ区切りで指定';
+SET @test_shop_id = 'SQL-4Aでpass確認したshop_id';
+
+`@allowed_shop_ids_csv` は、production actual config の `empty_mail.allowed_shop_ids` をread-only確認して設定する。
+ConfigLoader上の許可可能値は `yh-dandy` / `yh-clubd` / `yh-mrd` だが、実行時はactual config値を正とし、推測で補完しない。
+`@test_shop_id` は SQL-4A の `shop_id` が `pass` であることを確認した後、その値を指定する。
+
+期待値:
+
+- generation前: SQL-1 eligible mail unit count = 0
+- generation前: SQL-2 schedule_update eligible group count = 0
+- generation前: SQL-3 stale mail unit count = 0
+- generation前: SQL-4A target cast validation = pass
+- generation前: SQL-4B active suppression count = 0
+- generation前: SQL-4 test subscriber active / target subscription non-active
+- generation前: SQL-5 target subscription_added eligible count = 0
+- generation後: SQL-1 eligible mail unit count = 1
+- generation後: SQL-2 schedule_update eligible group count = 0
+- generation後: SQL-3 stale mail unit count = 0
+- generation後: SQL-5 target subscription_added eligible count = 1
+- generation後: SQL-5 detail queryで取得した delivery_id を target_delivery_id として記録
+
+SQL-1 eligible mail unit list/count
+
+SELECT
+    COUNT(*) AS eligible_mail_unit_count
+FROM (
+    SELECT d.delivery_id AS representative_delivery_id
+    FROM t_notification_delivery d
+    WHERE d.mail_type <> 'schedule_update'
+      AND d.status IN ('queued', 'deferred')
+      AND d.available_at <= UTC_TIMESTAMP(6)
+    UNION ALL
+    SELECT MIN(g.delivery_id) AS representative_delivery_id
+    FROM t_notification_delivery e
+    INNER JOIN t_notification_delivery g
+        ON g.message_group_key = e.message_group_key
+       AND g.mail_type = 'schedule_update'
+    WHERE e.mail_type = 'schedule_update'
+      AND e.message_group_key IS NOT NULL
+      AND e.status IN ('queued', 'deferred')
+      AND e.available_at <= UTC_TIMESTAMP(6)
+    GROUP BY e.message_group_key
+) eligible_units;
+
+SELECT
+    eligible_units.representative_delivery_id,
+    eligible_units.mail_type,
+    eligible_units.subscriber_id,
+    eligible_units.subscription_id,
+    eligible_units.recipient_sha256,
+    eligible_units.status_summary,
+    eligible_units.available_at,
+    eligible_units.delivery_row_count,
+    eligible_units.eligible_row_count
+FROM (
+    SELECT
+        d.delivery_id AS representative_delivery_id,
+        d.mail_type,
+        d.subscriber_id,
+        d.subscription_id,
+        SHA2(LOWER(d.recipient_email_snapshot), 256) AS recipient_sha256,
+        d.status AS status_summary,
+        d.available_at,
+        1 AS delivery_row_count,
+        1 AS eligible_row_count
+    FROM t_notification_delivery d
+    WHERE d.mail_type <> 'schedule_update'
+      AND d.status IN ('queued', 'deferred')
+      AND d.available_at <= UTC_TIMESTAMP(6)
+    UNION ALL
+    SELECT
+        MIN(g.delivery_id) AS representative_delivery_id,
+        'schedule_update' AS mail_type,
+        MIN(g.subscriber_id) AS subscriber_id,
+        MIN(g.subscription_id) AS subscription_id,
+        SHA2(LOWER(MIN(g.recipient_email_snapshot)), 256) AS recipient_sha256,
+        GROUP_CONCAT(DISTINCT g.status ORDER BY g.status SEPARATOR ',') AS status_summary,
+        MIN(g.available_at) AS available_at,
+        COUNT(DISTINCT g.delivery_id) AS delivery_row_count,
+        COUNT(DISTINCT e.delivery_id) AS eligible_row_count
+    FROM t_notification_delivery e
+    INNER JOIN t_notification_delivery g
+        ON g.message_group_key = e.message_group_key
+       AND g.mail_type = 'schedule_update'
+    WHERE e.mail_type = 'schedule_update'
+      AND e.message_group_key IS NOT NULL
+      AND e.status IN ('queued', 'deferred')
+      AND e.available_at <= UTC_TIMESTAMP(6)
+    GROUP BY e.message_group_key
+) eligible_units
+ORDER BY eligible_units.representative_delivery_id;
+
+SQL-2 schedule_update eligible group count
+
+SELECT
+    COUNT(*) AS eligible_schedule_update_group_count
+FROM (
+    SELECT e.message_group_key
+    FROM t_notification_delivery e
+    WHERE e.mail_type = 'schedule_update'
+      AND e.message_group_key IS NOT NULL
+      AND e.status IN ('queued', 'deferred')
+      AND e.available_at <= UTC_TIMESTAMP(6)
+    GROUP BY e.message_group_key
+) groups_for_send;
+
+SQL-3 stale sending count
+
+SELECT
+    COUNT(*) AS stale_mail_unit_count
+FROM (
+    SELECT d.delivery_id AS representative_delivery_id
+    FROM t_notification_delivery d
+    WHERE d.mail_type <> 'schedule_update'
+      AND d.status = 'sending'
+      AND d.locked_at IS NOT NULL
+      AND d.locked_at <= DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1800 SECOND)
+    UNION ALL
+    SELECT MIN(g.delivery_id) AS representative_delivery_id
+    FROM t_notification_delivery g
+    WHERE g.mail_type = 'schedule_update'
+      AND g.message_group_key IS NOT NULL
+      AND g.status = 'sending'
+      AND g.locked_at IS NOT NULL
+      AND g.locked_at <= DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1800 SECOND)
+    GROUP BY g.message_group_key
+) stale_units;
+
+SQL-4A target cast validation
+
+実装照合:
+
+- EmptyMailRegistrationService: girls()->findById($castId)
+- GirlRepository: t_girl_master2.g_id / name / att_shop / view
+- 公開判定: view = '1'
+- 店舗判定: TRIM(att_shop) != ''
+- 許可店舗判定: att_shop IN actual config empty_mail.allowed_shop_ids
+- rejection reason: cast_not_found / cast_hidden / shop_missing / shop_not_allowed
+- その他generation blocker: rate_limit_global / rate_limit_email / rate_limit_email_cast / suppressed / subscriber_suppressed / already_active / admin_paused / invalid_subscription_state
+
+SELECT
+    @test_cast_id AS requested_cast_id,
+    g.g_id AS cast_id,
+    g.view AS cast_view,
+    TRIM(COALESCE(g.att_shop, '')) AS shop_id,
+    CASE
+        WHEN g.g_id IS NULL THEN 'cast_not_found'
+        WHEN CAST(g.view AS CHAR) <> '1' THEN 'cast_hidden'
+        WHEN TRIM(COALESCE(g.att_shop, '')) = '' THEN 'shop_missing'
+        WHEN FIND_IN_SET(TRIM(g.att_shop), @allowed_shop_ids_csv) = 0 THEN 'shop_not_allowed'
+        ELSE 'pass'
+    END AS empty_mail_cast_validation
+FROM (SELECT @test_cast_id AS cast_id) target
+LEFT JOIN t_girl_master2 g
+    ON g.g_id = target.cast_id
+LIMIT 1;
+
+SQL-4B active suppression check
+
+EmptyMailRegistrationServiceは、cast validation後に t_notification_suppression の active suppression を確認する。
+対象recipientが抑止中の場合、subscription_added generationへ進まない。
+
+SELECT
+    COUNT(*) AS active_suppression_count
+FROM t_notification_suppression
+WHERE SHA2(LOWER(email), 256) = @expected_recipient_sha256
+  AND status = 'active'
+  AND (expires_at IS NULL OR expires_at > UTC_TIMESTAMP(6));
+
+rate limit確認:
+
+actual config の empty_mail.rate_limit に window_seconds / max_attempts が設定されている場合、
+t_notification_audit_log をread-onlyで確認し、rate_limit_global / rate_limit_email / rate_limit_email_cast に該当しないことを確認する。
+未設定の場合、実装上rate limitは適用されない。
+rate limitが有効で確認SQLを確定できない場合はNO-GOとする。
+
+SQL-4 test subscriber/subscription state
+
+SELECT
+    s.subscriber_id,
+    s.status AS subscriber_status,
+    SHA2(LOWER(s.email), 256) AS subscriber_email_sha256,
+    sub.subscription_id,
+    sub.shop_id,
+    sub.cast_id,
+    sub.status AS subscription_status,
+    sub.pause_reason
+FROM t_notification_subscriber s
+LEFT JOIN t_notification_subscription sub
+    ON sub.subscriber_id = s.subscriber_id
+   AND sub.shop_id = @test_shop_id
+   AND sub.cast_id = @test_cast_id
+WHERE SHA2(LOWER(s.email), 256) = @expected_recipient_sha256
+ORDER BY sub.subscription_id DESC
+LIMIT 5;
+
+SQL-5 generated subscription_added delivery confirmation
+
+SELECT
+    COUNT(*) AS target_subscription_added_eligible_count
+FROM t_notification_delivery d
+INNER JOIN t_notification_subscription sub
+    ON sub.subscription_id = d.subscription_id
+WHERE d.mail_type = 'subscription_added'
+  AND d.status IN ('queued', 'deferred')
+  AND d.available_at <= UTC_TIMESTAMP(6)
+  AND sub.shop_id = @test_shop_id
+  AND sub.cast_id = @test_cast_id
+  AND SHA2(LOWER(d.recipient_email_snapshot), 256) = @expected_recipient_sha256;
+
+SELECT
+    d.delivery_id,
+    d.subscriber_id,
+    d.subscription_id,
+    SHA2(LOWER(d.recipient_email_snapshot), 256) AS recipient_sha256,
+    d.mail_type,
+    d.status,
+    d.available_at,
+    d.attempt_count,
+    d.max_attempts,
+    d.template_key,
+    d.template_version,
+    d.last_error_code,
+    d.created_at
+FROM t_notification_delivery d
+INNER JOIN t_notification_subscription sub
+    ON sub.subscription_id = d.subscription_id
+WHERE d.mail_type = 'subscription_added'
+  AND sub.shop_id = @test_shop_id
+  AND sub.cast_id = @test_cast_id
+  AND SHA2(LOWER(d.recipient_email_snapshot), 256) = @expected_recipient_sha256
+ORDER BY d.delivery_id DESC
+LIMIT 5;
+
+generation後に以下を行う。
+
+1. `target_subscription_added_eligible_count = 1` を確認する
+2. detail queryの `delivery_id` を1件だけ取得する
+3. その値を `target_delivery_id` として実行ログに記録する
+4. 以後の送信後DB確認は、再検索だけに頼らず `delivery_id = target_delivery_id` で追跡する
+
+これはspecific delivery送信機能ではない。
+send-deliveries.phpにはdelivery_id指定機能を追加しない。
+送信処理そのものは従来どおりeligible mail unit全体を対象とする。
+
+SQL-6 target_delivery_id tracking
+
+SET @target_delivery_id = 0;
+
+`@target_delivery_id` には、SQL-5 detail queryで確定したdelivery_idを実行時に指定する。
+
+SELECT
+    d.delivery_id,
+    d.subscriber_id,
+    d.subscription_id,
+    sub.shop_id,
+    sub.cast_id,
+    SHA2(LOWER(d.recipient_email_snapshot), 256) AS recipient_sha256,
+    d.mail_type,
+    d.status,
+    d.available_at,
+    d.attempt_count,
+    d.max_attempts,
+    d.template_key,
+    d.template_version,
+    d.sent_at,
+    d.failed_at,
+    d.deferred_at,
+    d.last_error_code,
+    d.provider_message_id,
+    d.updated_at
+FROM t_notification_delivery d
+INNER JOIN t_notification_subscription sub
+    ON sub.subscription_id = d.subscription_id
+WHERE d.delivery_id = @target_delivery_id
+  AND d.mail_type = 'subscription_added'
+  AND sub.shop_id = @test_shop_id
+  AND sub.cast_id = @test_cast_id
+  AND SHA2(LOWER(d.recipient_email_snapshot), 256) = @expected_recipient_sha256
+LIMIT 1;
+
+送信前合格条件:
+
+- controlled test対象の subscription_added delivery が1件だけeligibleである
+- target_delivery_id が1件だけ確定している
+- 予定外のeligible mail unitが0件である
+- stale sending mail unit が0件である
+- test subscriber / subscription の状態が想定どおりである
+- token付きmail_typeが今回の送信対象に含まれない
+
+==================================================
+10. 送信手順
+==================================================
+
+送信直前に以下を一時設定する。
+
+- notification_empty_mail_receive_enabled=false
+- notification_delivery_create_enabled=false
+- notification_send_enabled=true
+- notification_dry_run=false
+
+想定コマンド:
+
+DANDY_NOTIFICATION_CONFIG=/path/to/production/dandy_notification_config.php \
+/usr/local/bin/php /home/hpg-kobe/public_html/dandy/yokohama_2607/sys/cli/send-deliveries.php
+
+制約:
+
+- 1回だけ実行する
+- 引数でdelivery_id / recipient / mail_typeを指定しない
+- cronでは実行しない
+- send-deliveries.phpの実行前にeligible mail unitが1件であることを確認する
+- target_delivery_idは追跡用の記録値であり、send-deliveries.phpへ渡さない
+- 実行後、成功 / 失敗 / exception / unexpected exit に関係なく直ちに notification_send_enabled=false / notification_dry_run=true へ戻す
+- generation flagsはfalseを維持する
+- safe flags復旧確認より前にDB調査、受信確認、header確認へ進まない
+
+送信CLI summary確認:
+
+- mode
+- request_id
+- worker_id
+- status
+- counters.mail_unit_claimed
+- counters.delivery_rows_claimed
+- counters.mail_unit_sent
+- counters.delivery_rows_sent
+- counters.mail_unit_deferred
+- counters.mail_unit_failed
+- counters.render_failure
+- counters.transport_failure
+- counters.send_outcome_unknown
+- counters.group_invariant_violation
+- counters.stale_send_outcome_unknown
+- counters.token_revoked
+- counters.sent_update_error_count
+- counters.transaction_error_count
+- counters.locked_skip
+- counters.not_eligible_skip
+- counters.flag_off_noop
+- counters.dry_run_noop
+- counters.fatal_error_count
+- error_count
+- duration_seconds
+- exit_code
+
+statusの主な値:
+
+- completed
+- failed
+- send_flag_off_noop
+- dry_run_noop
+- fatal_error
+
+stdoutはJSON 1行を想定する。
+JSON encode失敗時のみ最小fallbackとして {"status":"json_error","error_count":1,"exit_code":1} が出力される。
+token作成数を示すcounterは正式summary keyではないため確認対象にしない。
+
+subscription_added 1 row = 1 mail unit 正常成功時の期待値:
+
+- status = completed
+- error_count = 0
+- exit_code = 0
+- counters.mail_unit_claimed = 1
+- counters.delivery_rows_claimed = 1
+- counters.mail_unit_sent = 1
+- counters.delivery_rows_sent = 1
+- counters.mail_unit_deferred = 0
+- counters.mail_unit_failed = 0
+- counters.render_failure = 0
+- counters.transport_failure = 0
+- counters.send_outcome_unknown = 0
+- counters.group_invariant_violation = 0
+- counters.stale_send_outcome_unknown = 0
+- counters.token_revoked = 0
+- counters.sent_update_error_count = 0
+- counters.transaction_error_count = 0
+- counters.locked_skip = 0
+- counters.not_eligible_skip = 0
+- counters.flag_off_noop = 0
+- counters.dry_run_noop = 0
+- counters.fatal_error_count = 0
+
+summaryに以下が含まれていないこと:
+
+- 受信者メールアドレス全文
+- raw token
+- token付きURL
+- メール本文全文
+- DB password
+- session ID
+- secret
+
+==================================================
+11. 送信後DB確認
+==================================================
+
+SQL-6を使用し、`delivery_id = target_delivery_id` で対象deliveryを一意に追跡する。
+必要に応じてSQL-5も再実行するが、送信後の主確認はtarget_delivery_idを正とする。
+
+対象deliveryについて以下を確認する。
+
+- status = sent
+- attempt_count が送信試行分だけ増加している
+- sent_at が設定されている
+- last_error_code がNULLである
+- subscription_added 以外のdeliveryが処理されていない
+- tokenが新規生成されていない
+- 予定外のeligible mail unitが残っていない
+
+cleanup方針:
+
+- controlled test の証跡として subscriber / subscription / delivery は原則保持する
+- 手動DELETEしない
+- unsubscribeや解除操作は別途管理者判断とする
+
+==================================================
+12. 受信メール確認項目
+==================================================
+
+管理された受信先で、受信メールのraw headerを保存し以下を確認する。
+
+- Subject が正本どおりである
+- From が正本どおりである
+- 本文が subscription_added 正本テンプレートと一致する
+- 共通footer「個人情報の取扱いについて」が存在する
+- 共通footerのFIXED文面が正確に含まれる
+- 不要なtoken URLが含まれない
+- Return-Path
+- Envelope Sender / MAIL FROMの確認根拠
+- Authentication-Results の smtp.mailfrom 等
+- Received-SPF の envelope-from 等（存在する場合）
+- Received chain
+- 送信IP
+- PTR
+- SPF result
+- DKIM-Signatureの有無
+- Authentication-Results の DKIM result
+- DMARC result
+- 迷惑メール判定の有無
+- Gmail等での表示状態
+
+この確認結果により、Phase11の以下を確定または未確定として記録する。
+
+- Return-Path方針
+- Envelope Sender / MAIL FROM方針
+- 送信IP方針
+- SPF運用可否
+- DKIM運用可否
+- DMARC方針
+- 本番送信経路の採否
+
+==================================================
+13. 失敗時の停止条件
+==================================================
+
+以下のいずれかが発生した場合、以降の作業を停止する。
+
+- preflight不足
+- eligible mail unitが1件ではない
+- stale sendingが存在する
+- token付きmailがeligibleに含まれる
+- send=true / dry=false の復旧確認ができない
+- send-deliveries.phpのsummaryでerror_count > 0
+- 対象以外のdeliveryが処理された
+- 受信headerに想定外の送信元がある
+- SPF / DKIM / DMARC が重大な不整合を示す
+- 送信先以外へメールが送られた疑いがある
+
+失敗時も以下は行わない。
+
+- DB手動修正
+- DDL変更
+- production code変更
+- cron有効化
+- .procmailrc変更
+- Postfix設定変更
+- DNS変更
+
+==================================================
+14. Phase11 DONE条件との対応
+==================================================
+
+controlled real mail test 1件で確認可能な項目:
+
+- 本番mail()経路で実メールが送信できること
+- Return-Path / Envelope Sender / MAIL FROM相当の実測
+- 送信IPの実測
+- SPF評価の実測
+- DKIM有無と評価の実測
+- DMARC評価の実測
+- 受信側での到達性
+- Phase10 workerの本番実行可否
+
+controlled real mail test 1件だけでは完了しない項目:
+
+- cron本番運用開始
+- .procmailrc本番有効化
+- 継続監視
+- 複数受信先での到達性確認
+- DMARC本方針決定
+- Phase11 DONE / FROZEN判定
+
+Phase11 DONE / FROZEN は、Phase11追加確定仕様書の正式完了条件をすべて満たした後に別途判定する。
+
+==================================================
+15. 実行ログ記録項目
+==================================================
+
+実行時は以下を記録する。
+
+- 実行日時
+- 実行者
+- production path
+- PHP CLI path/version
+- DANDY_NOTIFICATION_CONFIG path
+- controlled test castId
+- recipient SHA-256
+- target_delivery_id
+- config変更前後のfeature flag値
+- delivery生成CLIのexit code / summary
+- send-deliveries CLIのexit code / summary
+- SQL-1からSQL-6の確認結果
+- 受信header確認結果
+- Return-Path
+- Envelope Sender / MAIL FROM
+- MAIL FROM確認根拠（Return-Path / Authentication-Results smtp.mailfrom / Received-SPF envelope-from）
+- send IP
+- SPF
+- DKIM
+- DMARC
+- 迷惑メール判定
+- 復旧後のfeature flag値
+- 追加対応要否
+
+平文で記録しないもの:
+
+- 受信者メールアドレス全文
+- DB password
+- raw token
+- token付きURL
+- SMTP secret
+- session ID
+- private key
+
+==================================================
+16. self-review checklist
+==================================================
+
+本計画書の確認結果:
+
+- 本番メール送信経路の事実確認に基づいている
+- Phase10 send-deliveries.phpの実挙動に合わせている
+- send-deliveries.phpに存在しない引数を前提にしていない
+- CLI summary keyを実装と照合している
+- 存在しないsummary keyを残していない
+- subscription_added 1 row正常成功時のCLI counter期待値を明記している
+- subscription_addedを対象にしている
+- token付きメールを今回必須にしていない
+- subscription_addedがtoken不要であることを実装と照合している
+- direct INSERTを前提にしていない
+- public/sys/pop3.phpのSTDIN経路を使用する計画である
+- .procmailrc経由受信を検証対象にしていない
+- cron経由送信を検証対象にしていない
+- generation前eligible=0をread-onlyで確認する
+- generation後eligible=1をread-onlyで確認する
+- generation後にtarget_delivery_idを確定する
+- 送信後はtarget_delivery_idで一意に追跡する
+- target_delivery_idをsend-deliveries.phpへ渡さない
+- schedule_update eligible group=0を両preflightで確認する
+- stale sending=0を両preflightで確認する
+- test subscriber activeをgeneration前に確認する
+- 対象subscription非activeをgeneration前に確認する
+- t_girl_master2.g_id / view / att_shop と empty_mail.allowed_shop_ids によるcast preflightを追加している
+- controlled test critical windowでは不要入口flagをOFF維持する
+- 存在しないfeature flagを新設していない
+- generation flagsのON/OFF順序が明確である
+- send flagsのON/OFF順序が明確である
+- CLI成否に関係なくsafe stateへ戻す
+- safe state復旧前に結果確認へ進まない
+- config全文diffを記録しない
+- sender_email / sender_name相当、log.path、DB config key、batch size、stale thresholdをpreflight対象にしている
+- send=true / dry=false を一時状態として扱っている
+- 通常安全状態 send=false / dry=true への復旧を必須にしている
+- privacy_policy_urlを前提にしない
+- URL不足時のfail-closedを前提にしている
+- preflightで1 mail unitだけを確認する
+- stale sendingが0件であることを確認する
+- SQLがread-onlyである
+- SQLがSELECT *を使用していない
+- SQLがメールアドレス全文を出力しない
+- 受信headerでReturn-Path / Authentication-Results / SPF / DKIM / DMARCを確認する
+- Received-SPFを必須header扱いしていない
+- Mail Fromという独立headerの存在を前提にしていない
+- Phase11 DONE / FROZENを自動確定しない
+- 本書作成時点で実行作業を行っていない
+
+==================================================
+17. 最終状態
+==================================================
+
+Phase11 controlled real mail test:
+COMPLETE / PASS
+
+Phase11 implementation:
+PASS / FINAL
+
+Phase11 production send:
+PASS / FINAL
+
+Phase11 DONE:
+runtime validation PASS / docs alignment complete candidate
+
+Phase11 FROZEN:
+未判定 / READY_FOR_FINAL_FREEZE_REVIEW
+
+==================================================
+18. Execution Status / Production Actual
+==================================================
+
+Execution Status:
+COMPLETE
+
+実施日:
+2026-09-07
+
+実施区分:
+Production Go-Live representative smoke
+
+fresh controlled identity preflight:
+
+```text
+subscriber=0
+subscription=0
+token=0
+delivery=0
+active suppression=0
+empty-mail rate-limit audit=0
+```
+
+実email、token、secretは本書に記録しない。
+
+TEST 1 / empty mail -> verify_email:
+
+```text
+planned=YES
+executed=YES
+result=PASS
+delivery_id=18
+status=sent
+attempt_count=1
+cron automatic send=PASS
+manual worker=0
+actual receipt=YES
+duplicate=NONE
+```
+
+TEST 2 / confirmation -> registration_complete:
+
+```text
+planned=YES
+executed=YES
+result=PASS
+delivery_id=19
+status=sent
+attempt_count=1
+cron automatic send=PASS
+manual worker=0
+actual receipt=YES
+duplicate=NONE
+```
+
+TEST 3 / settings_link:
+
+```text
+planned=YES
+executed=YES
+result=PASS
+delivery_id=20
+status=sent
+attempt_count=1
+cron automatic send=PASS
+direct HTTP send=0
+actual receipt=YES
+duplicate=NONE
+```
+
+Settings authentication / update:
+
+```text
+planned=YES
+executed=YES
+result=PASS
+manage_settings token used=YES
+manage_settings token revoked=NO
+maintenance=NO
+quiet_hours_enabled=1
+quiet_start_minute=720
+quiet_end_minute=1200
+```
+
+Additional cast registration / subscription_added:
+
+```text
+planned=YES
+executed=YES
+result=PASS
+delivery_id=21
+status=sent
+attempt_count=1
+cron automatic send=PASS
+manual worker=0
+actual receipt=YES
+duplicate=NONE
+```
+
+Final controlled graph:
+
+```text
+subscriber=active
+subscriptions=2 active
+verify token=used
+manage_settings token=used
+quiet hours=enabled / 720-1200
+controlled duplicate delivery=NONE
+```
+
+Final Production health check:
+
+```text
+WGMAILSYS_PHASE11_FINAL_PRODUCTION_HEALTH_CHECK=PASS
+eligible=0
+stale=0
+failed delivery=0
+transport_failure=0
+send_outcome_unknown=0
+fatal_error=0
+receive failure=0
+rate-limit rejection=0
+notification cron=PASS / count 1 / continuing YES
+permanent receive route=PASS
+```
+
+HTTP health:
+NOT_OBSERVABLE
+
+accessible error log候補に `/wgmailsys/` error evidenceは0。
+access logベースのHTTP 5xx総数は観測不可であるため、PASSとは記録しない。
+
+Bounce health:
+NOT_OBSERVABLE
+
+bounce mailbox read手段は未確立。
+controlled emailは全4通actual receipt確認済みだが、bounce mailboxそのものを確認したとは記録しない。
+
+Controlled Real Mail:
+COMPLETE / PASS

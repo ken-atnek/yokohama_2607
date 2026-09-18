@@ -26,6 +26,20 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
+## 公開サイト連携バックエンド作業時（必須）
+
+`public/sys/`、`public/backend/`、`public/db/` など、Next.js公開サイトと連携するPHP / API / メール / CLI / cron / DB連携 / JSON生成・参照に関する調査・実装を行う場合は、作業前に必ず以下を確認する。
+
+1. `backend_project/AGENTS.md`
+2. `backend_project/docs/specification/`
+3. `backend_project/docs/workflows/`
+4. `backend_project/docs/review/`
+5. `backend_project/docs/rules/`
+
+ルート `AGENTS.md` はプロジェクト全体とフロント側の入口、`backend_project/AGENTS.md` は公開サイト連携バックエンド開発の入口として扱う。
+
+---
+
 ## 運用ルール
 
 - Tailwind CSS は使用しない

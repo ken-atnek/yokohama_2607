@@ -116,7 +116,7 @@ export default function CastProfile() {
   const hasPhotoBlogLink = Boolean(cast?.photoBlogUrl);
   const hasNoticeMailLink = Boolean(noticeMailAddress && castId);
   const noticeMailHref = hasNoticeMailLink
-    ? `mailto:${noticeMailAddress}?subject=${encodeURIComponent(`add:${castId}`)}&body=${encodeURIComponent('そのまま送信してください')}`
+    ? `mailto:${noticeMailAddress}?subject=${encodeURIComponent(`add:${castId}`)}`
     : undefined;
 
   const [prevCastId, setPrevCastId] = useState<string | null>(null);

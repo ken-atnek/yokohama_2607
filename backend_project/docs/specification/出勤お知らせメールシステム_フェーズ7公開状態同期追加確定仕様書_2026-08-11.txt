@@ -1,0 +1,1836 @@
+# 出勤お知らせメールシステム フェーズ7公開状態同期追加確定仕様書
+
+作成日：2026-08-11
+対象フェーズ：フェーズ7「公開状態同期」
+
+## 1. 文書目的
+
+本書は、
+「出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版」
+および
+「出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版」
+に対する、フェーズ7「公開状態同期」の追加確定仕様書である。
+
+既存仕様と本書の内容がフェーズ7について競合する場合は、
+2026-08-11付の本書を優先する。
+
+本書は、フェーズ7の確定仕様を正式に固定するための文書であり、PHP、Next.js、DB、config、cron、.procmailrc、DDLそのものを変更する文書ではない。
+
+## 1.1 2026-08-12 実装完了状態
+
+フェーズ7「公開状態同期」は、2026-08-12時点でローカル実装、DB integration、回帰確認、既存girlブラウザ回帰、一時診断コード整理後の正式テスト再実行を完了した。
+
+これはフェーズ7実装完了を示すものであり、本番deploy、本番feature flag有効化、reconciliation cron登録、SMTP接続、実メール送信の開始を示すものではない。
+
+2026-08-12時点の本番導入状態：
+
+```text
+実装：完了
+ローカルDB integration：完了
+回帰テスト：完了
+既存girlブラウザ回帰：完了
+一時診断コード整理：完了
+正式テスト再実行：完了
+本番deploy：未実施
+本番direct sync有効化：未実施
+本番reconciliation有効化：未実施
+初回本番apply：未実施
+reconciliation cron：未登録
+mail send：OFF
+```
+
+## 2. 適用範囲
+
+本書は、横浜ダンディーグループ「出勤お知らせメールシステム」のフェーズ7に適用する。
+
+対象プロジェクト：
+
+```text
+E:\web_data\hot_point_kobe\public_html\dandy\yokohama_2607
+```
+
+フェーズ7direct syncの正式hook：
+
+```text
+E:\web_data\hot_point_kobe\public_html\cp8_dandy\input_girl_basic.php
+```
+
+## 3. 既存仕様との優先順位
+
+フェーズ7「公開状態同期」に関する参照優先順位は以下とする。
+
+```text
+1. 本書（2026-08-11 フェーズ7公開状態同期追加確定仕様）
+2. 出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt
+3. 出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt
+4. backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql
+5. 現行実装
+6. backup等の旧仕様
+```
+
+本書はフェーズ7の追加確定事項だけを扱う。フェーズ0～6、フェーズ8以降、既存DB仕様、既存登録・認証・設定・解除仕様を置き換えるものではない。
+
+## 4. 参照DDL
+
+フェーズ7から参照する正式DDLは、現時点では以下とする。
+
+```text
+backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql
+```
+
+DDL全文は本書へ転記しない。
+
+同階層の以下については、今回正本へ変更しない。
+
+```text
+backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03_up.sql
+```
+
+両者の正本関係をフェーズ7仕様書作成作業で変更・確定しない。
+
+## 5. フェーズ7の目的
+
+フェーズ7の目的は、
+
+```text
+t_girl_master2の公開状態と、
+既存notification subscriptionおよび未送信cast通知deliveryの整合性を維持すること
+```
+
+である。
+
+公開状態の正本は以下のみとする。
+
+```text
+t_girl_master2
+```
+
+フェーズ7で使用する主な公開状態情報は以下とする。
+
+```text
+g_id / castId
+att_shop / shop_id
+view
+girl行の存在有無
+```
+
+JSON、HTML、Next.js出力、ランキングJSON、schedule、realtime等をフェーズ7公開判定の正本として使用しない。
+
+## 6. フェーズ7対象機能
+
+フェーズ7で実装対象となる仕様は以下とする。
+
+```text
+・view変更時のdirect sync
+・物理削除時のdirect sync
+・active → paused / cast_hidden
+・paused / cast_hidden → active
+・対象castのqueued / deferred delivery cancellation
+・pending → active直前の公開状態guard
+・reconciliation CLI
+・subscription状態整合性チェック
+・Phase7 audit
+・Phase7 operational log
+・Phase7 feature flags
+```
+
+## 7. フェーズ7対象外
+
+以下はフェーズ7対象外とする。
+
+```text
+・通知event生成
+・出勤／リアルタイム差分検出
+・新規cast通知delivery生成
+・実メール送信
+・SMTP
+・送信worker
+・cron変更／登録
+・.procmailrc変更
+・新規subscription生成
+・subscription店舗移行
+・不正subscription自動修復
+・重複subscription自動統合
+・DBスキーマ／INDEX自動変更
+・管理画面Phase7警告UI
+・手動retry UI
+```
+
+将来便利である等の理由で、上記をフェーズ7へ追加しない。
+
+## 8. 公開状態の正本
+
+公開判定は以下とする。
+
+```text
+view='1'
+→ 公開
+
+view='0'
+→ 非公開
+
+NULL / 空文字 / '2' / その他不正値
+→ 公開扱いにしない
+→ fail closed
+```
+
+`view='1'`以外は公開扱いにしない。
+
+`view='0'`以外の不正値は`invalid_view`として扱う。
+
+`invalid_view`で正常active subscriptionを停止する場合のaudit reasonは以下とする。
+
+```text
+invalid_view
+```
+
+## 9. cast identity
+
+フェーズ7の同期キーは必ず以下とする。
+
+```text
+shop_id + cast_id
+```
+
+`cast_id`単独で検索・同期してはならない。
+
+同一cast_idでもshopが異なれば別castとして扱う。
+
+フェーズ7では、`shop_id + cast_id`を不変identityとして扱う。
+
+削除済みidentityを別girlへ再利用することを前提としない。
+
+名前、年齢、画像等から同一人物を推測しない。
+
+フェーズ7実装前に、現在のg_id / cast_id採番処理をread-onlyで確認する。
+
+削除済みの`shop_id + cast_id`が、別girlへ再利用されない既存仕様または実装であることを確認する。
+
+既存採番処理が再利用を行わない安全な実装である場合、フェーズ7のために採番処理を変更しない。
+
+再利用の可能性または既存仕様との矛盾が判明した場合は、フェーズ7側で推測対応せず、実装を進める前に報告する。
+
+フェーズ7のためにAUTO_INCREMENT変更、採番ロジック変更、DELETE方式変更等を行わない。
+
+## 10. 店舗
+
+フェーズ7対象店舗は正式allowlistとして以下のみとする。
+
+```text
+yh-dandy
+yh-clubd
+yh-mrd
+```
+
+`att_shop`からnotification `shop_id`への正式mappingを共通化する。
+
+未知または変換不能な店舗は推測しない。
+
+未知または変換不能な店舗の場合は以下とする。
+
+```text
+・subscription変更なし
+・delivery変更なし
+・auditなし
+・ERRORログ
+```
+
+cast_id単独fallbackは禁止する。
+
+## 11. subscription状態遷移
+
+### 11.1 view 1 → 0
+
+変更対象は以下の正常active subscriptionのみとする。
+
+```text
+status='active'
+AND
+pause_reason IS NULL
+```
+
+変更後：
+
+```text
+status='paused'
+pause_reason='cast_hidden'
+paused_at=UTC_TIMESTAMP(6)
+```
+
+`activated_at`は維持する。
+
+以下は変更しない。
+
+```text
+pending
+paused / cast_hidden
+paused / user_paused
+paused / admin_paused
+unsubscribed
+```
+
+ユーザー停止理由または管理者停止理由をフェーズ7で上書きしない。
+
+### 11.2 view 0 → 1
+
+変更対象は以下のみとする。
+
+```text
+status='paused'
+pause_reason='cast_hidden'
+```
+
+変更後：
+
+```text
+status='active'
+pause_reason=NULL
+paused_at=NULL
+```
+
+元の`activated_at`は維持する。
+
+以下は変更しない。
+
+```text
+active
+pending
+paused / user_paused
+paused / admin_paused
+unsubscribed
+```
+
+フェーズ7自身が停止したsubscriptionだけをフェーズ7が復帰させる。
+
+### 11.3 timestamp / no-op / 冪等性
+
+フェーズ7の状態遷移では、以下のtimestampを変更しない。
+
+```text
+requested_at
+unsubscribed_at
+```
+
+no-op対象行はUPDATEしない。
+
+再実行時、既に`paused / cast_hidden`である行の`paused_at`を書き換えない。
+
+既に`active`へ復帰済みの行へ不要なUPDATEを行わない。
+
+この補足を理由に新しいtimestampカラムを追加しない。
+
+## 12. pendingの扱い
+
+girlが非公開になっても、以下は`cast_hidden`へ変更しない。
+
+```text
+pending
+```
+
+pending → active直前には必ず最新DB状態で以下を確認する。
+
+```text
+・girl行が存在
+・shopが一致
+・view='1'
+```
+
+pending → activeのsubscription更新は、UPDATE実行時点でも以下であることを条件とする。
+
+```text
+status='pending'
+```
+
+現在statusがpending以外へ変化している場合、古い認証時点の判定を使ってactiveで上書きしない。
+
+概念上の順序：
+
+```text
+girlをFOR UPDATE相当でlock
+↓
+girl存在 / shop一致 / view='1'確認
+↓
+subscriptionを確認
+↓
+現在status='pending'の場合のみactive化
+```
+
+条件を満たさない場合は以下とする。
+
+```text
+・pending維持
+・active化しない
+・subscription削除しない
+・unsubscribedへ変更しない
+・cast_hiddenへ変更しない
+```
+
+この公開状態guardはフェーズ7feature flagとは独立して常時有効とする。
+
+確認不能時もfail closedとし、active化しない。
+
+## 13. pending → active guard失敗時
+
+公開状態guardに失敗した場合、ユーザーへ通常の登録完了画面を表示しない。
+
+内部理由は直接表示しない。
+
+直接表示しない内部理由例：
+
+```text
+view='0'
+girl不存在
+shop不一致
+invalid_view
+```
+
+ユーザー向けには、以下の趣旨の汎用案内とする。
+
+```text
+現在この女の子の出勤お知らせ登録を完了できない
+```
+
+公開状態だけが理由の場合：
+
+```text
+認証token
+→ 消費しない
+
+CSRF token
+→ 再利用不可
+```
+
+再試行時：
+
+```text
+・同じ有効な認証tokenを使用可能
+・新しいCSRF tokenを発行
+・最新公開状態を再確認
+```
+
+認証token期限は延長しない。
+
+## 14. 物理削除
+
+`t_girl_master2`のgirl行が存在しない状態は以下として扱う。
+
+```text
+cast_missing
+```
+
+物理削除時は、正常active subscriptionを以下へ変更する。
+
+```text
+active
+→ paused / cast_hidden
+```
+
+subscriptionそのものは削除しない。
+
+以下は変更しない。
+
+```text
+pending
+user_paused
+admin_paused
+unsubscribed
+```
+
+直接削除処理では以下の順序とする。
+
+```text
+1. DELETE前にshop_id + cast_idを保持
+2. girl DELETEを先に正常完了
+3. DELETE成功後にPhase7 direct sync
+4. Phase7失敗でもDELETEをrollbackしない
+5. ERRORログ
+6. reconciliationで後日修復
+```
+
+全体仕様書に残っている「完全退店で女の子DB行が削除された場合の購読最終状態」は、本フェーズ7仕様では以下を正本とする。
+
+```text
+girl行不存在
+→ cast_missing
+→ 正常active subscriptionのみ paused / cast_hidden
+→ subscriptionは削除しない
+```
+
+## 15. 店舗移動
+
+既存subscriptionの`shop_id`をフェーズ7が書き換えて移行してはならない。
+
+旧shopと新shopは別identityとする。
+
+旧shop側：
+
+```text
+旧shop + cast_idがmissing
+→ activeならpaused / cast_hidden
+```
+
+新shop側：
+
+```text
+subscription自動作成なし
+```
+
+新しい店舗で通知登録するには通常のユーザー登録フローを使用する。
+
+## 16. direct sync
+
+正式hookは既存の以下とする。
+
+```text
+cp8_dandy/input_girl_basic.php
+```
+
+DB更新前後の`view`差分を利用する。
+
+POST値だけを正本にしない。
+
+girl DB更新成功後、実DB上で以下の場合のみdirect sync候補とする。
+
+```text
+old_view != new_view
+```
+
+ただしフェーズ7transaction直前または内部では最新`t_girl_master2`を再取得し、以下の最新状態で実際の同期方向を決定する。
+
+```text
+exists + view='1'
+exists + view='0'
+exists + invalid_view
+missing
+```
+
+古い`new_view`を無条件適用しない。
+
+## 17. direct sync feature flag
+
+direct sync用feature flagは以下とする。
+
+```text
+notification_public_state_sync_enabled
+```
+
+未定義またはfalseの場合はdirect syncを実行しない。
+
+既存girl更新または削除処理には影響を与えない。
+
+フェーズ7設定不正、DB接続失敗、初期化失敗等でも以下とする。
+
+```text
+・girl更新／削除は成功のまま
+・Phase7のみ失敗
+・管理画面警告なし
+・ERRORログ
+```
+
+## 18. direct sync runtime validation
+
+direct syncでは重いDB構造preflightを毎回行わない。
+
+最低限以下を確認する。
+
+```text
+・Phase7設定validation
+・feature flag
+・DB接続
+・対象店舗
+・正式shop mapping
+・shop_id + cast_idの安全な特定
+```
+
+DDL、INDEX、storage engine、isolation level等は、実装前、本番導入、reconciliation preflightで確認する。
+
+## 19. direct sync失敗時のUI
+
+フェーズ7失敗を管理画面へ表示しない。
+
+既存完了UIを変更しない。
+
+以下を追加しない。
+
+```text
+・Phase7警告
+・エラーモーダル
+・再試行ボタン
+・管理者通知メール
+```
+
+詳細は運用ERRORログのみとする。
+
+girl公開／非公開操作をフェーズ7がブロックしない。
+
+girl DB更新成功後のフェーズ7失敗は以下とする。
+
+```text
+Phase7 rollback
+ERROR log
+girl更新成功維持
+```
+
+## 20. delivery cancellation
+
+castが通知不可になった場合、構造的に対象cast通知と証明できるdeliveryをcancelする。
+
+通知不可状態：
+
+```text
+view='0'
+invalid_view
+cast_missing
+```
+
+cancel対象status：
+
+```text
+queued
+deferred
+```
+
+対象castが通知不可であり、正式なevent / subscription関係から対象`shop_id + cast_id`のcast通知deliveryであることを構造的に確認できる場合、statusがqueuedまたはdeferredのdeliveryは、該当するものをすべてcancelledへ変更する。
+
+以下のような選別を行ってはならない。
+
+```text
+delivery_idが最大の1件だけ
+created_atが最新の1件だけ
+eventが最新の1件だけ
+```
+
+例：
+
+```text
+同一cast
+
+delivery A = queued
+delivery B = queued
+delivery C = deferred
+delivery D = sent
+```
+
+A～Dが正式に対象cast通知と確認できる場合：
+
+```text
+A → cancelled
+B → cancelled
+C → cancelled
+D → sentのまま
+```
+
+変更後：
+
+```text
+cancelled
+```
+
+変更しないstatus：
+
+```text
+sending
+sent
+failed
+suppressed
+cancelled
+```
+
+再公開してもcancelled deliveryを復活させない。
+
+## 21. delivery識別
+
+deliveryをsubject、body、template文字列等から推測してはならない。
+
+正式なevent / subscription関係から以下が一致するcast通知deliveryだけを対象とする。
+
+```text
+shop_id + cast_id
+```
+
+eventとsubscriptionのshop/castが不一致の場合は以下とする。
+
+```text
+・推測cancelしない
+・subscription変更しない
+・auditなし
+・ERROR
+```
+
+subscription行が欠損したorphan deliveryも推測してcancelしない。
+
+## 22. delivery cancellationとsubscription status
+
+cast自体が通知不可なら、delivery cancellationはsubscription statusから独立して行う。
+
+構造的に正常なcast-event deliveryなら、以下にリンクしていてもqueued / deferredはcancel対象とする。
+
+```text
+active
+pending
+user_paused
+admin_paused
+unsubscribed
+```
+
+ただしorphanやidentity不整合は対象外とする。
+
+逆にgirlが正常公開中なら、subscriptionが非activeという理由だけでフェーズ7はdeliveryをcancelしない。
+
+フェーズ7が業務上変更するdelivery内容は以下のみとする。
+
+```text
+queued / deferred
+→ cancelled
+```
+
+実装前に最新DDL / DeliveryRepositoryを確認し、既存status変更時に必須の正式カラムのみ更新する。
+
+フェーズ7独自の以下は追加しない。
+
+```text
+cancel reason column
+error_message利用
+retry_count変更
+sent_at変更
+```
+
+## 23. event
+
+フェーズ7は既存`t_notification_event`を以下のように変更しない。
+
+```text
+DELETE
+UPDATE
+status変更
+```
+
+eventは発生済み事実として保持する。
+
+フェーズ7が変更するのは必要なsubscriptionとdeliveryのみとする。
+
+## 24. transaction
+
+girl管理画面本体の更新transactionとフェーズ7transactionは分離する。
+
+フェーズ7では`shop_id + cast_id`単位の短いtransactionを使用する。
+
+1cast transaction内で以下を同一DB connection / transactionで実行する。
+
+```text
+1. 最新girl状態確認
+2. 正常subscriptionの条件付きUPDATE
+3. 対象deliveryの条件付きcancel
+4. 必要なPhase7 audit INSERT
+5. COMMIT
+```
+
+フェーズ7失敗時はフェーズ7transactionのみrollbackする。
+
+先に成功したgirl管理操作をrollbackしない。
+
+## 25. locking / concurrency
+
+girl行が存在する場合、フェーズ7transactionではgirl行を以下相当でロックし、ロック後の最新状態を使用する。
+
+```text
+SELECT ... FOR UPDATE
+```
+
+girlがmissingの場合、存在しない行をロックしようとしない。
+
+subscription UPDATEは現在status / pause_reasonを条件に含める。
+
+自動retryは行わない。
+
+deadlock / lock timeout時：
+
+```text
+rollback
+ERRORログ
+次回reconciliationで修復
+```
+
+girlとsubscriptionの両方を扱う場合の基本lock orderは以下とする。
+
+```text
+girl
+↓
+subscription
+```
+
+pending → active認証処理でも同じ順序とする。
+
+reconciliation advisory lockはreconciliation同士専用とする。
+
+direct syncはadvisory lockを取得または待機しない。
+
+同一cast競合は以下で制御する。
+
+```text
+girl row lock
+latest state recheck
+conditional UPDATE
+```
+
+既に目的状態ならno-opとする。
+
+## 26. DB connection / isolation
+
+フェーズ7の1cast transactionでは以下を同一DB connection / transactionで処理する。
+
+```text
+t_girl_master2
+t_notification_subscription
+t_notification_delivery
+t_notification_audit_log
+```
+
+擬似transactionを作らない。
+
+実装前に同一connectionで処理可能かread-only確認する。
+
+フェーズ7のためにconnection、session、global isolation levelを変更しない。
+
+既存DBの正式設定を使用する。
+
+競合制御は以下で行う。
+
+```text
+transaction
+FOR UPDATE
+lock order
+conditional UPDATE
+```
+
+## 27. reconciliation CLI
+
+reconciliationはdirect sync失敗等を修復する定期照合処理とする。
+
+通常実行：
+
+```text
+php reconcile.php
+```
+
+これはdry-runとする。
+
+実更新：
+
+```text
+php reconcile.php --apply
+```
+
+これはfeature flag等すべての安全条件を満たす場合のみ更新する。
+
+## 28. CLI引数
+
+実更新指定は完全一致の以下のみとする。
+
+```text
+--apply
+```
+
+以下を同等扱いしない。
+
+```text
+apply
+-apply
+--Apply
+--apply=true
+--apply=1
+```
+
+未知引数や不要な位置引数は本処理開始前にexit 1とする。
+
+dry-runへ自動fallbackしない。
+
+`--force`等の安全機構回避optionを追加しない。
+
+## 29. reconciliation feature flag
+
+reconciliation実更新許可用feature flagは以下とする。
+
+```text
+notification_public_state_reconciliation_enabled
+```
+
+引数なしdry-runはflag=falseでも実施可能とする。
+
+```text
+flag=false + dry-run
+→ 通常dry-run
+
+flag=false + --apply
+→ safe skip
+→ dry-runへ降格しない
+→ candidate走査なし
+→ DB変更なし
+→ auditなし
+→ exit 0
+```
+
+## 30. reconciliation preflight
+
+dry-run / --apply双方で本処理前にpreflightを実施する。
+
+最低限確認する項目：
+
+```text
+・設定validation
+・DB接続
+・正式店舗mapping
+・必要table / column
+・transaction要件
+・storage engine
+・既存status / pause_reason / delivery status
+・必要INDEX
+・DB advisory lock利用可否
+```
+
+安全に実行不能なら走査開始前にexit 1とする。
+
+自動DDL修正は禁止する。
+
+## 31. advisory lock
+
+reconciliation CLIの多重起動防止としてDB advisory lockを使用する。
+
+ロック名は以下を識別できる1環境1ロックとする。
+
+```text
+Phase7 reconciliation + environment
+```
+
+shop / cast / request / page単位へ分割しない。
+
+取得順序：
+
+```text
+CLI validation
+Config validation
+DB接続
+preflight
+advisory lock
+run upper bounds
+走査
+```
+
+already running時：
+
+```text
+走査なし
+更新なし
+auditなし
+exit 0
+```
+
+1 CLIにつき原則、以下とする。
+
+```text
+1 DB connection
+1 advisory lock
+複数のcast単位transaction
+```
+
+lock保持connectionと処理connectionを分離しない。
+
+DB接続断時は自動reconnectしない。
+
+```text
+ERROR
+exit 1
+```
+
+次回runで先頭から再走査する。
+
+## 32. reconciliation全体処理順序
+
+正式順序は以下とする。
+
+```text
+1. CLI引数validation
+2. Phase7設定validation
+3. DB接続
+4. preflight
+5. advisory lock取得
+6. run_upper_bound確定
+7. run_upper_subscription_id確定
+8. subscription初回整合性チェック
+9. cast公開状態reconciliation
+10. subscription最終整合性再チェック
+11. final counter / error_count確定
+12. summary
+13. advisory lock解放
+14. exit
+```
+
+この処理順に新しいフェーズ7機能を勝手に追加しない。
+
+## 33. reconciliation candidate
+
+通常候補集合は以下とする。
+
+A.
+
+```text
+active
+OR
+paused / cast_hidden
+```
+
+を持つcast。
+
+B.
+
+```text
+queued / deferred cast-event delivery
+```
+
+を持つcast。
+
+AとBをUNIONし、`shop_id + cast_id`でdistinctする。
+
+同じcastを1runで重複処理しない。
+
+## 34. pagination / run upper bound
+
+cast candidateは以下のkeyset paginationで走査する。
+
+```text
+ORDER BY shop_id, cast_id
+```
+
+LIMIT / OFFSETは禁止する。
+
+`run_upper_bound`を開始時に確定し、その境界まで走査する。
+
+cast_idのDB型を推測して整数化等しない。
+
+1runは開始時に確定した境界まで走査して終了する。
+
+途中で増えた対象を無限に追跡しない。
+
+resume cursorを永続保存しない。
+
+次回runは最新DBから先頭より再評価する。
+
+advisory lock取得後、走査開始前に以下を一度だけ確定する。
+
+```text
+run_upper_bound
+run_upper_subscription_id
+```
+
+実行中に拡張または再取得しない。
+
+subscription初回チェックと最終チェックは同じ上限を使用する。
+
+対象0件は正常skipとする。
+
+## 35. reconciliation batch size
+
+設定：
+
+```text
+notification_public_state_reconciliation_batch_size
+```
+
+default：
+
+```text
+100
+```
+
+許容：
+
+```text
+1～1000
+```
+
+明示的な不正値はconfig errorとする。
+
+自動clampしない。
+
+batch sizeはページサイズであり、1runの処理上限ではない。
+
+## 36. subscription状態整合性チェック
+
+通常cast同期とは別にread-only整合性チェックを行う。
+
+最新DDL、Phase5、Phase6実装から正式な以下の組み合わせを確認する。
+
+```text
+status + pause_reason
+```
+
+推測で状態定義を増やさない。
+
+不正状態：
+
+```text
+・自動修復なし
+・auditなし
+・ERROR
+```
+
+正常subscriptionのフェーズ7同期は妨げない。
+
+subscription整合性チェックは`subscription_id`によるkeyset paginationで行う。
+
+開始時に以下を確定する。
+
+```text
+run_upper_subscription_id
+```
+
+走査条件の思想：
+
+```text
+subscription_id > last_id
+AND
+subscription_id <= run_upper_subscription_id
+ORDER BY subscription_id
+```
+
+LIMIT / OFFSETは禁止する。
+
+batch sizeはreconciliation batch sizeを共用する。
+
+## 37. subscription不正状態
+
+意味が明確でない組み合わせをフェーズ7が推測修復しない。
+
+例：
+
+```text
+active + pause_reason非NULL
+paused + pause_reason NULL
+paused + unknown reason
+```
+
+正常activeは以下として扱う。
+
+```text
+status='active'
+AND
+pause_reason IS NULL
+```
+
+データ不整合を検出しても、それだけでrun全体を停止しない。
+
+正常cast同期は継続する。
+
+DB接続断、SQL実行不能等の致命的エラーなら中断し、exit 1とする。
+
+## 38. 重複subscription
+
+同一の以下に複数subscriptionが存在しても、フェーズ7は正本を推測しない。
+
+```text
+subscriber_id + shop_id + cast_id
+```
+
+禁止：
+
+```text
+DELETE
+統合
+subscription_id大小による選択
+created_atによる選択
+```
+
+ERRORとして検出する。
+
+正常な他subscriptionは処理継続する。
+
+同一castに正常subscriptionと不正subscriptionが混在する場合、安全に判定可能な正常subscriptionは通常どおり同期する。
+
+不正行または重複グループのみ除外する。
+
+不正行があることを理由に同一cast全体を止めない。
+
+ただしSQL例外等transaction自体の失敗ならcast transaction全体をrollbackする。
+
+## 39. subscriptionが存在しないcast / subscriber.status
+
+subscriptionをフェーズ7が新規作成しない。
+
+単にsubscriptionがないだけではauditを作らない。
+
+deliveryが存在しても参照subscriptionが欠損したorphanなら推測cancelしない。
+
+フェーズ7は以下を変更しない。
+
+```text
+t_notification_subscriber.status
+```
+
+subscription公開状態同期条件にもsubscriber.statusを使用しない。
+
+subscriber状態は別責務とする。
+
+## 40. 最終subscription整合性再チェック
+
+最終summary前に、同じ以下までread-only再走査する。
+
+```text
+run_upper_subscription_id
+```
+
+最終時点で残っている整合性データ異常を最終未解決error_countへ反映する。
+
+途中で正常化されたものは最終未解決error_countから除外可能とする。
+
+ただしtransactionエラー等の実行時エラーは消さない。
+
+最終再チェック後に新しい不整合を検出しても、以下へ戻らない。
+
+```text
+cast同期2周目
+再々チェック
+収束ループ
+```
+
+counter / error_count / ERRORログへ反映して終了する。
+
+次回reconciliationで再評価する。
+
+## 41. dry-run
+
+dry-runは完全read-onlyとする。
+
+禁止：
+
+```text
+FOR UPDATE
+subscription UPDATE
+delivery UPDATE
+audit INSERT
+```
+
+advisory lockは取得する。
+
+dry-run結果を後の`--apply`用action listとして保存または再利用しない。
+
+apply時は最新DBを再読込する。
+
+## 42. audit作成条件
+
+subscription状態が実際に1件以上変化した場合のみフェーズ7auditを作成する。
+
+状態変更0件ならauditなしとする。
+
+deliveryだけcancelされた場合もフェーズ7auditなしとする。
+
+正常COMMITされる状態変更auditのみ作成し、以下とする。
+
+```text
+result='success'
+```
+
+失敗auditを別transactionで作らない。
+
+失敗はoperational ERROR logへ記録する。
+
+## 43. audit action / 単位
+
+フェーズ7actionは以下のみとする。
+
+```text
+cast_hidden_paused
+cast_hidden_restored
+```
+
+direct / reconciliationでaction名を分けない。
+
+sourceはmetadataへ記録する。
+
+1 subscriptionにつき1auditではなく、以下の1同期につき1auditとする。
+
+```text
+shop_id + cast_id
+```
+
+auditの基本値：
+
+```text
+actor_type='system'
+actor_id=NULL
+subscriber_id=NULL
+subscription_id=NULL
+```
+
+## 44. audit metadata
+
+metadataの最低限のkeyは以下とする。
+
+```text
+source
+shop_id
+cast_id
+old_view
+new_view
+observed_view
+affected_count
+reason
+```
+
+source：
+
+```text
+direct
+reconciliation
+```
+
+reason：
+
+```text
+cast_hidden
+cast_missing
+invalid_view
+```
+
+等の確定理由。
+
+`affected_count`は実際に状態変更されたsubscription件数とする。
+
+direct：
+
+```text
+old_view / new_view
+→ 元のDB変更を表す
+
+observed_view
+→ Phase7同期時点の最新DB状態
+```
+
+実処理判断はobserved最新状態で行う。
+
+delete：
+
+```text
+new_view=NULL
+observed_view=NULL
+reason=cast_missing
+```
+
+reconciliation：
+
+```text
+old_view=NULL
+new_view=NULL
+observed_view=現在値
+```
+
+metadata extra key互換性は実装前に既存consumerを確認する。
+
+既存metadata keyを削除、rename、意味変更しない。
+
+フェーズ7は追加のみとする。
+
+既存consumerが固定構造前提の場合は、勝手に実装せず報告する。
+
+## 45. audit shop_id / cast_id / 利用者情報
+
+トップレベルの以下と、
+
+```text
+t_notification_audit_log.shop_id
+t_notification_audit_log.cast_id
+```
+
+metadataの以下の両方に同じ値を記録する。
+
+```text
+metadata.shop_id
+metadata.cast_id
+```
+
+同一同期contextから生成し、不一致を作らない。
+
+フェーズ7auditでは以下をNULLとする。
+
+```text
+email_hash=NULL
+ip_hash=NULL
+user_agent_hash=NULL
+```
+
+direct / reconciliation共通とし、特定subscriberを代表値にしない。
+
+## 46. audit request_id / created_at
+
+direct：
+
+```text
+既存request_idが正式利用可能なら継承。
+なければPhase7境界で生成。
+```
+
+reconciliation：
+
+```text
+1 CLI runにつき1 request_id。
+全cast audit / ERROR / summaryで共通。
+```
+
+PIIやsecretを含めない。
+
+フェーズ7独自の時刻生成方式を追加しない。
+
+既存AuditRepository、Phase5、Phase6の正式方式をread-only確認し、その方式を使用する。
+
+DB defaultならDB default。
+
+repository設定ならrepository方式。
+
+独自timezone変換は禁止する。
+
+## 47. operational log
+
+通常は簡潔、異常時は診断可能な情報を残す。
+
+direct ERROR最低限：
+
+```text
+Phase7/direct
+request_id
+shop_id
+cast_id
+current public state
+failure_stage
+exception/error
+timestamp
+```
+
+failure stage例：
+
+```text
+load_girl
+resolve_shop
+begin_transaction
+update_subscription
+cancel_delivery
+insert_audit
+commit
+```
+
+secret、token、email等は出力しない。
+
+## 48. reconciliation summary / exit code
+
+summaryでは最低限、確定した各種counterに加え、以下を出力する。
+
+```text
+mode
+request_id
+error_count
+duration
+exit_code
+```
+
+実更新件数とdry-run candidate件数を混在させない。
+
+exit 0：
+
+```text
+正常完了
+差分なし
+dry-run正常完了
+feature flag OFFの--apply safe skip
+already running safe skip
+```
+
+exit 1：
+
+```text
+DB failure
+config invalid
+CLI args invalid
+fatal error
+per-cast unresolved error
+未解決data inconsistency
+```
+
+## 49. error_count
+
+`error_count`はcast件数ではない。
+
+`error_count`は、フェーズ7が安全に解消できず残した未解決エラー事象数とする。
+
+同一castでも独立エラーなら複数加算する。
+
+同一事象の重複ログでは二重加算しない。
+
+正常補正できたinvalid_view等は専用counterには入れてもerror_countへは入れない。
+
+`error_count > 0`なら最終exit 1とする。
+
+同一subscription不整合を以下の双方で再検出しても二重加算しない。
+
+```text
+初回subscription整合性チェック
+通常cast同期
+```
+
+異常カテゴリごとに件数計上の正本を決める。
+
+例：
+
+```text
+invalid subscription state
+duplicate logical subscription
+unknown / invalid subscription.shop_id
+```
+
+は整合性チェック側を原則計上元とする。
+
+## 50. counter単位
+
+cast / subscription / delivery件数を分離する。
+
+実更新時例：
+
+```text
+checked_cast_count
+paused_cast_count
+paused_subscription_count
+restored_cast_count
+restored_subscription_count
+cancelled_delivery_count
+```
+
+dry-run：
+
+```text
+pause_candidate_cast_count
+pause_candidate_subscription_count
+restore_candidate_cast_count
+restore_candidate_subscription_count
+cancel_delivery_candidate_count
+```
+
+異常counterも単位が名称から判別できるようにする。
+
+回復可能なエラーがあり最終exit 1でも、可能な限りsummaryを出力する。
+
+正常COMMIT済み件数は保持する。
+
+個別ERROR詳細は運用ログへ記録する。
+
+summaryは全体件数中心とする。
+
+致命的障害でも可能な範囲でbest-effort summaryを出力する。
+
+## 51. 共通transition
+
+direct / reconciliationで使用する公開状態transitionの判定ロジックは、可能な限り共通化する。
+
+ただし既存機能へ影響する過剰な共通化・大規模リファクタリングは禁止する。
+
+フェーズ7に必要な最小範囲だけ共通化する。
+
+## 52. 新規女の子登録
+
+新規登録時にフェーズ7direct syncを発火させない。
+
+missing old_viewを0とみなして0→1処理にしない。
+
+初期view defaultはフェーズ7が変更しない。
+
+フェーズ7は以下を作成しない。
+
+```text
+subscriber
+subscription
+token
+event
+delivery
+```
+
+## 53. 在籍コピー
+
+在籍コピー先登録も新規登録扱いとする。
+
+フェーズ7direct syncを発火させない。
+
+コピー元subscriptionを変更しない。
+
+通知データを移行または新規作成しない。
+
+## 54. 新規登録view初期値
+
+フェーズ7は`t_girl_master2.view`のdefaultを定義または変更しない。
+
+実装前preflightで以下をread-only確認する。
+
+```text
+型
+NULL
+default
+add_girl_data()結果
+```
+
+既存仕様とDBが不一致でもフェーズ7で勝手に修正しない。
+
+## 55. DDL / INDEX
+
+フェーズ7実装のついでに以下を行わない。
+
+```text
+ALTER TABLE
+CREATE INDEX
+constraint追加
+```
+
+必要性が判明した場合は別途報告・確認する。
+
+DBスキーマ、INDEX、DDLの自動変更は禁止する。
+
+## 56. feature flags
+
+フェーズ7feature flagの正式名称は以下とする。
+
+```text
+notification_public_state_sync_enabled
+notification_public_state_reconciliation_enabled
+```
+
+defaultはfalseとする。
+
+未定義もfalseとする。
+
+mail send / dry-run flagとは独立する。
+
+config exampleへの追加はフェーズ7実装フェーズで行うため、仕様書整備作業では変更しない。
+
+reconciliation batch size設定は以下とする。
+
+```text
+notification_public_state_reconciliation_batch_size
+```
+
+## 57. reconciliation頻度
+
+想定運用は1時間ごととする。
+
+ただしフェーズ7実装作業ではcronを変更または登録しない。
+
+初回本番`--apply`確認後の別作業とする。
+
+## 58. 後続フェーズ要件：実送信前guard
+
+フェーズ7では送信workerを実装しない。
+
+ただし後続senderではSMTP送信直前に以下等を最終確認する必要がある。
+
+```text
+subscriber送信可能
+subscription active
+event/subscription shop+cast一致
+girl存在
+shop一致
+view='1'
+```
+
+条件不成立なら送信せずcancelledとする。
+
+これはフェーズ7実装対象ではない。
+
+## 59. 後続フェーズ要件：通知対象抽出guard
+
+後続のcast通知対象抽出では以下を必須とする。
+
+```text
+subscription active
+girl存在
+shop一致
+view='1'
+```
+
+対象抽出処理がsubscription状態を修復してはならない。
+
+これはフェーズ7では対象抽出処理そのものを実装しない。
+
+## 60. duplicate / invalidデータ
+
+フェーズ7が推測修復してはならない。
+
+データ異常は影響範囲を異常行または異常groupへ限定し、正常データ処理を可能な限り継続する。
+
+## 61. mandatory tests
+
+フェーズ7ではDB integrationを必須とする。
+
+最低限以下を確認する。
+
+```text
+1→0
+0→1
+pending untouched
+user_paused untouched
+admin_paused untouched
+unsubscribed untouched
+pending→active guard
+physical delete
+cast delivery cancellation
+system delivery non-interference
+rollback
+idempotency
+dry-run
+--apply
+feature flags
+invalid_view
+shop ID errors
+multiple shops
+keyset pagination
+advisory lock
+exit codes
+invalid subscription state
+duplicate subscription
+```
+
+専用テストデータを使用し、cleanup後残存0を確認する。
+
+## 62. 本番導入順序
+
+本番導入順序は以下とする。
+
+```text
+1. Phase7コードをflags OFFでdeploy
+2. production preflight
+3. reconciliation dry-run
+4. 内容確認
+5. direct sync ON
+6. reconciliation ON
+7. 手動で初回 --apply
+8. DB / log / summary確認
+9. 再度dry-runで残差確認
+10. 問題なしを確認後、別作業でhourly cron登録
+```
+
+異常時はcronを登録しない。
+
+2026-08-12時点では上記の本番導入工程は未実施である。production rolloutはフェーズ7実装完了後の別工程として扱う。
+
+## 63. フェーズ7完了条件
+
+以下をすべて満たした場合のみフェーズ7実装完了とする。
+
+```text
+・Phase7確定仕様への実装完了
+・実装前preflight矛盾なし
+・不要DDL変更なし
+・Phase5 / Phase6 regressionなし
+・既存girl更新／削除regressionなし
+・mandatory DB integration test全PASS
+・dry-run DB変更0
+・apply / rollback / idempotency PASS
+・flags OFF安全性PASS
+・direct sync failure isolation確認
+・audit確認
+・cast通知以外delivery非変更確認
+・exit code / summary / error_count確認
+・test cleanup後残存0
+・既存Next.js / PHP関連処理regressionなし
+```
+
+実装完了と本番feature flag有効化／cron登録は別扱いとする。
+
+2026-08-12 判定：
+
+```text
+・Phase7確定仕様への実装完了：PASS
+・実装前preflight矛盾なし：PASS
+・不要DDL変更なし：PASS
+・Phase5 / Phase6 regressionなし：PASS
+・既存girl更新／削除regressionなし：PASS
+・mandatory DB integration test全PASS：PASS
+・dry-run DB変更0：PASS
+・apply / rollback / idempotency PASS：PASS
+・flags OFF安全性PASS：PASS
+・direct sync failure isolation確認：PASS
+・audit確認：PASS
+・cast通知以外delivery非変更確認：PASS
+・exit code / summary / error_count確認：PASS
+・test cleanup後残存0：PASS
+・既存Next.js / PHP関連処理regressionなし：PASS
+```
+
+実装完了日：2026-08-12
+
+確認済みの主な結果：
+
+```text
+Phase4 parser：passed: 40
+Phase5 regression：CSRF / DB integration / HTTP API PASS
+Phase6 regression：config validation / session CSRF / DB integration / delivery insert rollback / HTTP API PASS
+Phase7 mandatory DB integration：PASS
+Phase7 cleanup residual：0
+既存girlブラウザ回帰：通常更新、view 1→0、view 0→1、削除 PASS
+PHP syntax：PASS
+Next.js build：PASS
+限定ESLint：PASS
+一時診断コード整理後のPhase7 DB integration：PASS
+```
+
+Phase7 DB integration最終再実行のcompletion marker：
+
+```text
+[ok] phase7_db_integration_tests_completed
+```
+
+このcompletion markerは、以下のcleanup residual assertが全項目0で通過した後にだけ出力される。
+
+```text
+audit_log=0
+delivery=0
+token=0
+subscription=0
+subscriber=0
+event=0
+girl=0
+```
+
+2026-08-12時点のactual configは変更していない。以下の安全状態を維持する。
+
+```text
+notification_public_state_sync_enabled=false
+notification_public_state_reconciliation_enabled=false
+notification_send_enabled=false
+notification_dry_run=true
+```
+
+本状態は「Phase7実装完了」であり、本番での公開状態同期稼働、reconciliation定期実行、通知メール送信開始を意味しない。
+
+## 64. 既存資料との関係
+
+本書はフェーズ7公開状態同期の詳細正本である。
+
+既存の全体仕様書およびフェーズ別実装手順書にある公開状態同期の概要は維持し、詳細は本書を参照する。
+
+フェーズ6追加確定仕様書は、フェーズ6において公開状態同期を対象外としている。フェーズ7仕様はその後続事項として本書で扱う。
+
+DDLは`backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql`を参照する。DDL全文の重複記載は行わない。
+
+## 65. 今回の仕様書整備で変更しないもの
+
+本書作成作業では以下を変更しない。
+
+```text
+・PHP
+・Next.js
+・JS
+・SCSS
+・config
+・DDL
+・DB接続
+・DB更新
+・SQL実行
+・cron
+・.procmailrc
+・テスト実行によるDB変更
+・Phase6仕様書
+・backend_project/docs/specification/backup/**
+```
