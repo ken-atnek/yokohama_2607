@@ -16,11 +16,10 @@ const BlockTelop = () => {
     const fetchTelopData = async () => {
       try {
         // キャッシュバスティング用のタイムスタンプを追加
-        const timestamp =
-          process.env.NODE_ENV === 'development' ? Date.now() : '';
-        const dataPath = `/db/contents/area/areaTopTelop.json${timestamp ? `?t=${timestamp}` : ''}`;
+        const timestamp = Date.now();
+        const dataPath = `/db/contents/area/areaTopTelop.json?t=${timestamp}`;
 
-        const response = await fetch(dataPath);
+        const response = await fetch(dataPath, { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
