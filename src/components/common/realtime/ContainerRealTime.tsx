@@ -220,10 +220,9 @@ const ContainerRealtime = () => {
                     className={clsx(
                       styles.itemCast,
                       cast.gradeId >= 0 && styles[`grade${cast.gradeId}`],
-                      shop === 'dandy' &&
-                        (cast.badgeType === 'new' ||
-                          cast.badgeType === 'new_kirakira' ||
-                          cast.badgeType === 'trial') &&
+                      (cast.badgeType === 'new' ||
+                        cast.badgeType === 'new_kirakira' ||
+                        cast.badgeType === 'trial') &&
                         styles.isNew
                     )}
                   >
