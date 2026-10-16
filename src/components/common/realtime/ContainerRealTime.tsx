@@ -3,7 +3,7 @@
  * URL: /src/components/common/realtime/ContainerRealTime.tsx
  * Referenced in: /src/app/dandy/realtime/page.tsx
  * Created: 2025-08-29
- * Last updated: 2026-07-18
+ * Last updated: 2026-10-16
  * ======================================= */
 'use client';
 
@@ -219,7 +219,12 @@ const ContainerRealtime = () => {
                     key={cast.castId}
                     className={clsx(
                       styles.itemCast,
-                      cast.gradeId >= 0 && styles[`grade${cast.gradeId}`]
+                      cast.gradeId >= 0 && styles[`grade${cast.gradeId}`],
+                      shop === 'dandy' &&
+                        (cast.badgeType === 'new' ||
+                          cast.badgeType === 'new_kirakira' ||
+                          cast.badgeType === 'trial') &&
+                        styles.isNew
                     )}
                   >
                     <div className={styles.innerItemCast}>

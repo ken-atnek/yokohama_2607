@@ -4,7 +4,7 @@
  * URL: /src/styles/ShopRealtime.module.scss
  * Referenced in: /src/components/common/realtime/ContainerRealTime.tsx
  * Created: 2025-08-29
- * Last updated: 2026-07-17
+ * Last updated: 2026-10-16
  * ======================================= */
 .containerRealtime {
     position: relative;
@@ -379,6 +379,35 @@
                             no-repeat center center/cover;
                         background-blend-mode: hard-light;
                         background-color: rgb(var(--grade-color));
+                    }
+                    // 新人枠追加
+                    &.isNew {
+                        --base-color: #16a6da;
+                        &::before {
+                            content: "";
+                            position: absolute;
+                            inset: 0;
+                            background-color: var(--base-color);
+                            border-radius: 0.5em;
+                            padding: 0.3rem;
+                            mask:
+                                linear-gradient(#000 0 0) content-box,
+                                linear-gradient(#000 0 0);
+                            mask-composite: exclude;
+                        }
+                        &::after {
+                            content: "NEW FACE";
+                            position: absolute;
+                            left: 50%;
+                            top: -0.8rem;
+                            translate: -50%;
+                            @include futura-cyrillic-book;
+                            color: $pure-white;
+                            background-color: var(--base-color);
+                            font-size: fz(18);
+                            padding: 0.3rem 2rem;
+                            border-radius: 0.3rem;
+                        }
                     }
                 }
                 @media screen and (width <= 1030px) {
