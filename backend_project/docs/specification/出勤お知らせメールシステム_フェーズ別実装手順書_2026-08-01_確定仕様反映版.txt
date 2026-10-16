@@ -1,0 +1,1918 @@
+横浜ダンディーグループ
+出勤お知らせメールシステム フェーズ別実装手順書
+2026-08-01 確定仕様反映版
+
+============================================================
+0. 実装原則
+============================================================
+
+・旧システムを稼働させたまま新システムを構築する。
+・各フェーズを独立して実装、確認する。
+・前フェーズの完了条件を満たすまで次へ進まない。
+・初期状態では利用者へ実メールを送信しない。
+・NOTIFICATION_SEND_ENABLED=falseを維持する。
+・NOTIFICATION_DRY_RUN=trueを維持する。
+・DB更新と外部メール送信を同一トランザクションに含めない。
+・Web、CLI、cronで共通Serviceを使用する。
+・旧DB、旧cron、旧.procmailrcは切替完了まで削除しない。
+・ロールバック不能な変更を一度に行わない。
+・各フェーズの変更ファイル、SQL、テスト結果を記録する。
+・リアルタイム更新の通知処理は実装しない。
+・del:<女の子ID>による解除は実装しない。
+
+============================================================
+フェーズ0：現行保全・未確定事項整理
+============================================================
+
+目的
+
+実装前に現行資産を保全し、本番送信以外の実装へ着手できる状態を作る。
+
+作業
+
+1. 次のファイルをバックアップする。
+
+/home/hpg-kobe/.procmailrc
+旧sys/pop3.php
+旧wgmailsys.php
+旧wgmail/wgm_reject.php
+旧wgmail/wgm_select.php
+旧sys/auto_send_wgmail.php
+旧cron設定
+旧DBスキーマ
+t_wmail_user
+t_wmail_list
+
+2. 現行pop3.phpの処理を基準資料として保存する。
+
+確認済みの現行フロー：
+
+・php://stdinで受信
+・件名add:<gid>
+・Fromからメールアドレス取得
+・新規利用者は仮登録
+・認証済み利用者は即時追加
+・del:<gid>は直接削除
+・認証URLへメールアドレスとmd5(timestamp)を含める
+
+新システムでは以下を廃止する。
+
+・delメール
+・メールアドレス入りURL
+・md5(timestamp)
+・GETだけでの本登録
+・SQL文字列連結
+・test.logへの個人情報出力
+・split()
+・ereg_replace()
+・rawメール全体の文字コード変換
+・@によるメール送信エラー抑制
+・SJIS内部処理
+
+3. 本番メール送信情報を確認待ちとして記録する。
+
+・送信経路
+・Return-Path
+・送信IP
+・SPF
+・DKIM
+・DMARC
+
+4. 現在確認済みのDNS情報を記録する。
+
+SPF：
+v=spf1 include:kagoya.net ~all
+
+MX：
+dmail.kagoya.net
+
+DMARC：
+未設定
+
+DKIM：
+selector不明
+
+5. 移行対象を再集計する。
+
+SELECT
+    COUNT(DISTINCT u.wmu_idmail) AS migration_user_count,
+    COUNT(*) AS migration_subscription_count
+FROM t_wmail_user AS u
+INNER JOIN t_wmail_list AS l
+    ON l.wml_idmail = u.wmu_idmail
+INNER JOIN t_girl_master2 AS g
+    ON g.g_id = l.wml_g_id
+WHERE u.wmu_status = 'ok'
+  AND g.view = '1'
+  AND l.wml_shop_id = g.att_shop;
+
+期待値の暫定値：
+
+登録者65人
+購読73件
+
+完了条件
+
+・バックアップ取得済み
+・旧cron、旧受信フロー確認済み
+・view='1'の意味確認済み
+・通知対象条件確認済み
+・共通受付アドレス確認済み
+・本番パス確認済み
+・送信認証情報だけが保留として明示されている
+
+ロールバック
+
+変更を行わないため不要。
+
+============================================================
+フェーズ1：新DBテーブル作成
+============================================================
+
+目的
+
+旧システムへ影響を与えず、新通知システムのDB基盤を作成する。
+
+対象テーブル
+
+・t_notification_subscriber
+・t_notification_subscription
+・t_notification_token
+・t_notification_event
+・t_notification_delivery
+・t_notification_suppression
+・t_notification_audit_log
+
+追加要件
+
+t_notification_subscriptionへpause_reasonを用意する。
+
+想定値：
+
+cast_hidden
+user_paused
+admin_paused
+
+制約
+
+・InnoDB
+・utf8mb4
+・外部キー
+・UNIQUE制約
+・CHECK制約
+・日時はUTC保存
+・メールアドレスの一意制約
+・subscriber_id + shop_id + cast_idの一意制約
+・event_keyの一意制約
+・event_id + subscription_idの一意制約
+
+テスト
+
+・同じメールアドレスを重複登録できない
+・同じ女の子購読を重複登録できない
+・存在しないsubscriber_idを登録できない
+・不正statusを保存できない
+・不正pause_reasonを保存できない
+・同じイベント、購読のdeliveryを重複作成できない
+
+完了条件
+
+・全テーブル作成済み
+・SHOW CREATE TABLE保存済み
+・全制約確認済み
+・テストデータ削除済み
+・旧テーブル未変更
+
+ロールバック
+
+本番データ投入前に限り、新テーブルを依存関係の逆順で削除する。
+
+============================================================
+フェーズ2：公開外設定・共通PHP基盤
+============================================================
+
+目的
+
+Web API、CLI、cronから共通利用する安全なPHP基盤を作る。
+
+推奨構成
+
+sys/
+├─ api/
+├─ cli/
+└─ lib/
+
+sys/libへ作成する主な処理
+
+・bootstrap
+・通知専用PDO接続
+・SubscriberRepository
+・SubscriptionRepository
+・TokenRepository
+・EventRepository
+・DeliveryRepository
+・SuppressionRepository
+・AuditRepository
+・RegistrationService
+・SettingsService
+・NotificationEventService
+・DeliveryService
+・MailService
+・CSRF
+・ロガー
+・機能フラグ
+
+PDO設定
+
+PDO::ATTR_ERRMODE = PDO::ERRMODE_EXCEPTION
+PDO::ATTR_EMULATE_PREPARES = false
+PDO::ATTR_DEFAULT_FETCH_MODE = PDO::FETCH_ASSOC
+
+機能フラグ
+
+NOTIFICATION_EMPTY_MAIL_RECEIVE_ENABLED=false
+NOTIFICATION_CONFIRMATION_ENABLED=false
+NOTIFICATION_SETTINGS_ENABLED=false
+NOTIFICATION_EVENT_ENQUEUE_ENABLED=false
+NOTIFICATION_DELIVERY_CREATE_ENABLED=false
+NOTIFICATION_SEND_ENABLED=false
+NOTIFICATION_DRY_RUN=true
+NOTIFICATION_LEGACY_MIGRATION_ENABLED=false
+NOTIFICATION_ADMIN_ENABLED=false
+
+上記の大文字表記は、仕様上の概念名／旧資料上の表記として扱う。
+
+少なくともPhase8については以下を正式に区別する。
+
+```text
+NOTIFICATION_EVENT_ENQUEUE_ENABLED = 概念名／旧表記
+notification_event_enqueue_enabled = 現行実装・設定key
+```
+
+Phase8の現行実装・設定key：
+
+```text
+notification_event_enqueue_enabled=false
+未定義=false
+```
+
+保存場所
+
+公開外PHP設定ファイル
+
+ログ
+
+記録する：
+
+・request_id
+・処理種別
+・cast_id
+・shop_id
+・状態コード
+・メールアドレスのマスク値またはハッシュ
+・処理時間
+
+記録しない：
+
+・生メール
+・本文
+・メールアドレス全文
+・生トークン
+・DBパスワード
+
+テスト
+
+・DB接続
+・例外時ロールバック
+・プレースホルダ
+・機能フラグOFF
+・ログマスキング
+・時刻UTC保存
+・設定ファイル公開外
+
+完了条件
+
+・共通ServiceをCLIとAPIの両方から利用可能
+・管理画面固有処理への過剰依存がない
+・DB接続情報が公開外
+・CLI、libへのWebアクセスが拒否される
+
+ロールバック
+
+新コードを無効化し、全フラグをOFFにする。
+
+============================================================
+フェーズ3：女の子詳細mailto導線
+============================================================
+
+目的
+
+登録専用フォームを作らず、女の子詳細ページから共通受付アドレスへ空メールを送れるようにする。
+
+対象候補
+
+E:\web_data\hot_point_kobe\public_html\dandy\yokohama_2607\src\components\common\profile\CastProfile.tsx
+
+実装内容
+
+宛先：
+workgmail_dy72gu0x@hot-point.jp
+
+件名：
+add:<castId>
+
+本文：
+そのまま送信してください
+
+店舗IDをmailtoへ含めない。
+
+女の子名、店舗名等を登録判定用パラメータへ含めない。
+
+テスト
+
+・3店舗で同じ受付アドレスになる
+・件名に正しいcastIdが入る
+・本文が正しい
+・メールアプリ起動
+・件名、本文を利用者が変更してもバックエンドは件名だけを判定する
+・view='0'の女の子に導線を表示するか、クリック後に拒否するかを既存画面仕様と整合させる
+
+完了条件
+
+・登録フォームなし
+・mailtoリンク正常
+・全店舗対応
+・ビルド、静的出力正常
+
+ロールバック
+
+ボタンを旧mailto実装へ戻す。
+
+============================================================
+フェーズ4：空メール受信CLI
+============================================================
+
+目的
+
+新しいpop3.phpで、安全に空メール登録要求を受け付ける。
+
+本番エントリーポイント
+
+/home/hpg-kobe/public_html/dandy/yokohama_2607/sys/pop3.php
+
+.procmailrc
+
+/home/hpg-kobe/.procmailrc
+
+実装手順
+
+1. PHP_SAPI==='cli'を確認
+2. 機能フラグ確認
+3. php://stdinからrawメールを読み込む
+4. サイズ上限を確認
+5. ヘッダーと本文の境界を検出
+6. ヘッダーだけ解析
+7. 自動返信、バウンス、ループを除外
+8. Fromを取得
+9. SubjectをMIMEデコード
+10. trim
+11. add:<正の整数>と完全一致確認
+12. 女の子ID取得
+13. t_girl_master2確認
+14. view='1'確認
+15. att_shop取得
+16. suppression確認
+17. subscriber状態確認
+18. 新規、pending、activeごとに処理分岐
+19. 監査ログ保存
+20. 仮登録または追加完了メールをキューへ登録
+
+件名
+
+許可：
+add:7521
+
+拒否：
+del:7521
+add:
+add:abc
+add:7521abc
+re:add:7521
+
+大文字ADDを許可するかは、実装時に件名仕様と一致させる。
+初期仕様では小文字addだけを許可する。
+
+新規利用者
+
+subscriber=pending
+subscription=pending
+verify_email delivery queue登録
+Phase4ではraw token生成なし
+Phase4ではverification URL生成なし
+Phase4では実メール送信なし
+
+pending利用者
+
+subscriber再利用
+対象subscription=pending
+既存unused verification tokenを必要に応じて無効化
+verify_email delivery queue登録
+Phase4ではraw token生成なし
+Phase4ではverification URL生成なし
+Phase4では実メール送信なし
+
+active利用者
+
+対象subscriptionを即時active
+再認証なし
+追加完了メール
+
+テスト
+
+・正常なadd
+・MIMEエンコードSubject
+・表示名付きFrom
+・不正Subject
+・複数From
+・自動返信
+・バウンス
+・MAILER-DAEMON
+・存在しない女の子
+・view='0'
+・重複登録
+・pending利用者の別女の子追加
+・active利用者の即時追加
+・del拒否
+・本文変更
+・本文削除
+・DB例外
+・メール送信キュー登録失敗
+
+完了条件
+
+・旧DBへ書き込まない
+・新DBへ正しい状態で登録
+・女の子、店舗をDBから確定
+・本文を解析しない
+・delを処理しない
+・ログへ個人情報全文を出さない
+
+ロールバック
+
+NOTIFICATION_EMPTY_MAIL_RECEIVE_ENABLED=false
+.procmailrcを旧パイプ先へ戻す。
+
+============================================================
+フェーズ5：仮登録認証・本登録完了
+============================================================
+
+目的
+
+新規利用者のメールアドレス所有確認を行い、POSTで本登録を確定する。
+
+Next.js画面
+
+src/app/dandy/wgmailsys/confirm/page.tsx
+src/app/dandy/wgmailsys/complete/page.tsx
+
+PHP API
+
+sys/api/confirmation.php
+
+処理
+
+1. URLから生トークン取得
+2. SHA-256ハッシュ化
+3. token検索
+4. purpose=verify_email確認
+5. expires_at確認
+6. used_at、revoked_at確認
+7. GETでは確認内容だけ表示
+8. CSRFトークン発行
+9. 利用者が本登録ボタンを押す
+10. POST
+11. tokenをFOR UPDATEで取得
+12. subscriberをactive
+13. token.subscription_idに紐づく対象subscriptionだけをactive
+14. used_at保存
+15. consented_at保存
+16. consent_version保存
+17. audit_log保存
+18. COMMIT
+19. 本登録完了メールを配信キューへ登録
+20. 完了画面へ遷移
+
+トークン
+
+・Phase5ではraw tokenを生成しない
+・URLの64文字小文字hex raw tokenからSHA-256 hashを算出して検索する
+・DBはSHA-256ハッシュBINARY(32)
+・有効期限1時間
+・1回使用
+・URLへメールアドレス等を含めない
+・verify_email tokenはsubscription_id NOT NULL
+・同一subscriberに複数pending subscriptionがあっても一括active化しない
+
+テスト
+
+・正常認証
+・GETだけ
+・POST
+・期限切れ
+・使用済み
+・無効化済み
+・改ざん
+・二重POST
+・CSRF不正
+・DB失敗
+・完了メールキュー作成失敗
+
+完了条件
+
+・GETだけではactiveにならない
+・POSTで1回だけactiveになる
+・トークン再利用不可
+・本登録完了メールが登録される
+
+ロールバック
+
+NOTIFICATION_CONFIRMATION_ENABLED=false
+
+============================================================
+フェーズ6：設定リンク・設定・解除
+============================================================
+
+目的
+
+安全な一時トークンと24時間セッションで設定変更、解除を行う。
+
+Next.js画面
+
+src/app/dandy/wgmailsys/settings-request/page.tsx
+src/app/dandy/wgmailsys/settings/page.tsx
+src/app/dandy/wgmailsys/unsubscribe/page.tsx
+src/app/dandy/wgmailsys/unsubscribe-all/page.tsx
+
+PHP API
+
+sys/api/settings-link-request.php
+sys/api/settings.php
+sys/api/unsubscribe.php
+sys/api/unsubscribe-all.php
+
+設定リンク
+
+・発行要求は何度でも可能
+・個別トークンは1回使用
+・成功後に24時間セッション発行
+
+Cookie
+
+Domain=dandy-g.jp
+Path=/
+Secure
+HttpOnly
+SameSite=Lax
+Max-Age=86400
+
+複数端末
+
+許可する。
+端末ごとに別トークン、別セッションを使用する。
+
+設定画面
+
+・登録女の子一覧
+・店舗名
+・女の子名
+・受信停止時間
+・女の子単位解除
+・全解除
+
+解除
+
+・GETだけでは解除しない
+・確認画面
+・CSRF付きPOST
+・subscription.status=unsubscribed
+・解除完了メール
+
+delメールは使用しない。
+
+受信停止時間
+
+・分単位保存
+・日跨ぎ対応
+・0/0旧値は無効として移行
+・24時は0分へ変換
+
+テスト
+
+・設定リンク再発行
+・個別トークン1回使用
+・使用済みURL
+・24時間セッション
+・複数端末
+・CSRF
+・他利用者subscription_id
+・女の子単位解除
+・二重解除
+・全解除
+・受信停止日跨ぎ
+・セッション切れ
+
+完了条件
+
+・メールアドレスだけでは設定画面を開けない
+・同じトークンを再使用できない
+・複数端末で独立利用可能
+・GETで解除されない
+・監査ログが残る
+
+ロールバック
+
+NOTIFICATION_SETTINGS_ENABLED=false
+
+============================================================
+フェーズ7：公開状態同期
+============================================================
+
+詳細正本
+
+Phase7の詳細確定仕様は、
+「出勤お知らせメールシステム_フェーズ7公開状態同期追加確定仕様書_2026-08-11.txt」
+を正本として参照する。
+
+実装状態
+
+2026-08-12 実装完了。
+
+direct sync、reconciliation、pending→active public state guard、Phase7 mandatory DB integration、Phase5/6 regression、既存girl更新／削除ブラウザ回帰、cleanup residual 0、一時診断コード整理後の正式テスト再実行まで完了済み。
+
+ただし、production rolloutは未実施。
+
+2026-08-12時点の本番feature flagと送信状態は以下を維持する。
+
+```text
+notification_public_state_sync_enabled=false
+notification_public_state_reconciliation_enabled=false
+notification_send_enabled=false
+notification_dry_run=true
+```
+
+reconciliation cronは未登録。
+
+目的
+
+view='0'、view='1'の変化を購読状態へ反映する。
+
+処理
+
+view='1'→view='0'
+
+subscription.status=paused
+pause_reason=cast_hidden
+
+view='0'→view='1'
+
+status=paused
+かつ
+pause_reason=cast_hidden
+
+の購読だけactiveへ復帰する。
+
+次は復帰しない。
+
+user_paused
+admin_paused
+unsubscribed
+
+実装箇所
+
+・女の子公開状態更新処理
+・定期照合ジョブ
+
+更新処理に組み込めない経路がある場合、照合ジョブで補完する。
+
+テスト
+
+・公開から非公開
+・非公開から公開
+・user_paused
+・admin_paused
+・unsubscribed
+・複数店舗
+・女の子削除
+
+完了条件
+
+・cast_hiddenだけ自動復帰
+・利用者解除を復帰させない
+・通知対象抽出と一致
+・mandatory DB integration全PASS
+・Phase5 / Phase6 regressionなし
+・既存girl更新／削除regressionなし
+・cleanup後残存0
+
+2026-08-12時点で上記はすべてPASS。
+
+次工程
+
+Phase7実装完了後のproduction rolloutは別工程として実施する。
+
+概念的な順序：
+
+1. productionへflag OFFでdeploy
+2. production preflight
+3. reconciliation dry-run
+4. 内容確認
+5. direct sync flag ON
+6. reconciliation flag ON
+7. 初回手動 --apply
+8. DB / log / summary確認
+9. 再dry-runで残差確認
+10. reconciliation cron登録
+
+メール送信開始とは混同しない。
+
+ロールバック
+
+公開状態同期フラグをOFFにし、照合ジョブ停止。
+
+============================================================
+フェーズ8：出勤変更イベント生成
+============================================================
+
+詳細正本
+
+Phase8の詳細確定仕様は、
+「出勤お知らせメールシステム_フェーズ8出勤変更イベント生成追加確定仕様書_2026-08-12.txt」
+を正本として参照する。
+
+実装状態
+
+2026-08-18 ローカル実装完了。
+
+実装、unit/static、mandatory DB integration、cleanup residual 0、管理画面ブラウザ回帰まで完了済み。
+
+ただし、production rolloutは未実施。
+
+production feature flag ON、cron登録、SMTP接続、実メール送信、Phase9 delivery生成、reconciliation実装は未実施。
+
+目的
+
+通知対象の出勤変更だけをイベントとして保存する。
+
+通知対象
+
+・初回出勤登録
+・出勤開始時刻変更
+・休みへの変更
+・休みから出勤への変更
+
+上記のうち、Phase8 event判定実行時のAsia/Tokyo基準today以降のschedule_dateだけを対象とする。
+
+ここでtodayは、schedule保存／event判定実行日のAsia/Tokyo calendar dateとする。
+
+Phase9の「配信予定基準日以降の次回出勤日最大3件」とは別仕様であり、混同しない。
+
+通知対象外
+
+・終了時刻だけの変更
+・TEL確認
+・公休日
+・LAST
+・OTHER_SPECIAL
+・同一内容再保存
+・過去日修正
+・休憩のみ
+・schedule DELETE
+・リアルタイム更新すべて
+
+canonical state
+
+・UNREGISTERED
+・WORK
+・OFF
+・TEL
+・HOLIDAY
+・LAST
+・OTHER_SPECIAL
+
+分類
+
+・OFF = win秒03 届出休、win秒13 お休み
+・TEL = win秒02、win秒08
+・HOLIDAY = win秒04のみ
+・LAST = wout秒09
+・OTHER_SPECIAL = win秒05 / 11 / 12 / 14、win秒21～25、その他正式分類されない特殊状態
+
+21～25はHOLIDAYではなく、現行表示上の出張中特殊状態としてOTHER_SPECIALへ分類する。OFFにも含めない。
+
+実装
+
+1. 保存前データ取得
+2. 出勤データ保存
+3. 公開JSON生成
+4. 保存後データ取得
+5. 通知対象項目比較
+6. 対象変更ならevent_key生成
+7. event INSERT
+8. UNIQUEで重複防止
+
+イベント種別
+
+schedule_created
+schedule_start_changed
+schedule_changed_to_off
+schedule_changed_to_work
+
+リアルタイムイベントは作らない。
+
+event_key
+
+request-scoped request_idを使用し、同一HTTP保存リクエスト内では同じrequest_idを共有する。
+
+event_key canonical materialは以下を使用する。
+
+・version = phase8-v1
+・request_id
+・shop_id
+・cast_id
+・schedule_date
+・event_type
+・before
+・after
+
+NotificationEventService::eventKeyHash()でSHA-256生成する。
+
+この方式は同一保存内のduplicate防止を目的とする。完全並行した別HTTPリクエスト間のlogical duplicate完全排除までは保証しない。
+
+reconciliation
+
+Phase8では実装しない。
+
+source_type = reconciliation はDDL上の将来互換として残すが、Phase8ローカル実装完了の対象外とする。
+
+テスト
+
+・初回登録
+・開始変更
+・終了だけ変更
+・休みへ変更
+・休みから出勤
+・TEL確認
+・公休日
+・LAST
+・OTHER_SPECIAL
+・過去日
+・同一保存
+・休憩のみ
+・schedule DELETE
+・リアルタイム更新
+・二重実行
+・DB-layer event INSERT failure isolation
+・management hook failure isolation static確認
+・通常ブラウザ回帰
+
+forced event INSERT failure browser E2Eは未実施。
+
+現在のPhase8完了条件では、DB-layer isolationとstatic hook確認をPhase8 failure isolation確認として採用済みであり、Phase8 FROZEN判定は維持する。
+
+完了条件
+
+・対象変更だけイベント作成
+・対象外変更ではイベントなし
+・同じイベントが重複しない
+・既存出勤登録処理を壊さない
+・unit/static PASS
+・DB integration PASS
+・cleanup residual 0
+・管理画面ブラウザ回帰 PASS
+・実メール未送信
+・SMTP未接続
+・cron未変更
+・追加DDLなし
+
+2026-08-18時点で上記はすべてPASS。
+
+次工程
+
+Phase9。
+
+Phase9の詳細確定仕様は、
+「出勤お知らせメールシステム_フェーズ9_2時間集約・配信キュー追加確定仕様書_2026-08-18.txt」
+を正本として参照する。
+
+2026-08-19 FINAL FREEZE時点のPhase9状態は、local implementation FROZEN、unit/static PASS、DB integration PASS、blockingなしである。
+
+ロールバック
+
+notification_event_enqueue_enabled=false
+
+production rolloutは未実施のため、Phase8本番稼働のロールバック作業はまだ発生していない。
+
+============================================================
+フェーズ9：2時間集約・配信キュー
+============================================================
+
+詳細正本
+
+Phase9の詳細確定仕様は、
+「出勤お知らせメールシステム_フェーズ9_2時間集約・配信キュー追加確定仕様書_2026-08-18.txt」
+を正本として参照する。
+
+実装状態
+
+2026-08-19 local implementation FROZEN。
+
+unit/static、DB integration、P9-06 regressionはPASS済み。
+
+ただし、cron登録、SMTP接続、実メール送信、production rolloutは未実施。
+
+目的
+
+未処理イベントを利用者単位、店舗横断で1通へ集約し、配信キューを作成する。
+
+cron
+
+00:10
+02:10
+04:10
+06:10
+08:10
+10:10
+12:10
+14:10
+16:10
+18:10
+20:10
+22:10
+
+cron式
+
+10 0-23/2 * * *
+
+抽出
+
+・status = pending
+・available_at <= UTC_TIMESTAMP(6)
+・Phase8が生成したschedule event
+・subscriber=active
+・subscription=active
+・suppressionなし
+
+cron停止や一時障害があっても、未処理pending eventを次回実行で回収する。
+
+P9-03正式仕様：
+
+```text
+1 Phase9 CLI invocation
+= 1 claimed batch
+= 1 notification InnoDB transaction
+```
+
+一度のCLI invocationで複数claimed batchを連続drainしない。
+
+batch sizeは1 Phase9 transactionでclaimする最大event数であり、delivery row件数ではない。
+
+batch上限を超えたpending eventは次回Phase9 cron executionで回収する。
+
+集約
+
+delivery正式単位：
+
+```text
+1 row = 1 event × 1 subscription
+```
+
+message_group_key：
+
+```text
+1 Phase9 claimed batch × 1 subscriber
+```
+
+同一message_group_keyはPhase10 senderで1通として扱う。
+
+同一message_group_key内：
+
+・subscriber_id同一
+・recipient_email_snapshot同一
+・mail_type = schedule_update
+・available_at同一
+
+店舗をまたいでも利用者ごとに1通。
+
+mail-group専用tableは追加しない。
+
+message_group_keyはBINARY(16)で、Phase9がrandom_bytes(16)により生成する。
+
+次回出勤日
+
+正式基準名：
+
+```text
+配信予定基準日
+```
+
+定義：
+
+```text
+delivery.available_atをsubscriber.timezoneへ変換したcalendar date
+```
+
+配信予定基準日以降の通常出勤日を日付順に最大3件。
+
+calendar dateごとに最大1件。
+
+同一calendar dateに複数rowが存在した場合は、ORDER BY win ASCの最初のrowをそのcalendar dateの代表rowとする。
+
+代表rowをcanonicalizeし、canonical WORKならnext_schedulesへ追加する。
+
+WORK以外なら、そのcalendar dateはnext_schedulesへ追加しない。
+
+同日の後続rowは採用しない。
+
+これは正常データモデルとして同日複数rowを許容する仕様ではなく、異常データに対するP0 deterministic fallbackである。
+
+除外：
+
+未登録
+休み
+TEL確認
+公休日
+LAST
+OTHER_SPECIAL
+
+3件未満なら存在分だけ表示。
+
+Phase9でsnapshot固定し、Phase10 actual sendが遅延しても再計算しない。
+
+配信キュー
+
+・event_id + subscription_id UNIQUE
+・available_at
+・受信停止時間内なら終了後へ延期
+・送信対象メールアドレスをsnapshot保存
+・template_data_snapshotをPhase9で固定
+・dry-run=trueでもdeliveryを作成
+・実メール送信はPhase10側で抑止
+
+transaction
+
+claimed batch単位transactionを採用する。
+
+個別eventごとのcommit方式は採用しない。
+
+途中失敗時はROLLBACKし、部分delivery、event processed、不完全message groupをcommitしない。
+
+対象delivery 0件のeventもprocessedにする。
+
+Phase9 event展開retryでは、独自backoffをP0で設けない。
+
+failure attempt更新後、max_attempts未満ならstatus = pendingへ戻し、event.available_atは変更しない。
+
+次回Phase9 runで再度pending eventとして処理する。
+
+max_attempts到達時はstatus = failedとし、通常pending抽出対象外とする。
+
+Phase9 event展開retryとPhase10 delivery送信retryは別責務である。
+
+P9-06 failure owner model
+
+```text
+EVENT
+TARGET
+SYSTEM
+WORK_DATA
+INVARIANT / PROGRAMMING
+UNKNOWN
+```
+
+EVENT failureは `EventDataValidationException` として明示し、EVENTのみpoison event isolationおよびrecordFailureAttempt対象とする。
+
+raw `ValidationException` は一律EVENT扱いしない。
+
+TARGET failureは `TargetPlanningException` として明示し、P0では `invalid_timezone` と `invalid_quiet_hours` を対象とする。
+
+TARGET failure時は当該targetだけskipし、正常targetは処理継続する。
+
+batch全体rollback、event attempt_count増加、timezone fallback、subscriber自動修正、subscription pause、suppression自動追加は行わない。
+
+TARGET counters：
+
+```text
+target_invalid_skipped
+event_all_targets_invalid
+```
+
+`event_zero_target` はeligible/current target自体が最初から0件の場合のみを指し、`event_all_targets_invalid` と区別する。
+
+SYSTEMはPDOExceptionとし、UNKNOWNはbatch rollback、failure_not_attributed、event attempt不消費とする。
+
+poison event
+
+1 eventの異常で同じbatchの正常eventが永久停止しないようにする。
+
+batch rollback後、原因eventが特定できる場合は、そのeventだけfailure attemptを別transactionで更新する。
+
+原因eventが特定できない場合は、event単位または縮小sub-batchで再評価し、原因eventを隔離する。
+
+same cast multiple event
+
+同一Phase9 claimed batchで、同一subscriber、同一shop_id、同一cast_id、同一schedule_dateに複数eventがある場合：
+
+・event rowは全件保持
+・delivery rowはeventごとに全件作成
+・メール表示は1 cast / schedule_date entryへcollapse
+
+代表eventは、occurred_at ASC、event_id ASCで並べた最後のevent。
+
+display reasonはPhase9で確定し、Phase10で再判定しない。
+
+quiet-hours
+
+subscriber.timezoneで判定する。
+
+quiet-hours中ならquiet終了local datetimeをUTC変換し、delivery.available_atへ保存する。
+
+quiet-hours外または無効なら、delivery.available_atはPhase9 queue作成時UTCとする。
+
+snapshot
+
+採用：
+
+```text
+C案
+```
+
+1 delivery rowへ、event固有snapshot、Phase9で確定した表示用summary、next_schedules、必要なgroup表示情報を保存する。
+
+Phase10はt_work_listを再取得しない。
+
+P9-05 known inconsistent state
+
+以下はKNOWN INCONSISTENT-STATE BEHAVIORとして扱う。
+
+```text
+t_notification_event.status = pending
+かつ
+同一(event_id, subscription_id)のt_notification_deliveryが既に存在する
+```
+
+この状態では既存deliveryのmessage_group_keyを維持する。
+
+同一subscriberの別event / 別subscriptionに対して今回新規deliveryが生成されると、preexisting deliveryとnew deliveryでmessage_group_keyが分かれる場合がある。
+
+これは正常Phase9 flowでは生成されない異常状態であり、P9-05 P0ではauto repair、既存deliveryのgroup変更、既存delivery削除、pending event自動再構築、新DDL追加を行わない。
+
+batch size
+
+Phase9正式config key：
+
+```text
+notification_delivery_create_batch_size
+```
+
+初期値：
+
+```text
+100
+```
+
+上限：
+
+```text
+500
+```
+
+このkeyはPhase9で新たに正式化するconfig keyであり、2026-08-19 close反映時点ではactual configへ追加しない。
+
+feature flag
+
+概念名／旧表記：
+
+```text
+NOTIFICATION_DELIVERY_CREATE_ENABLED
+```
+
+actual key：
+
+```text
+notification_delivery_create_enabled
+```
+
+default=false、未定義=false。
+
+notification_delivery_create_enabled=true かつ notification_dry_run=true の場合、delivery queueは作成する。
+
+テスト
+
+・1利用者1店舗
+・1利用者複数店舗
+・複数キャスト
+・次回出勤日が3件
+・1件
+・0件
+・受信停止
+・cron失敗後の回収
+・二重cron
+・同じイベント再処理
+・view='0'
+・解除済み
+・suppression
+・zero-target event processed
+・quiet-hours disabled
+・quiet-hours same-day interval
+・quiet-hours overnight
+・subscriber timezone
+・available_at UTC
+・配信予定基準日
+・next schedules 3件
+・next schedules 1件
+・next schedules 0件
+・OFF/TEL/HOLIDAY/LAST/OTHER_SPECIAL除外
+・batch rollback
+・incomplete groupなし
+・poison event isolation
+・attempt retry
+・max_attempts failed
+・P9-05 known group split再現
+・P9-06 valid / invalid / valid
+・P9-06 invalid target only
+・P9-06 invalid subscriber multiple events
+・target_invalid_skipped
+・event_all_targets_invalid
+・raw ValidationException非EVENT誤帰責
+・EventDataValidationException経路
+・TargetPlanningException経路
+・feature flag off
+・dry_runでもdelivery生成
+・cron-gap recovery相当
+・batch size boundary
+・cleanup residual 0
+・Phase8 regression
+
+2026-08-19 FINAL FREEZE時点の実施済みtest evidenceは以下を正本とする。
+
+```text
+unit/static PASS
+DB integration PASS
+P9-06 CASE1 PASS
+P9-06 CASE2 PASS
+P9-06 CASE3 PASS
+event-specific retry PASS
+max_attempts failed PASS
+system lock wait timeout PASS
+multi-event claimed batch rollback PASS
+cross-shop same subscriber group invariant PASS
+P9-05 known group split再現 PASS
+cleanup residual 0 PASS
+feature flag OFF safety PASS
+dry-run safety PASS
+```
+
+上記テスト一覧のうち、実施証拠がない項目をPASSとして扱わない。
+
+markProcessed failureはsafe fault injection手段がないため、DB integrationで強制failureを直接再現していない。
+
+ただし、SYSTEM PDO regression、claimed batch rollback、unit/static確認済みであり、Phase9 close blockerではないtest limitationとして扱う。
+
+event14〜19 protectionはN/Aとする。
+
+理由：
+
+```text
+ローカルMariaDB破損とdandy_g_db02再構築により、
+以前存在したevent_id 14〜19 pending 6件が現在DBに存在しないため。
+```
+
+production rollout前のP2運用確認として、Phase8由来pending eventが実際に存在する環境で、pre-existing pending snapshot-diffまたは安全なread-only / controlled確認により、既存pending eventへの非干渉を一度実証することを推奨する。
+
+完了条件
+
+・利用者ごとに1通
+・店舗、キャスト順
+・次回出勤日最大3件
+・未処理漏れなし
+・二重キューなし
+・実送信なしで内容確認可能
+・group invariant確認
+・batch rollback PASS
+・zero-target processed PASS
+・quiet-hours PASS
+・next3 snapshot PASS
+・same-cast summary PASS
+・feature flag OFF安全性 PASS
+・dry-run安全性 PASS
+・duplicate protection PASS
+・Phase8 regressionなし
+・cleanup residual 0
+・実メール未送信
+・cron未登録
+・SMTP未接続
+・追加DDLなし
+
+ロールバック
+
+notification_delivery_create_enabled=false
+
+追加DDLなしのため、DB schema rollbackは発生しない。
+
+次工程
+
+Phase10追加確定仕様書に基づく初回実装。
+
+============================================================
+フェーズ10：メールテンプレート・送信ワーカー
+============================================================
+
+詳細正本
+
+「出勤お知らせメールシステム_フェーズ10メールテンプレート・送信ワーカー追加確定仕様書_2026-08-19.txt」
+を参照する。
+
+目的
+
+各メール文面を実装し、送信結果、再試行を管理する。
+
+メール種別
+
+・仮登録受付
+・本登録完了
+・女の子追加
+・女の子解除
+・設定リンク
+・全解除
+・出勤お知らせ
+
+文字コード
+
+UTF-8
+
+From
+
+ダンディーグループ <no-reply@dandy-g.jp>
+
+送信方式
+
+mail()
+
+mb_send_mail()はPhase10 P0 transportとして使用しない。
+
+禁止
+
+・@によるエラー抑制
+・SJIS内部処理
+・メールアドレス入り管理URL
+・生トークンのログ出力
+
+ワーカー
+
+・FOR UPDATE SKIP LOCKED
+・最大100 mail units
+・schedule_updateは1 message_group_key = 1 mail unit
+・その他mail_typeは1 delivery_id = 1 mail unit
+・同一message_group_keyを複数workerへ分割しない
+・schedule_updateはgroup内にeligible rowが1件以上あればgroup candidate
+・representativeはgroup全体のMIN(delivery_id)等のdeterministic row
+・representative row自身がqueued / deferredであることをcandidate条件にしない
+・sending状態
+・attempt_countはclaim transaction内でPhase10送信試行開始回数として加算
+・送信中にトランザクション保持しない
+・成功sent
+・renderer failureはrender_failure
+・render_failureではmail transport未呼出
+・token付きmailのrender_failureではtoken revoke
+・max未満のrender_failureはdeferred
+・max到達時のrender_failureはfailed
+・同期的transport failureはtransport_failure
+・max未満のtransport_failureはdeferred
+・max到達時はfailed
+・max_attempts=5は初回含む総5 Phase10送信試行
+・retry intervalは5分、15分、1時間、6時間
+・24時間間隔は採用しない
+・1800秒超sendingはsend_outcome_unknownとしてterminal化
+・send_outcome_unknownはautomatic retryなし
+・production sender dry-runはno-op
+・本文確認はcontrolled previewで行う
+
+Phase10追加確定事項
+
+・1 message_group_key = 1 mail unit = 1 mail
+・「100件」は最大100 mail unitsであり、delivery row数ではない
+・同一message_group_keyを複数workerへ分割しない
+・representative rowがsentでもgroup内にeligible rowがあればcandidateとなり、group_invariant_violationへ到達させる
+・verify_email / settings_link tokenは送信試行直前に生成する
+・raw tokenはbin2hex(random_bytes(32))による64文字小文字hex
+・token_hashはhash('sha256', rawToken, true)によるBINARY(32)
+・verify_email tokenはsubscription_id NOT NULL
+・settings_link mailのtoken purposeはmanage_settings、subscription_id NULL
+・Phase10 P0 native transportはmail()
+・group invariantはmax_attempts、template_key、template_versionも確認する
+・render_failureはsend_outcome_unknownに分類しない
+・raw token、token URL、mail body全文を通常logへ出さない
+・outcome unknown時tokenは自動revokeしない
+・definite transport failure時tokenはrevokeし、retry時に新tokenを生成する
+
+Phase11 privacy仕様による上書き事項
+
+Phase10 FROZEN履歴は維持する。
+ただし、privacy_policy_url要件はPhase11追加仕様で廃止する。
+
+・notification_url.privacy_policy_urlは完全廃止
+・optional化、nullable保持、dead field保持は採用しない
+・real-send preflightはconfirmation_base_url / settings_base_urlのみ必須
+・RegistrationConfirmationService / SettingsLinkRequestService responseからprivacyPolicyUrlを削除
+・ConfirmationClient / SettingsRequestClientのprivacy linkを削除
+・代替privacy linkは追加しない
+・女の子詳細ページ等の出勤お知らせ登録ボタン付近へ説明文を追加しない
+・専用privacy pageは新設しない
+・全通知メールへ共通footerを適用
+
+共通footer FIXED文面：
+
+```text
+個人情報の取扱いについて
+
+ご登録いただいたメールアドレスは、出勤お知らせメールの配信、本サービスの登録・解除・設定、および運営上必要な連絡にのみ利用します。
+広告メール、他サービスのご案内、マーケティング目的には利用しません。
+法令に基づく場合等を除き、第三者へ提供しません。
+```
+
+適用mail_type：
+
+・verify_email
+・registration_complete
+・subscription_added
+・subscription_removed
+・settings_link
+・unsubscribe_all
+・schedule_update
+
+これはPhase9 close blockerではない。
+
+初期設定
+
+NOTIFICATION_SEND_ENABLED=false
+NOTIFICATION_DRY_RUN=true
+
+テスト
+
+・テンプレート置換
+・複数店舗本文
+・通知理由
+・次回出勤日3件
+・controlled preview
+・send flag OFF no-op
+・dry-run no-op
+・verify_email token生成
+・settings_link token生成
+・64文字小文字hex token
+・verify_email token INSERT contract
+・manage_settings token INSERT contract
+・raw token DB非保存
+・raw token log非出力
+・definite send failure token revoke
+・retry new token
+・schedule_update group分割防止
+・group >100 delivery rows
+・100 mail unit boundary
+・group invariant violation
+・group max_attempts invariant
+・group template_key/template_version invariant
+・attempt_count claim-time increment
+・renderer failure
+・renderer failure mail transport未呼出
+・renderer failure attempt_count消費
+・renderer failure token revoke
+・renderer failure deferred
+・renderer failure max_attempts failed
+・renderer failure retry new token
+・renderer failure != send_outcome_unknown
+・送信失敗
+・再試行
+・24時間間隔は採用しない
+・send outcome unknown
+・stale sending 1800秒
+・stale -> send_outcome_unknown
+・unique cast count
+・renderer shop fixed order
+・cast_id ASC
+・schedule_date ASC
+・snapshot-only rendering
+・t_work_list requeryなし
+・display reason再判定なし
+・二重送信
+・メールアドレス、トークンのログ非出力
+・cleanup residual 0
+
+完了条件
+
+・全テンプレート確認済み
+・controlled previewで本文確認済み
+・production sender dry-run no-op確認済み
+・実送信はまだOFF
+
+ロールバック
+
+送信ワーカー停止
+NOTIFICATION_SEND_ENABLED=false
+
+============================================================
+フェーズ11：メール送信認証確認
+============================================================
+
+目的
+
+本番実送信前に、実際の送信経路と認証結果を確定する。
+
+Phase11 privacy仕様更新
+
+・privacy_policy_urlは廃止済み
+・production / staging / example configへ設定しない
+・controlled real mail testでは共通footerの実受信確認をREAL-MAIL-CONFIRM対象とする
+・privacy_policy_url未確定blockerはCLOSED
+・production program deployはPhase11差分実装、test、レビュー完了までHOLD
+
+現在のDNS
+
+SPF：
+v=spf1 include:kagoya.net ~all
+
+MX：
+dmail.kagoya.net
+
+DMARC：
+なし
+
+DKIM：
+selector不明
+
+確認内容
+
+・公開サーバーMTA直送か
+・KAGOYA SMTPリレーか
+・実際の送信IP
+・Return-Path
+・SPF PASS/SoftFail/Fail
+・DKIM PASS/NONE/FAIL
+・DKIM selector
+・DMARC NONE/PASS/FAIL
+
+確認方法
+
+テストアドレスへ1通送信し、受信原文の以下を確認する。
+
+Return-Path
+Received
+Received-SPF
+Authentication-Results
+DKIM-Signature
+
+判定
+
+SPF SoftFail/Fail：
+送信経路またはSPFを修正
+
+DKIM NONE：
+MTAまたはSMTPリレー側でDKIM対応を検討
+
+DMARC：
+SPFまたはDKIMのalignment確認後、p=noneから導入検討
+
+完了条件
+
+・本番送信経路確定
+・Return-Path確定
+・SPF結果確認
+・DKIM結果確認
+・DMARC方針確定
+・テスト送信成功
+
+ロールバック
+
+NOTIFICATION_SEND_ENABLED=falseを維持。
+
+============================================================
+フェーズ12：バウンス・管理・保持期限
+============================================================
+
+目的
+
+配信禁止、監査、ログ、保持期限を運用可能にする。
+
+保持期間
+
+認証トークン：90日
+通知イベント：1年
+配信履歴：1年
+監査ログ：2年
+解除済み登録者・購読：2年
+システムログ：90日
+配信禁止情報：有効期間中
+
+実装
+
+・期限切れトークン削除
+・古いイベント削除またはpayload除去
+・配信履歴削除または匿名化
+・監査ログ削除
+・解除済み登録者匿名化
+・ログローテーション
+・suppression管理
+・cron最終実行時刻
+・queued滞留監視
+・failed監視
+・stale lock監視
+
+テスト
+
+・期限境界
+・対象外データを消さない
+・匿名化
+・suppression適用
+・管理者操作監査
+
+完了条件
+
+・保持期限処理確認
+・削除前件数、削除後件数記録
+・個人情報を不要に保持しない
+
+ロールバック
+
+cleanupジョブ停止。
+削除済みデータはバックアップからのみ復旧。
+
+============================================================
+フェーズ13：旧データ移行リハーサル
+============================================================
+
+目的
+
+旧本登録済み利用者と有効購読を新DBへ再実行可能な形で移行する。
+
+移行条件
+
+u.wmu_status='ok'
+g.view='1'
+l.wml_shop_id=g.att_shop
+
+暫定件数
+
+subscriber：65
+subscription：73
+
+移行状態
+
+subscriber=active
+subscription=active
+再認証なし
+registration_source=legacy_migration
+
+受信停止時間変換
+
+0/0：
+無効
+
+24：
+0分
+
+移行CLI要件
+
+--dry-run
+--execute
+--batch-size
+再実行可能
+エラーCSV
+監査ログ
+メール送信なし
+
+テスト
+
+・初回
+・再実行
+・不正メール
+・重複
+・view='0'
+・女の子不存在
+・途中停止
+・再開
+・件数一致
+・メール送信なし
+
+完了条件
+
+・移行元、移行先件数一致
+・再実行で増えない
+・active移行
+・再認証要求なし
+・個人情報ファイル公開外
+
+ロールバック
+
+移行バッチ識別子で当該移行分だけ削除。
+本番新規データと混在後の一括DELETEは禁止。
+
+============================================================
+フェーズ14：並行稼働・本番切替・旧停止
+============================================================
+
+目的
+
+旧システムを維持しながら新判定を比較し、深夜帯に安全に切り替える。
+
+並行稼働
+
+・新イベント生成ON
+・新キュー作成ON
+・実送信OFF
+・dry-run ON
+・旧配信継続
+・最低7日、可能なら14日比較
+
+比較項目
+
+・旧送信対象
+・新送信予定
+・対象利用者数
+・対象キャスト数
+・店舗別件数
+・受信停止延期
+・通知対象外理由
+・差異理由
+・次回出勤日3件
+
+本番切替時間
+
+出勤更新が少ない深夜帯
+
+切替手順
+
+1. バックアップ
+2. 旧cron次回時刻確認
+3. 新イベント、キュー未処理確認
+4. SPF、DKIM、Return-Path確認済みであること
+5. 旧配信cron停止
+6. 旧停止時刻記録
+7. 新キュー重複確認
+8. テスト利用者へ送信
+9. 設定、解除、追加確認
+10. NOTIFICATION_DRY_RUN=false
+11. NOTIFICATION_SEND_ENABLED=true
+12. 本番ワーカー開始
+13. 24時間重点監視
+
+ロールバック
+
+1. NOTIFICATION_SEND_ENABLED=false
+2. 新ワーカー停止
+3. 未送信キュー保持
+4. .procmailrcを旧設定へ戻す
+5. 必要に応じて旧cron再開
+6. 重複配信対象を確認
+7. ロールバック時刻記録
+
+旧停止
+
+新システム安定後に以下を停止、保全する。
+
+・旧pop3.php
+・旧wgmailsys.php
+・旧設定画面
+・旧解除画面
+・旧auto_send_wgmail.php cron
+・旧mailto導線
+
+旧ファイル、旧テーブルは即削除せず、公開外へ退避、参照専用で保管する。
+
+運用確認
+
+日次：
+queued、sent、failed、suppressed、stale lock、cron最終時刻
+
+週次：
+登録者、購読、解除、バウンス、非公開購読、ログ容量
+
+月次：
+保持期限処理、SPF、DKIM、DMARC、バックアップ復元確認
+
+完了条件
+
+・新システムだけから通知
+・二重配信なし
+・送信漏れなし
+・空メール登録正常
+・設定、解除正常
+・旧DBへの更新停止
+・運用引継ぎ完了
+
+============================================================
+最終チェックリスト
+============================================================
+
+登録
+
+[ ] 3店舗共通受付
+[ ] 件名add:<gid>
+[ ] 本文は解析しない
+[ ] view='1'だけ登録
+[ ] att_shopをDBから取得
+[ ] 新規pending
+[ ] active利用者は即時追加
+[ ] del拒否
+
+認証
+
+[ ] random_bytes()
+[ ] SHA-256ハッシュ
+[ ] 1時間
+[ ] GETで確定しない
+[ ] POST
+[ ] CSRF
+[ ] 1回使用
+
+設定
+
+[ ] 発行要求は何度でも可能
+[ ] 個別トークン1回
+[ ] セッション24時間
+[ ] 複数端末
+[ ] Domain=dandy-g.jp
+[ ] Path=/
+[ ] Secure
+[ ] HttpOnly
+[ ] SameSite=Lax
+
+公開状態
+
+[ ] view='0'でcast_hidden
+[ ] view='1'でcast_hiddenだけ復帰
+[ ] user_pausedを復帰しない
+[ ] unsubscribedを復帰しない
+
+通知対象
+
+[ ] 初回出勤
+[ ] 開始時刻変更
+[ ] 休みへ変更
+[ ] 休みから出勤
+[ ] 終了時刻だけは除外
+[ ] TEL確認除外
+[ ] 公休日除外
+[ ] LAST除外
+[ ] 過去日除外
+[ ] 同一保存除外
+[ ] リアルタイム全除外
+
+集約
+
+[ ] 2時間ごと
+[ ] 偶数時10分
+[ ] 未処理イベント回収
+[ ] 利用者ごと1通
+[ ] 店舗横断
+[ ] 店舗別表示
+[ ] キャスト別表示
+[ ] 次回出勤日最大3件
+
+送信
+
+[ ] mail() transport
+[ ] UTF-8
+[ ] From確認
+[ ] Return-Path確認
+[ ] SPF確認
+[ ] DKIM確認
+[ ] DMARC方針
+[ ] production sender dry-run no-op
+[ ] controlled preview
+[ ] retry 5分/15分/1時間/6時間
+[ ] 24時間間隔は採用しない
+[ ] send_outcome_unknown
+[ ] group_invariant_violation
+[ ] transport_failure
+[ ] stale sending 1800秒
+[ ] token送信直前生成
+[ ] outcome unknown token non-revoke
+[ ] 二重送信防止
+
+移行
+
+[ ] 直前再集計
+[ ] active移行
+[ ] 再認証なし
+[ ] dry-run
+[ ] 再実行可能
+[ ] 65人、73購読との比較
+
+保持
+
+[ ] token 90日
+[ ] event 1年
+[ ] delivery 1年
+[ ] audit 2年
+[ ] 解除済み2年
+[ ] system log 90日
+[ ] suppression有効期間中

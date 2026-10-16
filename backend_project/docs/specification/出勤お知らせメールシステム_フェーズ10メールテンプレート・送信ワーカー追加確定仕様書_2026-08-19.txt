@@ -1,0 +1,1558 @@
+横浜ダンディーグループ
+出勤お知らせメールシステム
+フェーズ10「メールテンプレート・送信ワーカー」追加確定仕様書
+
+作成日：2026-08-19
+
+============================================================
+0. 本書の位置づけ
+============================================================
+
+本書は、Phase10「メールテンプレート・送信ワーカー」のP0実装前に確定した追加仕様である。
+
+Phase10について既存正本、DDL、実装と競合する場合は、以下の優先順位とする。
+
+1. 本書
+2. 出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt
+3. 出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt
+4. DDL/fase1_DB_table_DDL_2026-08-03.sql
+5. 実装
+
+本書の作成はdocs-onlyであり、production code、test、DB、DDL、config、cron、SMTP、実メール送信は変更しない。
+
+============================================================
+1. Phase8 / Phase9境界
+============================================================
+
+Phase8はFROZENとする。
+
+Phase9はFROZENとする。
+
+Phase10の都合でPhase8 / Phase9の仕様、message_group_key、update_count、template_data_snapshot、delivery生成単位を変更しない。
+
+Phase9正式interface：
+
+```text
+1 delivery row = 1 event × 1 subscription
+schedule_update: 1 message_group_key = 1 mail
+```
+
+Phase10はPhase9が固定した以下を使用する。
+
+```text
+message_group_key
+recipient_email_snapshot
+template_data_snapshot
+available_at
+```
+
+Phase10では以下を行わない。
+
+```text
+t_work_list再取得
+display reason再判定
+next_schedules再計算
+```
+
+============================================================
+2. Phase10 P0責務
+============================================================
+
+Phase10 P0は以下を担当する。
+
+```text
+mail unit claim
+sending化
+attempt管理
+token送信直前生成
+mail renderer
+mail transport
+送信結果管理
+retry
+stale sending検知
+controlled preview用test seam
+```
+
+以下はPhase10 P0対象外であり、Phase11以降またはPhase12の責務とする。
+
+```text
+actual SMTP / MTA経路確定
+Return-Path実測
+actual送信IP
+SPF実測
+DKIM
+DMARC
+production cron登録
+本番実メール送信確認
+hard bounce処理
+complaint処理
+suppression運用
+```
+
+============================================================
+3. mail unit
+============================================================
+
+Phase10正式送信単位を `mail unit` とする。
+
+```text
+schedule_update:
+1 message_group_key = 1 mail unit = 1 mail
+
+その他mail_type:
+1 delivery_id = 1 mail unit = 1 mail
+```
+
+対象mail_type：
+
+```text
+verify_email
+registration_complete
+subscription_added
+subscription_removed
+settings_link
+unsubscribe_all
+schedule_update
+```
+
+============================================================
+4. Phase10 batch size
+============================================================
+
+1 Phase10 CLI invocationは、最大100 mail unitsを処理する。
+
+「100件」はdelivery row数ではない。
+
+```text
+schedule_update:
+最大100 message groups
+
+その他mail:
+1 delivery row = 1 unit
+```
+
+1 message_group_keyに150 delivery rows存在しても、1 mail unitとして扱う。
+
+100 rows + 50 rowsへ分割してはならない。
+
+Phase10正式config候補：
+
+```text
+notification_send_batch_size
+default = 100
+P0 max = 100
+未定義 / 不正値 = 100
+```
+
+actual configへの追加はPhase10 implementation時に行う。本書作成時点ではconfigを変更しない。
+
+============================================================
+5. claim処理単位
+============================================================
+
+100 mail unitsを先に全件sending化しない。
+
+1 mail unitごとに以下を完了してから次mail unitへ進む。
+
+```text
+claim
+↓
+send
+↓
+outcome update
+```
+
+1 invocation内で最大100回繰り返す。
+
+理由：
+
+100 mail unitsを先行claim後にworker crashすると、最大100 mail unitsがsend outcome unknownになり得るため、ambiguous範囲を1 mail unitへ限定する。
+
+============================================================
+6. eligible delivery
+============================================================
+
+Phase10 claim対象：
+
+```text
+status IN ('queued', 'deferred')
+AND available_at <= current UTC
+```
+
+schedule_update mail unitがPhase10処理candidateとなる条件：
+
+```text
+同一message_group_key内に1件以上、
+status IN ('queued', 'deferred')
+AND available_at <= current UTC
+を満たすdelivery rowが存在すること。
+```
+
+schedule_updateでは、representative row自身がqueued / deferredであることをcandidate条件にはしない。
+
+対象外：
+
+```text
+sending
+sent
+failed
+suppressed
+cancelled
+```
+
+============================================================
+7. multi-worker / representative
+============================================================
+
+Phase10はmulti-worker対応を想定する。
+
+`FOR UPDATE SKIP LOCKED` をP0候補として採用する。
+
+ただし、schedule_updateについて単純row claimは禁止する。
+
+同一message_group_key内の別rowをworker A / worker Bが別々にcandidateとして取得すると、`1 group = 1 mail` が壊れる。
+
+そのため `mail unit representative` を定義する。
+
+```text
+schedule_update:
+candidateとなったgroupについて、group全体のMIN(delivery_id)等のdeterministic rowをrepresentativeとする。
+representative row自身がqueued / deferredであることをcandidate条件にはしない。
+
+その他mail:
+delivery_id自身。
+```
+
+representativeをclaimしたworkerだけが、そのmail unit全rowを処理する。
+
+同一message_group_keyについて、複数workerが別rowを別mail unitとして取得してはならない。
+
+representative取得後の要件：
+
+```text
+group全row lock
+↓
+group invariant validation
+↓
+group全row sending化
+```
+
+正確なSQLはPhase10 implementationで確定する。
+
+仕様上は、同一message_group_keyを複数workerへ分割claimしないことを必須invariantとする。
+
+この分離により、以下の異常groupもcandidateとして検出し、group invariant validationへ到達させる。
+
+```text
+delivery 100 = sent
+delivery 101 = queued
+same message_group_key
+```
+
+上記はrepresentative rowがsentであっても、group内にeligible rowが存在するためcandidateとなる。
+
+============================================================
+8. claim transaction
+============================================================
+
+1 mail unitについて以下を同一transactionで行う。
+
+```text
+BEGIN
+↓
+representative claim
+↓
+mail unit全row lock
+↓
+group invariant validation
+↓
+status = sending
+↓
+locked_at設定
+↓
+locked_by設定
+↓
+attempt_count += 1
+↓
+token付きmailならtoken生成
+↓
+token_hash INSERT
+↓
+expires_at確定
+↓
+COMMIT
+```
+
+COMMIT後に以下を行う。
+
+```text
+render
+↓
+mail send
+```
+
+送信中にDB transactionを保持しない。
+
+============================================================
+9. attempt_count / max_attempts
+============================================================
+
+`attempt_count` の正式意味：
+
+```text
+Phase10送信試行開始回数
+```
+
+送信成功回数ではない。
+
+mail()関数が実際に呼ばれた回数と完全同義ではない。
+
+mail unitをsendingへclaimし、claim transactionがCOMMITして1回の送信試行を開始した時点で1 attemptを消費する。
+
+increment：
+
+```text
+mail unitをsendingへclaimするtransaction内
+```
+
+理由：
+
+renderer failure、transport definite failure、mail送信後のDB sent更新失敗、worker crash等も、Phase10送信試行として記録する必要があるため。
+
+`max_attempts` の正式意味：
+
+```text
+初回を含む総Phase10送信試行数
+```
+
+DDL defaultの5を維持する。
+
+```text
+max_attempts = 5
+attempt 1 = 初回
+attempt 2〜5 = retry
+総Phase10送信試行 = 5
+retry回数 = 4
+```
+
+============================================================
+10. retry interval
+============================================================
+
+Phase10 P0 retry interval：
+
+```text
+attempt 1 failure: 5分後  / 300秒
+attempt 2 failure: 15分後 / 900秒
+attempt 3 failure: 1時間後 / 3600秒
+attempt 4 failure: 6時間後 / 21600秒
+attempt 5 failure: failed
+```
+
+既存資料に例示されていた24時間間隔案は採用しない。
+
+理由：
+
+```text
+max_attempts = 5 = 総5 Phase10送信試行
+```
+
+と矛盾するため。
+
+DDL defaultは変更しない。
+
+============================================================
+11. definite transport failure
+============================================================
+
+mail transportが同期的にfalseまたは明示的exceptionを返した場合、`definite send failure` として扱う。
+
+Phase10 P0ではtemporary / permanentを推測しない。
+
+```text
+attempt_count < max_attempts:
+status = deferred
+available_at = current UTC + retry delay
+deferred_at設定
+locked_at / locked_by clear
+last_errorを安全に保存
+
+attempt_count >= max_attempts:
+status = failed
+failed_at設定
+locked_at / locked_by clear
+```
+
+============================================================
+12. Phase12境界
+============================================================
+
+以下はPhase10同期send resultから推測しない。
+
+```text
+hard bounce
+invalid recipient
+complaint
+その他非同期恒久failure
+```
+
+これらはPhase12 suppression責務である。
+
+============================================================
+12.1 render_failure
+============================================================
+
+正式diagnostic code：
+
+```text
+render_failure
+```
+
+定義：
+
+```text
+mail unit claim COMMIT後、mail transportを呼び出す前のrenderer処理で発生したdeterministic failure。
+```
+
+例：
+
+```text
+template_data_snapshot不正
+必須placeholder不足
+unsupported mail_type renderer
+renderer internal validation failure
+mail()呼出前に本文生成を完了できないfailure
+```
+
+render_failure時はmail transportを呼び出していない。
+
+したがってsend_outcome_unknownではなく、利用者へ届いた可能性はない。
+
+token付きmailの場合は、そのattemptで発行したtokenをrevokeする。
+
+```text
+attempt_count < max_attempts:
+status = deferred
+available_at = current UTC + retry delay
+deferred_at設定
+locked_at / locked_by clear
+last_error_code = render_failure
+
+attempt_count >= max_attempts:
+status = failed
+failed_at設定
+locked_at / locked_by clear
+last_error_code = render_failure
+```
+
+次回retryでは新tokenを生成する。
+
+retry intervalは通常のPhase10 retry intervalを使用する。
+
+============================================================
+13. group outcome invariant
+============================================================
+
+schedule_update groupでは、全rowが同じ送信試行を共有する。
+
+したがって以下はgroup全row同時遷移とする。
+
+```text
+sending
+sent
+deferred
+failed
+```
+
+sent：
+
+```text
+group全row status = sent
+sent_at同一
+locked_at NULL
+locked_by NULL
+last_error clear
+```
+
+deferred：
+
+```text
+group全row status = deferred
+available_at同一
+deferred_at同一
+attempt_count同一
+locked clear
+```
+
+failed：
+
+```text
+group全row status = failed
+failed_at同一
+attempt_count同一
+locked clear
+```
+
+============================================================
+14. claim count validation
+============================================================
+
+Phase9のclaim count mismatch patternをPhase10でも採用する。
+
+mail unit全rowについて、期待row数と実UPDATE row数が一致しない場合は正常sendへ進まない。
+
+その場合はtransaction rollbackする。
+
+============================================================
+15. group invariant violation
+============================================================
+
+正式diagnostic code：
+
+```text
+group_invariant_violation
+```
+
+異常状態例：
+
+```text
+同一message_group_keyに sent / queued が混在
+attempt_count不一致
+available_at不一致
+max_attempts不一致
+template_key不一致
+template_version不一致
+recipient_email_snapshot不一致
+subscriber_id不一致
+mail_type不一致
+```
+
+正式同一性確認候補：
+
+```text
+subscriber_id
+recipient_email_snapshot
+mail_type
+available_at
+status
+attempt_count
+max_attempts
+template_key
+template_version
+```
+
+P0方針：
+
+```text
+auto repairしない
+既にsentのrowは変更しない
+未送信rowは status = failed
+last_error_code = group_invariant_violation
+manual review対象
+```
+
+単純skipして毎回workerへ再検出させない。
+
+既sent rowをqueued等へ戻さない。
+
+既sent rowを再送しない。
+
+============================================================
+16. token responsibility
+============================================================
+
+token付きmailは以下とする。
+
+```text
+verify_email
+settings_link
+```
+
+これらのtokenはPhase10送信試行直前に生成する。
+
+Phase4 / Phase6 queue作成時にはraw tokenを生成しない。
+
+token generation：
+
+```text
+$rawToken = bin2hex(random_bytes(32));
+
+rawToken:
+64文字小文字hex
+
+$tokenHash = hash('sha256', $rawToken, true);
+
+token_hash:
+BINARY(32)
+
+DBにはSHA-256 hashのみ保存
+raw tokenはprocess memoryのみ
+```
+
+verify_email / manage_settingsでは同じtoken representationを使用する。
+
+禁止：
+
+```text
+raw token DB保存
+raw token delivery snapshot保存
+raw token log出力
+```
+
+16.1 token INSERT contract
+------------------------------------------------------------
+
+verify_email：
+
+```text
+subscriber_id = delivery.subscriber_id
+subscription_id = delivery.subscription_id
+purpose = verify_email
+subscription_id NOT NULL
+token_hash = SHA-256(rawToken) binary
+expires_at = token INSERT UTC + 3600 seconds
+```
+
+manage_settings / settings_link：
+
+```text
+subscriber_id = delivery.subscriber_id
+subscription_id = NULL
+purpose = manage_settings
+token_hash = SHA-256(rawToken) binary
+expires_at = token INSERT UTC + 3600 seconds
+```
+
+上記はDDL chk_tntk_targetと整合させる。
+
+============================================================
+17. TokenRepository
+============================================================
+
+Phase10 implementationで最低限必要なmethod：
+
+```text
+token INSERT
+token_id単位revoke
+```
+
+既存のfind、mark used、revoke existing等と整合させる。
+
+本書作成時点では実装しない。
+
+============================================================
+18. token + claim transaction
+============================================================
+
+token生成・token_hash INSERTは、以下と同一transactionで行う。
+
+```text
+mail unit claim
+sending化
+attempt_count increment
+```
+
+理由：
+
+claim失敗時に孤立有効tokenを残さないため。
+
+COMMIT失敗時：
+
+```text
+raw token破棄
+token INSERTはrollback
+そのURLをsendしない
+```
+
+============================================================
+19. token TTL
+============================================================
+
+```text
+verify_email: 3600秒
+manage_settings: 3600秒
+```
+
+`expires_at` 起点：
+
+```text
+Phase10送信試行直前のtoken INSERT時点
+```
+
+queue作成時点をTTL起点にしない。
+
+queue滞留時間でtoken有効期限を消費しない。
+
+============================================================
+20. definite send failure token
+============================================================
+
+明示的なtransport failure時は、そのattemptで生成したtokenをrevokeする。
+
+token revokeとdelivery deferred / failed更新を同一outcome transactionで行う。
+
+次回retryでは新tokenを生成する。
+
+============================================================
+21. send outcome unknown
+============================================================
+
+正式diagnostic code：
+
+```text
+send_outcome_unknown
+```
+
+定義：
+
+```text
+mailが送られた可能性があるが、送信成功をDBへ確定記録できなかった状態
+```
+
+例：
+
+```text
+mail transport success -> sent UPDATE failure
+mail transport success -> worker crash
+send call中または直後にworker process消失
+```
+
+P0方針：
+
+```text
+automatic retryしない
+即terminal
+status = failed
+last_error_code = send_outcome_unknown
+manual review対象
+max_attempts到達を待たない
+```
+
+============================================================
+21.1 failure boundary
+============================================================
+
+render_failure：
+
+```text
+mail transport呼出前
+確実に未送信
+retry可
+token revokeあり
+send_outcome_unknownへ分類しない
+```
+
+transport_failure：
+
+```text
+mail transportが同期的にfalseまたは明示的definite failureを返した状態
+retry可
+token revokeあり
+send_outcome_unknownへ分類しない
+```
+
+send_outcome_unknown：
+
+```text
+mailが送られた可能性があるがDBへsuccessを確定できない状態
+automatic retry禁止
+token revokeなし
+terminal failed
+```
+
+============================================================
+22. outcome unknown時token
+============================================================
+
+send outcome unknownではtokenを自動revokeしない。
+
+理由：
+
+実際に利用者へメールが届いている可能性があり、自動revokeすると届いた認証URLを無効化する危険があるため。
+
+outcome unknown時tokenは以下の通常life cycleへ任せる。
+
+```text
+used
+expires_at
+manual revoke
+```
+
+verify_email：
+
+```text
+届いていたmailから正常認証可能
+```
+
+settings_link：
+
+```text
+届いていたmailのtokenを有効期限内は利用可能
+```
+
+============================================================
+23. stale sending
+============================================================
+
+stale sendingはsend outcome unknownと同一分類とする。
+
+```text
+automatic retryしない
+status = failed
+last_error_code = send_outcome_unknown
+manual review対象
+```
+
+============================================================
+24. stale threshold
+============================================================
+
+Phase10 P0正式値：
+
+```text
+30分
+1800秒
+```
+
+これは旧backup値の採用ではなく、Phase10 P0の新規仕様値である。
+
+判定：
+
+```text
+status = sending
+AND locked_at <= current UTC - 1800 seconds
+```
+
+理由：
+
+通常mail send処理は長時間DB lockを保持しない設計である。
+
+一方、stale判定後は自動retryではなくsend_outcome_unknownとしてterminal化するため、生存中workerを早すぎるthresholdで誤判定しないよう余裕を持った値を採用する。
+
+Phase10正式config候補：
+
+```text
+notification_send_stale_threshold_seconds
+default = 1800
+未定義 = 1800
+```
+
+minimum / maximumの厳密値はimplementation時に安全なvalidationを設定する。
+
+本書作成時点ではactual configを変更しない。
+
+============================================================
+25. stale unit
+============================================================
+
+stale判定もmail unit単位とする。
+
+```text
+schedule_update:
+message_group_key全体
+
+その他:
+delivery_id
+```
+
+groupの一部だけstale recoveryしない。
+
+============================================================
+26. dry-run
+============================================================
+
+production senderにおけるdry-runはno-opとする。
+
+以下の場合：
+
+```text
+notification_send_enabled = false
+または
+notification_dry_run = true
+```
+
+Phase10 workerは以下を行わない。
+
+```text
+claimしない
+status変更しない
+attempt_count変更しない
+token生成しない
+renderしない
+transportを呼ばない
+queueを消費しない
+```
+
+============================================================
+27. controlled preview
+============================================================
+
+本文・header確認は `controlled preview` という別概念に分離する。
+
+controlled previewはproduction sender dry-runとは別である。
+
+目的：
+
+```text
+local development
+unit test
+integration test
+template確認
+```
+
+要件：
+
+```text
+実メール送信なし
+production queue消費なし
+本物のtoken生成なし
+必要ならdummy token placeholder使用
+通常production logへ本文全文を出さない
+```
+
+実装時にはtransport abstractionを設け、Fake transport相当のtest seamを用意する。
+
+具体的class名は仕様では固定しない。
+
+============================================================
+28. send flag OFF
+============================================================
+
+`notification_send_enabled=false` の場合、workerはno-opとする。
+
+```text
+claimなし
+status変更なし
+token生成なし
+renderなし
+```
+
+============================================================
+29. renderer / transport分離
+============================================================
+
+renderer：
+
+```text
+logical mail content作成
+raw UTF-8のsubject / body / logical metadataを返す
+subjectをMIME encodingしない
+```
+
+transport：
+
+```text
+subject MIME encoding
+Content-Type
+Content-Transfer-Encoding
+CRLF normalization
+From
+その他header
+実送信
+```
+
+============================================================
+30. mail format
+============================================================
+
+Phase10 P0：
+
+```text
+plain text
+UTF-8
+HTMLなし
+multipartなし
+```
+
+Content-Type：
+
+```text
+text/plain; charset=UTF-8
+```
+
+subject：
+
+```text
+rendererがraw UTF-8を生成
+transportでRFC準拠のMIME encoded-wordへ変換
+二重encoding禁止
+```
+
+body transfer encoding：
+
+```text
+base64
+```
+
+transportがUTF-8 bodyをbase64 encodeし、適切なline wrappingを行う。
+
+mail transport outputのline ending：
+
+```text
+CRLF
+\r\n
+```
+
+============================================================
+31. transport abstraction
+============================================================
+
+Phase10 P0ではmail transportをinterface化する。
+
+目的：
+
+```text
+実メールなしunit test
+renderer test
+header test
+definite failure injection
+outcome processing test
+```
+
+Phase10 P0で使用するnative PHP transportは `mail()` とする。
+
+mb_send_mail()はPhase10 P0 transportとして使用しない。
+
+transportの責務：
+
+```text
+MIME subject encoding
+Content-Type
+Content-Transfer-Encoding
+base64 body
+CRLF
+From/header
+mail()実行
+```
+
+ただし以下を維持し、実メールは送らない。
+
+```text
+notification_send_enabled=false
+notification_dry_run=true
+```
+
+actual MTA / SMTPの本番確認はPhase11で行う。
+
+`provider_message_id` はdiagnostic / trace用途であり、idempotency保証ではない。
+
+同じprovider_message_idで二重送信防止できる前提を置かない。
+
+============================================================
+32. schedule_update renderer
+============================================================
+
+Phase9 snapshotだけで本文生成する。
+
+DB requery禁止：
+
+```text
+t_work_list
+schedule master
+event再判定用master
+```
+
+display bucket：
+
+```text
+shop_id + cast_id + schedule_date
+```
+
+summary：
+
+```text
+Phase9 bucket summaryを利用
+同一cast/date複数eventはPhase9 summaryに従いcollapse
+```
+
+============================================================
+33. 更新キャスト数
+============================================================
+
+Phase9の `update_count` はgroup内delivery row数である。
+
+本文表示には直接使用しない。
+
+本文表示：
+
+```text
+更新キャスト数：N名
+```
+
+N：
+
+```text
+同一mail unit内の unique(shop_id + cast_id) 件数
+```
+
+Phase9 update_countは変更しない。
+
+Phase10 rendererで表示用unique cast countを算出する。
+
+追加DB queryは行わない。
+
+============================================================
+34. renderer order
+============================================================
+
+Phase10 P0正式順：
+
+```text
+店舗
+↓
+キャスト
+↓
+出勤日
+```
+
+shop固定順：
+
+```text
+1. yh-dandy
+2. yh-clubd
+3. yh-mrd
+```
+
+これはPhase10表示仕様として新たに正式固定する。
+
+VALID_PUBLIC_STATE_SHOPS配列順を唯一の根拠とはしない。
+
+cast：
+
+```text
+cast_id ASC
+```
+
+これはP0 deterministic orderingである。
+
+schedule_date：
+
+```text
+ASC
+```
+
+same cast multiple date：
+
+```text
+同一castに複数schedule_dateの変更がある場合、
+shop + cast + schedule_date bucketごとに表示する。
+cast内でschedule_date ASC。
+```
+
+============================================================
+35. schedule_update subject / body
+============================================================
+
+正式件名：
+
+```text
+DANDY-出勤お知らせメール【更新情報】
+```
+
+本文基本構造：
+
+```text
+登録中の女の子の出勤情報が更新されました。
+
+更新キャスト数：{{unique_cast_count}}名
+
+------------------------
+
+店舗
+↓
+cast
+↓
+schedule_date
+↓
+更新理由
+↓
+Phase9 snapshotのnext_schedules
+
+------------------------
+
+最新schedule案内
+予約・問い合わせ
+設定リンク要求ページ案内
+```
+
+============================================================
+36. settings_link
+============================================================
+
+Phase10前に構造・URL contractを固定する。
+
+token付きURLは、現行Phase6設定とConfigLoaderに従う。
+
+raw tokenをsnapshotへ保存しない。
+
+件名：
+
+```text
+出勤お知らせメールの設定リンクをお送りします
+```
+
+本文必須構造：
+
+```text
+設定ページへのリンク発行要求を受け付けた旨
+設定URL
+URL有効期限は発行から1時間
+URLは1回使用である旨
+心当たりがなければ操作不要である旨
+```
+
+最終的な敬語・改行等の微調整はPhase10 template実装レビューで可能とする。
+
+必須情報・URL contractは本仕様で固定する。
+
+============================================================
+37. unsubscribe_all
+============================================================
+
+Phase10前に最低限の本文構造を正式固定する。
+
+件名：
+
+```text
+出勤お知らせメールの登録をすべて解除しました
+```
+
+本文必須構造：
+
+```text
+全登録解除が完了した旨
+現在登録中だった女の子への出勤お知らせメールがすべて解除された旨
+再度利用する場合は女の子詳細ページから登録できる旨
+心当たりがない場合の案内
+```
+
+unsubscribe_all完了mailでは新規token生成不要。
+
+============================================================
+38. その他mail template
+============================================================
+
+以下は既存正本の初期案を基準とし、Phase10追加仕様では既存placeholderとの契約だけ明確化する。
+
+```text
+verify_email
+registration_complete
+subscription_added
+subscription_removed
+```
+
+============================================================
+39. URL
+============================================================
+
+URLは既存configを使用する。
+
+```text
+verification:
+confirmation_base_url等、現行ConfigLoaderに従う。
+
+settings:
+settings_base_url等、現行ConfigLoaderに従う。
+```
+
+禁止：
+
+```text
+raw tokenをDB snapshot、log、mail queue JSONへ保存しない。
+URL全体を通常logへ出さない。
+```
+
+============================================================
+40. logging
+============================================================
+
+通常Phase10 logへ以下を出さない。
+
+```text
+recipient email全文
+raw token
+token URL
+mail body全文
+session
+secret
+```
+
+記録可：
+
+```text
+request_id
+worker_id
+delivery_id
+message_group_keyの安全な表現
+mail_type
+status transition
+attempt_count
+last_error_code
+処理時間
+件数summary
+```
+
+============================================================
+41. last_error_code
+============================================================
+
+最低限Phase10 P0正式code：
+
+```text
+render_failure
+send_outcome_unknown
+group_invariant_violation
+transport_failure
+```
+
+`render_failure` はmail transport呼出前のdeterministic renderer failureを表す。
+
+`transport_failure` は同期的なmail transport false / exceptionを表す。
+
+```text
+max未満: deferred
+max到達: failed
+```
+
+============================================================
+42. worker entry point
+============================================================
+
+Phase10正式entry point：
+
+```text
+public/sys/cli/send-deliveries.php
+```
+
+============================================================
+43. worker safety
+============================================================
+
+実装対象：
+
+```text
+PHP_SAPI = cli
+feature safety確認
+send flag確認
+dry-run確認
+DB preflight
+worker ID
+summary log
+```
+
+============================================================
+44. Phase10 mandatory tests
+============================================================
+
+最低限以下を確認する。
+
+```text
+send flag OFF no-op
+dry-run no-op
+controlled preview
+single-row mail success
+verify_email token生成
+settings_link token生成
+64文字小文字hex token
+verify_email token INSERT contract
+manage_settings token INSERT contract
+raw token DB非保存
+raw token log非出力
+token TTL 1時間
+definite send failure token revoke
+retry new token
+schedule_update single group
+schedule_update multiple shops
+schedule_update multiple casts
+same cast multiple dates
+group >100 delivery rows
+100 mail unit boundary
+same-group split prevention
+multi-worker representative claim
+FOR UPDATE SKIP LOCKED
+group sending transition
+group sent transition
+group deferred transition
+group failed transition
+group invariant violation
+group max_attempts invariant
+group template_key/template_version invariant
+attempt_count claim-time increment
+renderer failure
+renderer failure mail transport未呼出
+renderer failure attempt_count消費
+renderer failure token revoke
+renderer failure deferred
+renderer failure max_attempts failed
+renderer failure retry new token
+renderer failure != send_outcome_unknown
+retry 5m
+retry 15m
+retry 1h
+retry 6h
+5th failure terminal
+24h intervalなし
+send outcome unknown
+outcome unknown token non-revoke
+stale sending 1800秒
+stale -> send_outcome_unknown
+automatic stale retryなし
+provider_message_id非idempotency前提
+unique cast count
+renderer shop fixed order
+cast_id ASC
+schedule_date ASC
+snapshot-only rendering
+t_work_list requeryなし
+display reason再判定なし
+PII-free log
+mail() native transport
+transport failure injection
+Fake transport相当test seam
+cleanup residual 0
+```
+
+============================================================
+45. mail success + DB sent update failure
+============================================================
+
+Phase10 mandatory fault caseとする。
+
+```text
+mail transport success
+かつ
+sent outcome DB update failure
+```
+
+を安全なtest seamで再現する。
+
+期待：
+
+```text
+自動retry対象にしない
+send_outcome_unknownとしてmanual review可能な状態へ収束
+```
+
+実際のDB failure後に同一process内でfailed化できない場合もある。
+
+その場合：
+
+```text
+sending残存
+↓
+1800秒経過
+↓
+stale detection
+↓
+send_outcome_unknown
+```
+
+で収束することを確認する。
+
+============================================================
+46. production safety
+============================================================
+
+Phase10 implementation中も以下を維持する。
+
+```text
+notification_send_enabled=false
+notification_dry_run=true
+```
+
+禁止：
+
+```text
+実メール送信
+SMTP接続
+cron登録
+```
+
+============================================================
+47. DDL
+============================================================
+
+Phase10 P0ではDDLを変更しない。
+
+判定：
+
+```text
+B
+```
+
+専用unknown status等があれば運用可読性は上がるが、P0必須ではない。
+
+============================================================
+48. Phase9
+============================================================
+
+Phase9はFROZENを維持する。
+
+Phase10都合で以下を変更しない。
+
+```text
+message_group_key
+update_count
+snapshot
+delivery生成単位
+```
+
+============================================================
+49. production rollout
+============================================================
+
+Phase10 local implementation完了とproduction rolloutを混同しない。
+
+Phase10 local完了後も以下を維持する。
+
+```text
+send flag OFF
+dry_run ON
+cronなし
+実メールなし
+```
+
+============================================================
+50. 正本間の既存表現修正方針
+============================================================
+
+既存全体仕様・手順書にある以下の表現は、本書に合わせて解釈・修正する。
+
+```text
+従来の件数単位表現
+→ 最大100 mail units
+
+従来の回数表現
+→ 初回含む総5 Phase10送信試行
+
+従来の24時間間隔案
+→ 採用しない
+
+従来のstale復旧表現
+→ 1800秒超sendingをsend_outcome_unknownとしてterminal化、自動retryなし
+
+従来の本文確認表現
+→ production sender dry-runはno-op、本文確認はcontrolled preview
+```
+
+============================================================
+51. 状態
+============================================================
+
+Phase10追加仕様：
+
+```text
+CONFIRMED
+```
+
+Phase10実装：
+
+```text
+NOT STARTED
+```
+
+本書作成時点のblocking：
+
+```text
+なし
+```

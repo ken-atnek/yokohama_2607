@@ -1,0 +1,2290 @@
+横浜ダンディーグループ
+出勤お知らせメールシステム
+フェーズ11 本番メール送信経路・認証・運用開始 追加確定仕様書
+
+============================================================
+1. 文書情報
+============================================================
+
+文書名：
+出勤お知らせメールシステム_フェーズ11本番メール送信経路・認証・運用開始追加確定仕様書_2026-08-21.txt
+
+対象Phase：
+Phase11
+
+作成日：
+2026-08-21
+
+状態：
+Phase11 GO-LIVE ACTIVE / RUNTIME VALIDATION PASS / FREEZE PENDING FINAL DOCS/TRACKER REVIEW
+
+本書の目的：
+Phase10で完成済みのメールテンプレート・送信ワーカーを、本番メール配送経路へ安全に接続するため、Phase11で確認・確定する範囲、完了条件、production activation条件、rollback条件を定義する。
+
+正本：
+
+1. 出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt
+2. 出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt
+3. 出勤お知らせメールシステム_フェーズ10メールテンプレート・送信ワーカー追加確定仕様書_2026-08-19.txt
+
+事実確認・実測根拠：
+
+・既存実装
+・Phase11初回調査結果
+・Phase11 production SSH read-only調査結果（2026-08-24）
+・Phase11 privacy_policy_url完全廃止＋通知メール共通footer化決定
+・Production backend / frontend minimal deploy結果
+・P11-MAIL-AUTH-01A Production実メール確認結果
+・2026-09-07 Production Go-Live activation結果
+・2026-09-07 representative smoke結果
+・2026-09-07 final Production health check結果
+
+Phase8：
+FROZEN
+
+Phase9：
+FROZEN
+
+Phase10：
+FROZEN
+
+Phase11：
+GO-LIVE ACTIVE / RUNTIME VALIDATION PASS / FREEZE PENDING FINAL DOCS/TRACKER REVIEW
+
+Production deploy：
+Backend Production deploy = PASS / FINAL
+Frontend minimal deploy = PASS / FINAL
+Production DB migration/schema = PASS / FINAL / READY
+
+P11-MAIL-AUTH-01A：
+CLOSED / FINAL
+
+Go-Live readiness：
+PASS / FINAL
+
+canonical subscription_added Controlled Test：
+PASS / FINAL
+
+confirmation / settings / automation：
+PASS / FINAL
+
+本書の更新は仕様状態の反映であり、production code、test code、actual config、DNS、cron、MTA、SMTP、DBを変更しない。
+
+============================================================
+2. 確定区分
+============================================================
+
+本書では、各項目を以下へ分類する。
+
+[FIXED]
+現時点で仕様として確定できる事項。
+
+[ENV-CONFIRM]
+本番またはステージング環境の調査で確定する事項。
+
+[REAL-MAIL-CONFIRM]
+実メールの受信結果で確定する事項。
+
+[DECISION-REQUIRED]
+環境確認または実メール確認後に、追加判断が必要な事項。
+
+未確認値を推測で正式値として扱わない。
+
+============================================================
+3. Phase11の目的
+============================================================
+
+[FIXED]
+
+Phase11は、メール送信ロジックそのものを新規設計するPhaseではない。
+
+Phase10で完成したworkerを本番メール配送経路へ安全に接続する前提として、実際の配送結果と認証状態を確認し、production activationへ進めるかを判断できる状態にすることを目的とする。
+
+Phase11では、以下を確認・確定する。
+
+・実際の送信経路
+・Return-Path
+・実送信IP
+・SPF
+・DKIM
+・DMARC
+・Authentication-Results
+・actual URL config確認事項
+・cron本番導入条件の整理
+・安全なreal mail test
+・production activation prerequisite
+・rollback / emergency stop条件
+・初期監視項目
+
+============================================================
+4. Phase11の範囲
+============================================================
+
+[FIXED]
+
+Phase11 IN：
+
+・production / staging mail environment確認
+・MTA / SMTP relay経路確定
+・Return-Path確認
+・実送信IP確認
+・SPF確認
+・DKIM確認
+・DMARC確認
+・Authentication-Results確認
+・actual URL config確認事項整理
+・cron本番導入条件整理
+・安全なreal mail test
+・production activation prerequisite整理
+・rollback
+・初期監視
+
+Phase11 OUT：
+
+・Phase8～10の確定業務ロジックの任意な再設計・機能追加
+・hard bounce処理
+・complaint処理
+・suppression運用
+・大規模メール配送基盤刷新
+・マーケティングメール機能
+・DMARC aggregate report等の継続運用
+
+DMARC aggregate report等の継続運用は、Phase12以降の運用検討事項とする。
+現時点ではPhase12正式責務として未確定であり、Phase11初稿では断定しない。
+
+============================================================
+5. Phase10との境界
+============================================================
+
+[FIXED]
+
+Phase10はFROZENとする。
+
+Phase10当時の正本仕様およびPhase10完了時点の履歴は変更しない。
+
+Phase11仕様策定および本番送信経路確認の都合だけでは、以下を原則変更しない。
+
+・NativeMailTransport
+・DeliverySendService
+・DeliveryRepository
+・TokenRepository
+・NotificationMailRenderer
+・SendDeliveriesCommand
+
+ただし、Phase11で正式にFIXEDされたoverrideについては、Phase11差分実装としてPhase10由来production codeを変更できる。
+この変更はPhase10の再OPENまたはFROZEN解除を意味しない。
+
+今回該当するPhase11 override：
+
+・privacy_policy_url完全廃止
+・privacyPolicyUrl API/frontend field削除
+・全通知メール共通footer化
+・real-send preflightからprivacy URL除外
+
+上記overrideと無関係なNativeMailTransportのMIME / mail() / Subject / From、DeliveryRepository等のPhase10 FROZEN仕様は今回変更しない。
+
+Phase11調査の結果、上記override以外で将来的にPhase10コード変更が必要となる可能性が判明した場合は、「追加判断が必要」として記録するだけにする。
+
+Phase10変更が必要となる場合は、以下を経る。
+
+1. 環境実測
+2. 問題事実確認
+3. ChatGPT review
+4. 別途変更判断
+
+============================================================
+6. Phase10確定状態
+============================================================
+
+[FIXED]
+
+Phase10 NativeMailTransport：
+
+・mail()使用
+・mb_send_mail()なし
+・-f Return-Path指定なし
+・From表示名 RFC 2047 encoded-word対応済み
+・Subject RFC 2047 B encoding対応済み
+・Subject folding対応済み
+・Content-Type: text/plain; charset=UTF-8
+・Content-Transfer-Encoding: base64
+・body base64
+・header CRLF
+・mail() falseはtransport failure
+・mail() synchronous exceptionはMailTransportException
+
+Phase10 production sender safety：
+
+```text
+notification_send_enabled=false
+または
+notification_dry_run=true
+```
+
+上記の場合、workerはtotal no-opとする。
+
+以下を行わない。
+
+・DB接続
+・claim
+・status変更
+・attempt_count増加
+・token生成
+・renderer
+・transport
+
+```text
+notification_send_enabled=true
+AND
+notification_dry_run=false
+```
+
+の場合も、URL preflightをDB接続より前に行う。
+
+============================================================
+7. 送信経路
+============================================================
+
+[ENV-CONFIRM]
+
+2026-08-24 production SSH read-only調査で、設定上の本番送信経路を以下のとおり確認した。
+
+production project root：
+
+```text
+/home/hpg-kobe/public_html/dandy/yokohama_2607
+```
+
+SYS_ROOT予定：
+
+```text
+/home/hpg-kobe/public_html/dandy/yokohama_2607/sys
+```
+
+security-only staged deploy後のproduction SYS_ROOT現状：
+
+```text
+sys/.htaccess=配置済み
+sys/cli/.htaccess=配置済み
+sys/lib/.htaccess=配置済み
+sys/cli directory=存在
+sys/lib directory=存在
+HTTP protection=PASS / FINAL
+probe cleanup=完了
+probe残存=0
+```
+
+未配置：
+
+```text
+sys/pop3.php
+sys/cli/*.php
+sys/lib/bootstrap.php
+sys/lib/src/
+sys/api/
+その他production PHP program
+```
+
+sys/cli directoryと.htaccessは配置済みだが、CLI PHP programは未配置である。
+sys/lib directoryと.htaccessは配置済みだが、PHP library programは未配置である。
+
+sys/.htaccess、sys/cli/.htaccess、sys/lib/.htaccessはproduction program deploy前baselineであり、将来program rollback時も原則残す。
+
+production CLI PHP：
+
+```text
+/usr/local/bin/php
+PHP 8.4.24
+SAPI cli
+Loaded php.ini /etc/opt/remi/php84/php.ini
+additional ini /etc/opt/remi/php84/php.d/
+99-kagoya.ini 読込あり
+```
+
+PHP mail設定：
+
+```text
+sendmail_path=/usr/sbin/sendmail -t -i
+SMTP=localhost
+smtp_port=25
+sendmail_from=空
+mail.add_x_header=空
+mail.log=空
+disable_functions=空
+open_basedir=空
+mail.force_extra_parameters=空
+```
+
+MTA：
+
+```text
+/usr/sbin/sendmail
+↓
+/etc/alternatives/mta
+↓
+/usr/sbin/sendmail.postfix
+
+Postfix 3.5.25
+compatibility_level=2
+```
+
+Postfix routing：
+
+```text
+relayhost=空
+sender_dependent_relayhost_maps=空
+transport_maps=空
+fallback_relay=空
+smtp_generic_maps=空
+default_transport=smtp
+relay_transport=relay
+smtp_fallback_relay=$fallback_relay
+fallback_relay実体=空
+myhostname=o6021v-888.kagoya.net
+mydomain=kagoya.net
+myorigin=$myhostname
+```
+
+設定上の送信経路：
+
+```text
+PHP mail()
+↓
+/usr/sbin/sendmail -t -i
+↓
+sendmail.postfix
+↓
+Postfix
+↓
+default_transport=smtp
+↓
+宛先MX
+```
+
+明示的なrelayhost、sender dependent relay、transport map、fallback relayは確認されなかった。
+
+Phase10 workerはsmtp.kagoya.netを直接使用しない。SMTP client実装も持たない。
+
+したがって、Phase11仕様書上のENV-CONFIRMとしては「Postfix設定上、宛先MXへの直接配送構成」と記録する。
+
+KAGOYA SMTP relayを経由しているとは記載しない。
+
+[REAL-MAIL-CONFIRM CLOSED]
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認で、最終配送経路、実送信IP、Authentication-Resultsを確認済みである。
+
+============================================================
+8. From
+============================================================
+
+[FIXED]
+
+表示名：
+ダンディーグループ
+
+address：
+no-reply@dandy-g.jp
+
+Phase10 MIME encoding仕様を継承する。
+
+From表示名はRFC 2047 encoded-word化し、addr-specはASCIIのまま維持する。
+
+============================================================
+9. Return-Path
+============================================================
+
+[REAL-MAIL-CONFIRM CLOSED]
+
+2026-08-24 production SSH read-only調査時点：
+未確定
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認結果：
+
+```text
+Return-Path=<bounce@dandy-g.jp>
+MAIL FROM / smtp.mailfrom=bounce@dandy-g.jp
+Header From=no-reply@dandy-g.jp
+```
+
+Phase10：
+-fなし
+
+2026-08-24 production SSH read-only調査で確認したEnvelope From関連設定：
+
+```text
+mail.force_extra_parameters=空
+myorigin=$myhostname
+myhostname=o6021v-888.kagoya.net
+append_at_myorigin=yes
+sender_canonical_maps=空
+canonical_maps=空
+masquerade_domains=空
+masquerade_exceptions=空
+smtp_generic_maps=空
+sender_bcc_maps=空
+always_bcc=空
+remote_header_rewrite_domain=空
+authorized_submit_users=static:anyone
+```
+
+2026-08-24時点の環境情報では、-fなし時にEnvelope Fromをdandy-g.jpへ自動rewriteする設定証拠は確認されなかった。
+
+2026-08-24時点では、Return-Pathを hpg-kobe@o6021v-888.kagoya.net 等へ確定しない。
+
+これは2026-08-24時点の可能性の記録として残す。
+
+旧実装：
+-fno-reply@dandy-g.jp の記録あり
+
+ただし、旧実装をそのまま復活させない。
+
+2026-08-24時点の計画では、まずPhase10現行状態で管理下のtest recipientへ1通実送信し、受信原文から以下を確認する方針であった。
+
+・Return-Path
+・Received
+・Authentication-Results
+
+確認結果により、以下を[DECISION-REQUIRED]とする。
+
+・-f追加が必要か
+・MTA設定で対応するか
+・SMTP relay側で設定するか
+・Return-Path用アドレスを別途設計するか
+
+2026-08-29 P11-MAIL-AUTH-01Aでは、mail.envelope_from=bounce@dandy-g.jp と mail() 第5引数 -fbounce@dandy-g.jp により、Return-Path / smtp.mailfrom が bounce@dandy-g.jp として確認済みである。
+P11-MAIL-AUTH-01Aは補助verify_email authentication testであり、canonical subscription_added Controlled Testの完了を意味しない。
+
+============================================================
+10. SPF
+============================================================
+
+[FIXED]
+
+Phase11初回調査時点のDNS TXT record：
+
+```text
+dandy-g.jp
+v=spf1 include:kagoya.net ~all
+```
+
+kagoya.net：
+
+```text
+v=spf1 ip4:103.3.48.0/22 ip4:124.248.144.0/20 ip4:210.134.48.0/20 ip4:203.142.192.0/20 ip4:203.142.208.0/21 ip4:43.244.0.72/32 ip4:153.127.224.0/19 ip4:133.18.0.0/16 ip6:2406:8c00::/32 ~all
+```
+
+MX：
+
+```text
+dmail.kagoya.net
+```
+
+[ENV-CONFIRM]
+
+2026-08-24 production SSH read-only調査で確認した送信IP候補：
+
+```text
+IPv4: 133.18.103.245
+IPv6: 2406:8c00:0:3440:103:245::
+```
+
+Postfix：
+
+```text
+smtp_bind_address=未指定
+smtp_bind_address6=未指定
+inet_protocols=all
+smtp_address_preference=any
+smtp_helo_name=$myhostname
+```
+
+IPv4 route src：
+
+```text
+133.18.103.245
+```
+
+forward / reverse DNS：
+
+```text
+133.18.103.245 PTR -> o6021v-888.kagoya.net
+o6021v-888.kagoya.net A -> 133.18.103.245
+
+2406:8c00:0:3440:103:245:: PTR -> o6021v-888.kagoya.net
+o6021v-888.kagoya.net AAAA -> 2406:8c00:0:3440:103:245::
+```
+
+production serverのIPv4 / IPv6候補は、dandy-g.jp SPFのinclude先であるkagoya.netの許可範囲に含まれる。
+
+```text
+133.18.103.245 -> ip4:133.18.0.0/16 内
+2406:8c00:0:3440:103:245:: -> ip6:2406:8c00::/32 内
+```
+
+o6021v-888.kagoya.net のTXT recordは確認されなかった。
+
+kagoya.net親ドメインのSPF recordは存在するが、SPF recordはsubdomainへ自動継承されない。
+
+SPFの評価対象domainは、実際のMAIL FROM / Envelope Senderに依存する。
+
+上記の送信IP候補がdandy-g.jp SPF include先の許可範囲内であることは、実MAIL FROM domainがdandy-g.jpとなる場合のSPF評価材料である。
+
+MAIL FROMが別domainの場合は、そのdomainのSPF policyを基準に評価される。
+
+したがって、「送信IP候補がdandy-g.jp SPF許可範囲内」であることと、「実メールのSPF PASS」は同義ではない。
+
+[REAL-MAIL-CONFIRM CLOSED]
+
+DNS recordとして存在することと、実送信がSPF PASSすることは分けて扱う。
+
+実メール受信原文の以下で確認する。
+
+・Received-SPF
+・Authentication-Results
+・spf=pass / softfail / fail
+・MAIL FROM / Return-Path domain
+・送信IP
+
+送信IP候補がSPF許可範囲内であることはENV-CONFIRM CLOSEDとする。
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認結果：
+
+```text
+実送信IP=133.18.103.245
+SPF=PASS
+smtp.mailfrom=bounce@dandy-g.jp
+SPF alignment=PASS
+```
+
+P11-MAIL-AUTH-01Aの認証確認として、実送信IP、MAIL FROM / Return-Path、Authentication-Results、SPF PASS、SPF alignmentは確認済みである。
+canonical subscription_added Controlled Testは、2026-09-07 representative smokeでPASS / FINALである。
+
+[DECISION-REQUIRED]
+
+SPF SoftFail / Failの場合、送信経路またはSPF recordの修正要否を判断する。
+
+============================================================
+11. DKIM
+============================================================
+
+[ENV-CONFIRM]
+
+Phase11初回調査では、以下selector候補でTXT未確認。
+
+・default
+・mail
+・selector1
+・selector2
+・xserver
+・kagoya
+
+ただし、selector不明のため「DKIM未設定」とは断定しない。
+
+2026-08-24 production SSH read-only調査で確認したproduction Web server側Postfix状態：
+
+```text
+smtpd_milters=空
+non_smtpd_milters=空
+postconf -nにmilter / dkim / rspamd / opendkim関連の有効設定なし
+master.cfのDKIM / Milter関連はコメントのみ
+OpenDKIM / Rspamd稼働process確認なし
+command -v opendkim=なし
+command -v rspamd=なし
+/etc/opendkim* なし
+/etc/rspamd なし
+/etc/postfix/*dkim* なし
+```
+
+production Web server Postfixにおいて、今回確認したMilter、OpenDKIM、Rspamd、Postfix DKIM関連設定によるDKIM署名設定の証拠は確認されなかった。
+
+2026-08-24時点では、DKIM署名の実際の有無およびDKIM結果を[FIXED]へ昇格させない方針であった。
+
+ユーザー運用確認では、dandy-g.jpのメールはKAGOYAメールサービスを利用している。
+
+```text
+IMAP/POP3: m09.kagoya.net
+SMTP server: smtp.kagoya.net
+```
+
+ただし、Phase10 workerはsmtp.kagoya.netを直接使用しない。
+
+KAGOYA契約プランやKAGOYAメールサービス側DKIM可否については、SSH結果だけからFIXEDへ昇格しない。
+
+必要な場合は別途公式/管理画面確認事項とする。
+
+公開サーバーMTA / relayの環境事実は§7で確認済み。
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認では、DKIM=none / DKIM-Signatureなしを確認済みである。
+
+将来DKIMを導入または再評価する場合は、以下を確認する。
+
+・KAGOYAメール契約 / プラン
+・対象ドメインのDKIM対応可否
+・DKIM selector
+・DKIM署名対象domain
+
+[REAL-MAIL-CONFIRM CLOSED]
+
+実メール受信原文で以下を確認する。
+
+・DKIM-Signature
+・Authentication-Results dkim=pass / none / fail
+・header.d
+・selector
+
+[DECISION-REQUIRED]
+
+DKIM NONEの場合、MTAまたはSMTP relay側でDKIM対応を検討する。
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認結果：
+
+```text
+DKIM=none
+DKIM-Signature=なし
+```
+
+DKIM noneはProduction実測事実として記録する。
+DKIM導入はOPTIONAL / HOLDであり、Go-Live mandatory blockerとはしない。
+
+============================================================
+12. DMARC
+============================================================
+
+[ENV-CONFIRM]
+
+2026-08-24確認では、以下はNXDOMAIN。
+
+```text
+_dmarc.dandy-g.jp
+```
+
+DMARC record：
+なし
+
+DMARC policy：
+なし
+
+DMARC recordが存在しないことはENV-CONFIRM CLOSEDとする。
+
+ただし、新規record値やpolicyは確定しない。
+
+確認順：
+
+1. 全送信元把握
+2. SPF確認
+3. DKIM確認
+4. SPF alignment確認
+5. DKIM alignment確認
+6. DMARC導入判断
+
+[DECISION-REQUIRED]
+
+Phase11では、SPF / DKIM / alignment確認後にDMARC導入方針を判断する。
+
+正本上、DMARCはSPFまたはDKIMのalignment確認後、p=noneから導入検討する。
+
+ただし、p=noneを現時点でproduction DNSへ設定することが確定済みという意味ではない。
+
+p=none等の具体的なDMARC policyは、SPF / DKIM / alignment確認後に判断する。
+
+Phase11初稿時点では、p=noneを正式仕様として確定しない。
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認結果：
+
+```text
+DMARC=none
+```
+
+DMARC noneはProduction実測事実として記録する。
+DMARC導入はOPTIONAL / HOLDであり、Go-Live mandatory blockerとはしない。
+
+============================================================
+13. Alignment
+============================================================
+
+[REAL-MAIL-CONFIRM]
+
+Phase11で以下を確認する。
+
+RFC5322.From：
+dandy-g.jp
+
+Return-Path / MAIL FROM：
+```text
+bounce@dandy-g.jp
+```
+
+DKIM d=：
+```text
+none
+```
+
+2026-08-24 ENV-CONFIRM：
+
+・RFC5322.FromはPhase10仕様上 no-reply@dandy-g.jp
+・-fなし時にEnvelope Fromをdandy-g.jpへ自動rewriteする設定証拠は確認されていない
+・production Web server PostfixでDKIM署名を行っている設定証拠は確認されていない
+
+2026-08-29 P11-MAIL-AUTH-01A Production実メール確認結果：
+
+```text
+Return-Path=<bounce@dandy-g.jp>
+smtp.mailfrom=bounce@dandy-g.jp
+SPF alignment=PASS
+DKIM=none
+DMARC=none
+```
+
+確認対象：
+
+・SPF alignment
+・DKIM alignment
+・DMARC評価
+
+SPF alignmentはP11-MAIL-AUTH-01AでPASS確認済みである。
+DKIM / DMARCはnoneとして確認済みであり、導入はOPTIONAL / HOLDとする。
+
+============================================================
+14. production / staging config
+============================================================
+
+[FIXED]
+
+production actual config：
+作成済み
+
+path：
+
+```text
+/home/hpg-kobe/private/dandy_notification/dandy_notification_config.production.php
+```
+
+状態：
+
+```text
+PHP syntax=PASS
+structural validation=PASS
+safe feature flags=PASS
+owner=hpg-kobe
+mode=600
+public_html外=PASS
+application log.path=/home/hpg-kobe/private/dandy_notification/logs/notification.log
+```
+
+production公開PHPから `/home/hpg-kobe` 配下private configを直接requireする既存実績がある。
+
+例：
+
+```text
+/home/hpg-kobe/public_html/dandy/db_load_func8.php
+→ /home/hpg-kobe/db_conf_dandy.php
+```
+
+production httpd workerは `hpg-kobe` として稼働していることを確認済みである。
+
+したがって、現在のproduction actual configは、owner `hpg-kobe` / mode `600` のままWeb PHPからread可能と判断する。
+
+[FIXED]
+
+Production notification application log path：
+
+```text
+/home/hpg-kobe/private/dandy_notification/logs/notification.log
+```
+
+application log pathはproduction actual config上で確認済みであり、FIXED / CLOSEDとする。
+
+future cronのstdout / stderr、cron実行時の出力運用、必要に応じたcron側log運用は別項目として扱い、application log pathと混同しない。
+
+2026-08-24 production SSH read-only調査時点では、新通知システム本体はproductionへ未デプロイであった。
+その後、security-only staged deployとしてHTTP防御用ファイルのみ配置済みである。
+
+```text
+PUBLIC_ROOT=/home/hpg-kobe/public_html/dandy/yokohama_2607
+SYS_ROOT予定=/home/hpg-kobe/public_html/dandy/yokohama_2607/sys
+sys directory=存在
+sys/.htaccess=配置済み
+sys/cli directory=存在
+sys/cli/.htaccess=配置済み
+sys/lib directory=存在
+sys/lib/.htaccess=配置済み
+HTTP protection=PASS / FINAL
+probe残存=0
+```
+
+現在のProduction deploy / Go-Live状態：
+
+```text
+Backend Production deploy=PASS / FINAL
+Frontend minimal deploy=PASS / FINAL
+Production DB migration/schema=PASS / FINAL / READY
+Production feature flags=Go-Live active / PASS
+notification_empty_mail_receive_enabled=true
+notification_delivery_create_enabled=true
+notification_confirmation_enabled=true
+notification_settings_enabled=true
+notification_send_enabled=true
+notification_dry_run=false
+```
+
+2026-09-07 Go-Live activation前のsafe baselineはhistorical recordとして扱う。
+
+[FIXED]
+
+Production config path resolution：
+
+Phase11 productionでは、HTTP API / CLI / future cronから共通bootstrapを使用する。
+
+採用方式：
+
+```text
+Option C
+bootstrap fixed production private path fallback
+```
+
+Config pathは以下の優先順位で解決する。
+
+1. 明示config pathが渡された場合
+
+例：
+
+```php
+Bootstrap::create($configPath)
+```
+
+指定pathを使用する。
+
+指定pathが不正な場合はFAILとし、他pathへfallbackしない。
+
+2. 明示pathなし、かつ `DANDY_NOTIFICATION_CONFIG` が非空の場合
+
+environment variableのpathを使用する。
+
+env pathが不正な場合はFAILとし、production fixed pathへfallbackしない。
+
+3. 明示pathなし、かつ `DANDY_NOTIFICATION_CONFIG` 未設定の場合
+
+以下のproduction fixed configが存在する場合のみ使用する。
+
+```text
+/home/hpg-kobe/private/dandy_notification/dandy_notification_config.production.php
+```
+
+4. 上記いずれでもconfigを解決できない場合
+
+FAILとする。
+
+重要：
+
+不正explicit pathまたは不正environment pathを、production fixed path fallbackで隠蔽してはならない。
+
+fallbackは `DANDY_NOTIFICATION_CONFIG` が未設定の場合のみ許可する。
+
+[FIXED]
+
+Implementation responsibility：
+
+production fixed fallbackのpath resolutionは `public/sys/lib/bootstrap.php` 側で実装済みとする。
+
+`ConfigLoader.php` へKAGOYA固有production fixed pathを直接埋め込まない。
+
+ConfigLoaderは以下の汎用責務を維持する。
+
+・explicit path
+・environment path
+・realpath確認
+・readability確認
+・public root外確認
+・PHP config load
+・required config structure validation
+
+bootstrap側へConfigLoaderと同じsecurity validationを重複実装しない。
+
+[FIXED]
+
+Runtime behavior：
+
+HTTP API：
+
+`DANDY_NOTIFICATION_CONFIG` が未設定でも、production fixed configが存在する場合はfixed fallbackによりconfig load可能とする。
+
+envが設定されている場合はenvを優先する。
+
+envが不正ならFAILとし、fixed pathへfallbackしない。
+
+CLI：
+
+`DANDY_NOTIFICATION_CONFIG` のinline env指定を引き続き利用可能とする。
+
+env未設定の場合はproduction fixed fallbackも利用可能とする。
+
+future cron：
+
+cron登録時は `DANDY_NOTIFICATION_CONFIG` の明示指定を推奨する。
+
+ただしenv未設定時はproduction fixed fallbackも利用可能とする。
+
+cronで誤ったenv pathを指定した場合はFAILとし、fixed pathへfallbackしない。
+
+local / test：
+
+Windows local等では `/home/hpg-kobe/private/...` が存在しないため、production fixed fallbackは誤発動しない。
+
+local / testでは従来どおりexplicit pathまたは `DANDY_NOTIFICATION_CONFIG` を利用する。
+
+[FIXED]
+
+Security behavior：
+
+・config pathはHTTP request parameterから取得しない
+・config pathはHTTP headerから取得しない
+・user-controlled pathを使用しない
+・actual configはpublic_html外に置く
+・config fileはsecretを含むためpublic公開しない
+・fixed path自体はsecretではないが、不要にHTTP response / logへ出力しない
+
+[FIXED]
+
+Failure semantics：
+
+以下はすべてfail-closedとする。
+
+・explicit path不正
+・env path不正
+・fixed config不存在
+・fixed config unreadable
+・public root内config
+・config parse failure
+・required config validation failure
+
+[FIXED]
+
+実装時test requirementsとして以下を確認済み：
+
+・explicit valid pathでload成功
+・explicit invalid pathでFAIL、fixed fallbackしない
+・env validでenv config load成功
+・env invalidでFAIL、fixed fallbackしない
+・env unsetかつfixed config existsでfixed config load
+・env unsetかつfixed config不存在でFAIL
+・local / test環境でproduction fixed path誤発動なし
+・既存Phase11 regression維持
+・Phase10 / 既存config regressionへ想定外影響なし
+
+[FIXED]
+
+候補方式の採否：
+
+Option A `.htaccess SetEnv` はREJECTとする。
+
+理由：
+
+・productionでSetEnv利用可否が未確認
+・既存利用実績なし
+・HTTPのみの設定となりCLI / cronと分離する
+・運用依存が増える
+
+Option B server / PHP-FPM environment はREJECTとする。
+
+理由：
+
+・ユーザー権限で設定可能な根拠なし
+・server / root / hosting panel依存
+・運用再現性が低い
+
+Option D private loaderはREJECTとする。
+
+理由：
+
+・actual config以外に管理fileが増える
+・permission管理点が増える
+・fixed fallbackと比較して明確な利点なし
+
+[ENV-CONFIRM]
+
+staging actual config：
+未確認
+
+local actual config確認済み：
+
+```text
+app.environment=local
+notification_send_enabled=false
+notification_dry_run=true
+confirmation_base_url=NULL
+settings_base_url=NULL
+privacy_policy_url=Phase11で廃止済み。production / staging / example configへ設定しない
+delivery_send raw section=未定義
+```
+
+ConfigLoader default：
+
+```text
+notification_send_batch_size=100
+notification_send_stale_threshold_seconds=1800
+```
+
+Phase11では、staging利用時は以下を確認する。
+productionではactual config作成時に確認済みの項目として扱う。
+
+・app.environment
+・notification_send_enabled
+・notification_dry_run
+・confirmation_base_url
+・settings_base_url
+・notification_send_batch_size
+・notification_send_stale_threshold_seconds
+・log path
+・database接続設定の存在
+
+秘密情報、password、secret、API keyは値を文書へ記録しない。
+
+============================================================
+14.1 Production empty-mail / confirmation 初期運用値
+============================================================
+
+[FIXED]
+
+P11-EMPTY-MAIL-CONFIG-01のProduction正式初期値は以下とする。
+
+これはControlled Test専用値ではなく、Production initial operating valuesである。
+ConfigLoaderへ完全一致validationとしてハードコードしない。
+max_bytes / rate limitは運用実績に応じてconfigで調整可能なoperational parameterとして扱う。
+
+empty_mail.max_bytes：
+
+```text
+262144
+```
+
+採用理由：
+
+・RawMailReaderはraw RFC822全体をmax_bytes + 1まで読む
+・MailHeaderParserにはheader block 64 KiB制限がある
+・Production PHP memory_limitは128M
+・通常のReceived / DKIM-Signature / Authentication-Results / MIME等のheader余裕を確保する
+・128 KiBより余裕があり、512 KiBほど大きくする必要もない
+
+empty_mail.allowed_shop_ids：
+
+```text
+yh-dandy
+yh-clubd
+yh-mrd
+```
+
+empty_mail.verification_token_ttl_seconds：
+
+```text
+3600
+```
+
+empty_mail.rate_limit.email：
+
+```text
+window_seconds = 3600
+max_attempts = 12
+```
+
+同一利用者の複数cast登録、入力ミス、メール未着による再送、既存active subscriberによる別cast追加を許容しつつ、同一senderからの連続投入を制限する。
+
+empty_mail.rate_limit.email_cast：
+
+```text
+window_seconds = 3600
+max_attempts = 5
+```
+
+同一email + 同一castへの連打をemail全体より厳しく制御する。
+pending subscriberの正常な再登録・fresh verify_email再発行、MTA再投入、利用者再送には最低限の余裕を残す。
+
+empty_mail.rate_limit.global：
+
+```text
+window_seconds = 300
+max_attempts = 200
+```
+
+3店舗共通受付のためglobalは全利用者共通である。
+1時間windowでは攻撃時に全利用者を長時間巻き込むため、5分windowにしてblast radiusを限定する。
+email/email_castより十分大きい200回として正常利用の誤ブロックを避ける。
+
+confirmation.consent_version：
+
+```text
+2026-08-31
+```
+
+Productionで本登録した時点の同意・案内文面version識別子として使用する。
+
+保存先：
+
+```text
+t_notification_subscriber.consent_version
+t_notification_subscriber.consented_at
+t_notification_audit_log.metadata.consent_version
+```
+
+既存subscriberをUPDATEしない。
+今後、同意対象となるprivacy / 案内文面を変更した場合は、その変更時点で新versionを設定する。
+
+============================================================
+15. URL設定
+============================================================
+
+[FIXED]
+
+production notification URL値：
+
+confirmation_base_url：
+
+```text
+https://www.dandy-g.jp/wgmailsys/confirm/
+```
+
+settings_base_url：
+
+```text
+https://www.dandy-g.jp/wgmailsys/settings/
+```
+
+production actual configへ正式設定済みであり、ConfigLoader / SendDeliveriesCommandのproduction validationとも一致する。
+
+[ENV-CONFIRM]
+
+production route reachability：
+
+Production frontend minimal deployはPASS / FINALである。
+2026-09-07 representative smokeで、confirm / settings / settings-request / settings authentication / settings updateのProduction受入はPASSした。
+
+URL値のFIXEDと、production routeのHTTP到達性、ブラウザ受入試験完了は分けて扱う。
+
+settings-requestは `notification_url` config keyではないため、confirmation / settings config値のFIXED化と混同しない。
+
+[ENV-CONFIRM]
+
+既知candidate：
+
+staging confirmation：
+https://demo-yokohama.dandy-g.jp/wgmailsys/confirm/
+
+staging settings：
+https://demo-yokohama.dandy-g.jp/wgmailsys/settings/
+
+[FIXED]
+
+official site URL：
+https://dandy-g.jp/
+
+重要：
+official site URLとnotification system URLを混同しない。
+
+[FIXED]
+
+privacy_policy_url：
+廃止
+
+Phase10時点で必須化されたprivacy URL要件は、Phase11追加仕様により該当部分だけ上書きする。
+Phase10 FROZEN履歴は維持し、Phase10正本を過去に遡って書き換えない。
+
+notification_urlは以下のみとする。
+
+```text
+confirmation_base_url
+settings_base_url
+```
+
+privacy_policy_urlはproduction / staging / example configへ設定しない。
+optional化、nullable保持、dead field保持は採用しない。
+
+real-send preflightは以下2URLのみを必須確認する。
+
+・confirmation_base_url
+・settings_base_url
+
+confirmation/settingsのfail-closed仕様は維持し、privacy廃止を理由にURL preflight全体を緩めない。
+
+API contract：
+
+・RegistrationConfirmationService responseからprivacyPolicyUrlを削除する
+・SettingsLinkRequestService responseからprivacyPolicyUrlを削除する
+・privacyPolicyUrl = null / '' / optional として残さない
+
+frontend contract：
+
+・ConfirmationClientのprivacy linkを削除する
+・SettingsRequestClientのprivacy linkを削除する
+・代替privacy linkは追加しない
+・女の子詳細ページ等の出勤お知らせ登録ボタン付近へ説明文を追加しない
+
+専用privacy page：
+
+・出勤お知らせメールシステム用には新設しない
+・/privacy/ を今回の必須要件にしない
+
+[FIXED]
+
+個人情報の取扱い説明は、全通知メールの共通footerとして以下の固定文面を記載する。
+
+```text
+個人情報の取扱いについて
+
+ご登録いただいたメールアドレスは、出勤お知らせメールの配信、本サービスの登録・解除・設定、および運営上必要な連絡にのみ利用します。
+広告メール、他サービスのご案内、マーケティング目的には利用しません。
+法令に基づく場合等を除き、第三者へ提供しません。
+```
+
+この文面はPhase11 FIXEDとし、句読点を含め勝手に変更しない。
+
+footer適用対象：
+
+・verify_email
+・registration_complete
+・subscription_added
+・subscription_removed
+・settings_link
+・unsubscribe_all
+・schedule_update
+
+実装方針：
+
+各templateへ同じ固定文を個別直書きせず、NotificationMailRenderer内の共通footer処理へ集約する。
+実装名は最終コードに合わせてよいが、候補はcommonFooterLines()とする。
+
+verify_emailの旧privacy URL linkは廃止し、共通footerを適用する。
+その他mail_typeは既存本文、settings案内、公式サイトURL等を不用意に変更せず、既存メール本文＋共通privacy footerとする。
+
+実装時の必須変更候補：
+
+・public/sys/lib/src/DandyNotification/Config/ConfigLoader.php
+・public/sys/lib/src/DandyNotification/Config/AppConfig.php
+・public/sys/lib/src/DandyNotification/Cli/SendDeliveriesCommand.php
+・public/sys/lib/src/DandyNotification/Mail/NotificationMailRenderer.php
+・public/sys/lib/src/DandyNotification/Service/RegistrationConfirmationService.php
+・public/sys/lib/src/DandyNotification/Service/SettingsLinkRequestService.php
+・src/app/wgmailsys/confirm/ConfirmationClient.tsx
+・src/app/wgmailsys/settings-request/SettingsRequestClient.tsx
+・関連Phase11 test
+
+SettingsLinkRequestService.php / SettingsRequestClient.tsxは条件付きではなく必須変更候補とする。
+
+test方針：
+
+・privacy_policy_urlなしでConfigLoaderが正常成立する
+・notification_urlにconfirmation/settingsが正しく必要
+・send=true / dry=falseでprivacyなしを理由にpreflight failしない
+・confirmation URL不足はfail
+・settings URL不足はfail
+・全mail_typeに共通footerが含まれる
+・verify_emailに旧privacy linkが存在しない
+・API responseにprivacyPolicyUrlが存在しない
+・frontendにprivacy linkが存在しない
+
+Phase10 test codeは今回変更しない。
+実装時に既存test harnessの役割を確認し、Phase11 regression追加を原則とする。
+
+DB / DDL：
+
+今回の仕様変更ではDDL不要、DB schema変更不要、data migration不要とする。
+production actual configは作成済みだが、今回の仕様変更ではproduction config migrationも不要である。
+
+============================================================
+16. activation flag
+============================================================
+
+[FIXED]
+
+安全状態：
+
+```text
+notification_empty_mail_receive_enabled=false
+notification_delivery_create_enabled=false
+notification_event_enqueue_enabled=false
+notification_confirmation_enabled=false
+notification_settings_enabled=false
+notification_send_enabled=false
+notification_dry_run=true
+notification_public_state_sync_enabled=false
+notification_public_state_reconciliation_enabled=false
+```
+
+Phase11では、production activation完了まで原則として安全状態を維持する。
+
+controlled real mail test用の一時的なflag切替と、production activation用の恒常的なflag切替は分離する。
+
+Phase11 controlled real mail test時のみ、以下の全条件を満たした後に一時的に変更できる。
+
+```text
+notification_send_enabled=true
+notification_dry_run=false
+```
+
+controlled real mail test用一時切替の最低前提：
+
+・production private領域準備済み
+・production actual config準備済み
+・safe feature flags確認済み
+・config owner / permission確認済み
+・production program deploy済み
+・deploy後smoke check PASS
+・confirmation_base_url確定
+・settings_base_url確定
+・production DB read-only preflight PASS
+・eligible mail unit総数 = 1
+・管理下test recipient対象のみ
+・その他eligible mail unit = 0
+・stale sending = 0
+・schedule_update eligible group = 0
+・cron未登録または確実に停止状態
+・手動CLI実行のみ
+・実行者が対象1 unitを確認済み
+
+controlled real mail testでは、一時的にsend=true / dry=falseへ変更し、send-deliveries.phpを手動で1回実行した後、ただちに以下の安全状態へ戻す。
+
+```text
+notification_send_enabled=false
+notification_dry_run=true
+```
+
+その後、DB状態、受信原文、log、Authentication-Resultsを確認する。
+
+この一時的flag切替は、production activation、恒常的通常運用開始、cron有効化、全購読者向け送信開始を意味しない。
+
+2026-09-07 Production Go-Live activationでは、activation checklist、representative smoke、final Production health checkを経て、以下を正式Go-Live flagsとして反映済みである。
+
+```text
+notification_empty_mail_receive_enabled=true
+notification_delivery_create_enabled=true
+notification_confirmation_enabled=true
+notification_settings_enabled=true
+notification_send_enabled=true
+notification_dry_run=false
+```
+
+Go-Live activationはPASS / FINALである。
+Phase11 FROZENは、runtime PASS後のdocs / tracker alignmentとChatGPT final freeze reviewを経て別途判定する。
+
+============================================================
+17. Real mail test
+============================================================
+
+[FIXED]
+
+Phase11ではreal mail testを必須とする。
+
+2026-08-29に、P11-MAIL-AUTH-01A supplemental authentication testとして、verify_email mail typeのProduction実メール送信を実施しPASSした。
+
+```text
+Application Controlled Send=PASS
+Mailbox receipt=PASS
+Return-Path=<bounce@dandy-g.jp>
+send IP=133.18.103.245
+SPF=PASS
+smtp.mailfrom=bounce@dandy-g.jp
+SPF alignment=PASS
+DKIM=none
+DMARC=none
+```
+
+これはReturn-Path / SPF確認用の補助Controlled Testであり、以下のcanonical Controlled Real Mail Planを置き換えない。
+
+real mail testの最低条件：
+
+・管理下の専用test recipientを使用する
+・1 mail unitのみを対象にする
+・cronではなく手動CLIで実行する
+・既存subscriber全体を対象にしない
+・大量queueをclaimしない
+・実行前にqueue対象を確認する
+・実行後にDB状態を確認する
+・受信原文を確認する
+・ログにPII / token / token URL / body全文が出ていないことを確認する
+
+canonical subscription_added Controlled Test前には、production private領域、safe actual config、owner / permission、safe feature flags、production program deployを確認済みであることを前提とする。
+
+これは、cron登録、恒常的なnotification flag ON、全購読者向け通常送信開始を意味しない。
+
+一時プログラムやtest-only codeは新設しない。
+
+通常productionへ配置するPhase10 workerを、cron未登録・通常送信未開始の状態でcontrolled real mail testに使用する。
+
+初回real mail testは原則として以下を使用する。
+
+・管理下test recipient
+・activeなtest subscriber
+・generation前の対象subscriptionはnon-active
+・既存の正規登録フローにより対象subscriptionをactive化し、subscription_added 1 mail unitを生成する
+・mail type = subscription_added
+
+2026-09-07のrepresentative smokeでは、fresh controlled identityによりcanonical subscription_addedを含む以下4通をProduction cron自動送信で確認し、すべてactual receipt PASSとなった。
+
+```text
+verify_email: delivery_id=18 / sent / attempt_count=1 / actual receipt=YES
+registration_complete: delivery_id=19 / sent / attempt_count=1 / actual receipt=YES
+settings_link: delivery_id=20 / sent / attempt_count=1 / actual receipt=YES
+subscription_added: delivery_id=21 / sent / attempt_count=1 / actual receipt=YES
+```
+
+全4通でmanual worker=0、duplicate=0である。
+
+DBへのmanual direct INSERTは、初回real mail testの標準手順にしない。
+
+token mailは初回real mail testの必須条件にしない。
+
+test後は、subscriber、subscription、delivery、token、auditの残存状態を確認対象とする。
+
+ただし、auditを含めて何でもDELETEする仕様にはしない。
+
+保持、失効、削除の扱いは、real mail test計画時に既存仕様、FK、監査要件を確認して決定する。
+
+send-deliveries.phpには、specific delivery_id、recipient、mail_typeを指定して1件だけ送信するCLI引数は存在しない。
+
+Phase10 workerのbatch maxは100 mail unitsであり、eligible mail unitが複数ある場合は複数送信され得る。
+
+real mail test直前には、production DBをread-onlyでpreflightし、Phase10と同じmail unit単位で対象を確認する。
+
+最低条件：
+
+・eligible mail unit総数 = 1
+・その1 unitが管理下test recipient向けである
+・対象mail typeが予定したtest mailである
+・その他eligible mail unit = 0
+・stale sending = 0
+・schedule_update eligible group = 0
+
+上記を満たさない場合、send-deliveries.phpを実行しない。
+
+eligible条件はPhase10正本 / 実装に従う。
+
+最低限、queued / deferred かつ available_at がnow以下のdeliveryを対象とし、schedule_updateはmessage_group_key単位で扱う。
+
+具体的なread-only preflight queryは、real mail test計画時に実装と完全一致する形で確定する。
+
+production queueが空であること、real subscriber dataが存在しないこと、notification_delivery_create_enabledがproductionで一度もtrueになっていないことは、未確認のため事実として扱わない。
+
+Phase10 controlled previewとPhase11 real mail testを混同しない。
+
+controlled preview：
+DB queue、token、transport、実メールを使わない。
+
+real mail test：
+Phase11でのみ実施し、実際のtransportと受信原文を確認する。
+
+============================================================
+18. Real mail test確認項目
+============================================================
+
+[REAL-MAIL-CONFIRM]
+
+DB：
+
+・delivery status
+・attempt_count
+・sent_at
+・last_error_code
+・provider_message_id
+・token mailの場合のtoken row
+・cleanup対象
+
+mail：
+
+・From表示
+・Subject表示
+・本文文字化け
+・本文URL
+・公式サイトURL
+・設定リンク要求導線
+・共通footer「個人情報の取扱いについて」
+・共通footer FIXED文面
+
+headers：
+
+・Return-Path
+・Received
+・Received-SPF
+・Authentication-Results
+・DKIM-Signature
+
+auth：
+
+・SPF
+・DKIM
+・DMARC
+・alignment
+
+logging：
+
+以下が不要に出力されていないこと。
+
+・recipientメールアドレス全文
+・raw token
+・token URL
+・認証URL
+・設定URL
+・body全文
+
+============================================================
+19. token mail test
+============================================================
+
+[DECISION-REQUIRED]
+
+canonical Controlled Real Mail Planでは、§17のとおりsubscription_addedを原則使用する。
+
+token mailはcanonical subscription_added testの必須条件としない。
+
+P11-MAIL-AUTH-01Aではverify_emailを補助authentication testとして実施済みである。
+2026-09-07 representative smokeで、pending -> verify_email -> confirmation -> active -> registration_complete の本登録E2EはPASS / FINALである。
+duplicate token、expired token、invalid token等の異常系追加確認は、Go-Live blockerではない個別regression / operational follow-upとして扱う。
+
+token mail追加testを行う場合、tokenが実DBへ発行される。
+
+そのため、以下を事前に確定する。
+
+・テスト専用subscriber
+・テスト専用subscription
+・テスト専用recipient
+・token生成対象
+・token有効期限
+・token失効
+・テスト後cleanup
+・テスト後残存確認
+・cleanup方針
+・ログ確認
+
+token mail testを必ず行うとは、現時点では決定しない。
+
+============================================================
+20. cron
+============================================================
+
+[FIXED]
+
+既存正本上の通知cron頻度：
+
+```text
+偶数時10分
+```
+
+既存正本上のcron式：
+
+```text
+10 0-23/2 * * *
+```
+
+CLI：
+
+```text
+public/sys/cli/send-deliveries.php
+```
+
+[ENV-CONFIRM CLOSED]
+
+2026-08-24 production SSH read-only調査時点では、新通知システムはproductionへ未デプロイであり、新通知用cronも未設置であった。
+2026-09-07 Production Go-Live activationで、send-deliveries.php cronは正式登録済みである。
+
+Phase11 Production operational override：
+
+```text
+* * * * * DANDY_NOTIFICATION_CONFIG=/home/hpg-kobe/private/dandy_notification/dandy_notification_config.production.php /usr/local/bin/php /home/hpg-kobe/public_html/dandy/yokohama_2607/sys/cli/send-deliveries.php >> /home/hpg-kobe/private/dandy_notification/logs/send-deliveries.cron.log 2>&1
+```
+
+確認済み：
+
+```text
+production PHP binary=/usr/local/bin/php
+production PHP version=8.4.25
+production cron user=hpg-kobe
+notification cron count=1
+cron continuing=YES
+cron stderr health=PASS
+cron status=ACTIVE / PASS
+reason=Go-Live operational recommendationとして採用
+worker=multiworker safe
+overlap=acceptable
+external flock=not required
+notification cron entry=exactly 1
+```
+
+1分cronはPhase11 Production operational overrideとして採用した運用値であり、既存正本上の偶数時10分定義を理由なく置換するものではない。
+
+create-deliveries.php cronは登録しない。
+empty-mail flowではpermanent receive routeがdeliveryを生成し、send-deliveries.php cronが送信する。
+
+============================================================
+21. 重複起動
+============================================================
+
+[FIXED]
+
+Phase10 workerはmulti-worker safeとしてFROZEN済み。
+
+2026-09-07 Production operational decision：
+
+```text
+notification cron entry=1
+CRON_OVERLAP_ACCEPTABLE=YES
+EXTERNAL_FLOCK_REQUIRED=NO
+```
+
+通常運用ではcron定義は1件のみ維持する。
+worker自体はmultiworker safeのため、実行時間重複は許容可能とする。
+external flockは追加しない。
+
+安全性と運用方針を混同しない。
+
+============================================================
+22. activation checklist
+============================================================
+
+[FIXED]
+
+本番送信開始には、少なくとも以下を完了する。
+
+□ production private領域準備
+□ production actual config確認
+□ safe feature flags確認
+□ config owner / permission確認
+□ Option C production config path resolution local実装
+□ Option C unit / regression確認
+□ ChatGPT review
+□ 必要に応じ第三者review
+□ production program deploy
+□ deploy後smoke check
+□ staging actual config確認
+  ※stagingをPhase11 real mail testまたは本番前検証に利用する運用を採用する場合のみ必須。
+□ notification URL値確認
+□ production notification route reachability確認
+□ 共通footer本文の実受信確認
+□ production PHP mail environment確認
+□ MTA / relay経路確定
+□ Return-Path確認
+□ send IP確認
+□ SPF確認
+□ DKIM確認
+□ DMARC判断
+□ real mail test PASS
+□ From / Subject / body PASS
+□ URL PASS
+□ logging PASS
+□ cron条件確定
+□ cron command上のDANDY_NOTIFICATION_CONFIG明示指定方法確定
+□ rollback確認
+□ old / new cron重複なし
+□ notification flags変更手順確認
+
+上記のうちstaging actual config確認は、stagingを利用しないproduction activationでは無条件blockerにしない。
+
+その他の本番activation必須項目が未完了なら、本番activation不可とする。
+
+============================================================
+23. activation順序
+============================================================
+
+[FIXED]
+
+正本に定義がある部分を優先する。
+
+不足部分は「Phase11追加安全要件」として扱う。
+
+Phase11追加安全要件としての原則順序：
+
+1. production private領域準備
+2. production actual config作成
+3. safe feature flags確認
+4. config owner / permission確認
+5. Option C production config path resolution local実装
+6. Option C unit / regression確認
+7. ChatGPT review
+8. 必要に応じ第三者review
+9. production program deploy
+10. deploy後smoke check
+11. notification URL値確認
+12. production notification route reachability確認
+13. 必要なproduction environment確認
+14. production DB read-only preflight
+15. controlled delivery generation
+16. post-generation DB preflight
+17. controlled real mail test
+18. 即時safe flags復旧
+19. DB / log / received header確認
+20. Phase11 DONE
+21. Phase11 FROZEN
+22. cron条件確定
+23. old / new cron重複防止
+24. cron登録
+25. notification flags切替
+26. production activation
+
+この順序は、本書初稿時点では安全要件であり、既存正本に全文定義済みとは扱わない。
+
+Phase11メール送信認証確認の完了と、production activation完了は同義ではない。
+
+Phase11：
+
+```text
+送信経路・認証確認
+↓
+production actual config準備・安全確認
+↓
+Option C実装・test・review
+↓
+production program deploy
+↓
+mail unit単位read-only preflight
+↓
+管理下test recipientへの1通real mail test PASS
+↓
+Production Go-Live activation
+↓
+representative smoke PASS
+↓
+final Production health check PASS
+↓
+docs / tracker alignment
+↓
+ChatGPT final freeze review
+```
+
+production activation：
+
+```text
+queue eligible=0 / stale=0確認
+↓
+fresh Production config backup
+↓
+safe flagsのままnotification cron登録
+↓
+cron definition確認
+↓
+queue再確認
+↓
+final config candidate validation
+↓
+single atomic config replace
+↓
+NEW PHP PROCESSでflags確認
+↓
+queue確認
+↓
+representative smoke
+```
+
+実施済み正式cron：
+
+```text
+* * * * * DANDY_NOTIFICATION_CONFIG=/home/hpg-kobe/private/dandy_notification/dandy_notification_config.production.php /usr/local/bin/php /home/hpg-kobe/public_html/dandy/yokohama_2607/sys/cli/send-deliveries.php >> /home/hpg-kobe/private/dandy_notification/logs/send-deliveries.cron.log 2>&1
+```
+
+cron frequencyはevery 1 minuteで運用開始済みである。
+これはGo-Live時のOPERATIONAL_RECOMMENDATIONであり、canonical specificationによる固定値ではない。
+
+恒常的flag：
+
+```text
+notification_empty_mail_receive_enabled=true
+notification_delivery_create_enabled=true
+notification_confirmation_enabled=true
+notification_settings_enabled=true
+notification_send_enabled=true
+notification_dry_run=false
+```
+
+途中一度config candidate generation failureが発生したが、config switch前にnotification cron rollback、safe state再確認、再実行を行い、mixed Go-Live stateは発生していない。
+
+Permanent empty-mail receive route：
+
+```text
+MTA
+↓
+/usr/bin/procmail -f-
+↓
+~/.procmailrc
+↓
+/usr/local/bin/php -q /home/hpg-kobe/public_html/dandy/yokohama_2607/sys/cli/receive-empty-mail.php
+↓
+sys/pop3.php
+```
+
+RFC822 wrapper `sys/cli/receive-empty-mail.php` は、`procmail -f-` がpipe input先頭へ付与するMBOX `From ` separatorを、先頭1行だけがliteral `From ` で始まる場合に限り除去する。
+`From:` headerやbody中の `From ...` は変更しない。
+この対策はProduction E2Eでvalidated済みである。
+
+production program deploy、cron登録、permanent receive route、feature activation、representative smoke、final Production health checkはPASS / FINALである。
+
+============================================================
+24. Emergency stop
+============================================================
+
+[FIXED]
+
+問題発生時は、まず送信副作用を停止する。
+
+緊急停止：
+
+```text
+notification_send_enabled=false
+```
+
+または
+
+```text
+notification_dry_run=true
+```
+
+上記により、Phase10 workerはtotal no-opとなる。
+
+必要に応じてcron停止も実施する。
+
+新旧workerを同時稼働させない。
+
+============================================================
+25. Rollback
+============================================================
+
+[FIXED]
+
+Phase11では、コードrollbackより先に以下で配送を止める。
+
+・send flag OFF
+・dry-run ON
+・cron停止
+・新配信ワーカー停止
+
+DBを手動でqueuedへ戻す等の危険な修復操作を標準手順にしない。
+
+send_outcome_unknownはPhase10仕様を維持する。
+
+未送信キューは保持する。
+
+.procmailrcや旧cronへ戻す場合は、新旧双方から同じ通知を送らないことを必須とする。
+
+============================================================
+26. Monitoring
+============================================================
+
+[FIXED]
+
+Phase11初期監視では、Phase10既存counterを使用する。
+
+最低限見るべきcounter：
+
+・mail_unit_claimed
+・delivery_rows_claimed
+・mail_unit_sent
+・delivery_rows_sent
+・mail_unit_deferred
+・mail_unit_failed
+・render_failure
+・transport_failure
+・send_outcome_unknown
+・group_invariant_violation
+・stale_send_outcome_unknown
+・token_revoked
+・sent_update_error_count
+・transaction_error_count
+・fatal_error_count
+
+[DECISION-REQUIRED]
+
+どの値でalertにするかは、Phase11で必要に応じて別途確定する。
+
+============================================================
+27. BE-004
+============================================================
+
+[DECISION-REQUIRED]
+
+対象：
+MariaDB 10.4 FOR UPDATE fallback時のlock wait timeout専用counter
+
+現状：
+
+```text
+保留
+non-blocking
+Phase10 freeze blockerではない
+```
+
+Phase11では、既存transaction_error_countとlogで運用可能か確認する。
+
+専用counter実装を初稿時点で必須としない。
+
+実装が必要と判断されても、本書作成時点ではPhase10コードを変更しない。
+
+============================================================
+28. Phase12境界
+============================================================
+
+[FIXED]
+
+Phase12責務：
+
+・hard bounce処理
+・complaint処理
+・suppression運用
+
+Phase12以降の運用検討事項：
+
+・DMARC aggregate report等の継続運用
+
+DMARC aggregate report等の継続運用は、現時点ではPhase12正式責務として未確定とする。
+
+Phase11で実送信を開始しても、bounce automation等をPhase11へ勝手に前倒ししない。
+
+Phase11は初期導入、送信認証確認、運用開始判定までを扱う。
+
+============================================================
+29. 本番未確認事項一覧
+============================================================
+
+[ENV-CONFIRM] / [REAL-MAIL-CONFIRM] / [DECISION-REQUIRED]
+
+| 項目 | 区分 | 確認手段 | 確認タイミング | 確定後の影響 |
+| --- | --- | --- | --- | --- |
+| production actual config | ENV-CONFIRM CLOSED | server file確認 | 確認済み | `/home/hpg-kobe/private/dandy_notification/dandy_notification_config.production.php` / syntax PASS / structural PASS / safe flags PASS / mode 600 |
+| P11-EMPTY-MAIL-CONFIG-01 Production初期運用値 | FIXED | 正式値決定 | 確認済み | max_bytes=262144 / email=3600/12 / email_cast=3600/5 / global=300/200 |
+| confirmation.consent_version | FIXED | 正式値決定 | 確認済み | 2026-08-31 |
+| production notification application log path | ENV-CONFIRM CLOSED | actual config確認 | 確認済み | `/home/hpg-kobe/private/dandy_notification/logs/notification.log` |
+| HTTP config path resolution | FIXED / CLOSED | Option C実装・review確認 | 確認済み | bootstrap fixed production private path fallback / implementation PASS / FINAL |
+| production notification URL値 | FIXED | actual config確認 | 確認済み | confirmation/settings base URLは正式値確定 |
+| production backend program deployment | ENV-CONFIRM CLOSED | deploy結果確認 | 確認済み | Backend Production deploy PASS / FINAL |
+| production frontend minimal deployment | ENV-CONFIRM CLOSED | deploy結果確認 | 確認済み | Frontend minimal deploy PASS / FINAL。ブラウザ受入試験は別項目 |
+| production DB migration/schema | ENV-CONFIRM CLOSED | migration/schema確認 | 確認済み | PASS / FINAL / READY |
+| production notification route reachability | ENV-CONFIRM CLOSED | frontend deploy後HTTP確認 | 確認済み | representative smokeでconfirm/settings/settings-request受入PASS |
+| staging actual config | ENV-CONFIRM | server file確認 | staging利用判断時 | stagingを検証に使う場合のtest条件 |
+| 共通footer本文 | REAL-MAIL-CONFIRM | 受信本文確認 | real mail時 | privacy_policy_url廃止後の個人情報取扱い説明 |
+| production PHP version | ENV-CONFIRM CLOSED | CLI確認 | 確認済み | PHP 8.4.25 |
+| production php.ini mail設定 | ENV-CONFIRM CLOSED | CLI確認 | 確認済み | mail()経路 |
+| sendmail_path | ENV-CONFIRM CLOSED | php.ini確認 | 確認済み | /usr/sbin/sendmail -t -i |
+| mail()実利用可否 | ENV-CONFIRM CLOSED | 安全な環境確認 | 確認済み | mail() available |
+| MTA / relay設定 | ENV-CONFIRM CLOSED | サーバー設定確認 | 確認済み | Postfix設定上は宛先MX直接配送構成、明示relayなし |
+| 実配送経路 | REAL-MAIL-CONFIRM CLOSED | Received header | 確認済み | P11-MAIL-AUTH-01A Application Controlled Send PASS / Mailbox receipt PASS |
+| 送信IP候補 | ENV-CONFIRM CLOSED | IP / DNS / SPF確認 | 確認済み | IPv4 / IPv6候補はSPF include先の許可範囲内 |
+| Return-Path | REAL-MAIL-CONFIRM CLOSED | received raw header | 確認済み | `<bounce@dandy-g.jp>` |
+| 実送信IP | REAL-MAIL-CONFIRM CLOSED | Received header | 確認済み | 133.18.103.245 |
+| SPF結果 | REAL-MAIL-CONFIRM CLOSED | Received-SPF / Authentication-Results | 確認済み | SPF PASS / smtp.mailfrom=bounce@dandy-g.jp |
+| Authentication-Results | REAL-MAIL-CONFIRM CLOSED | raw header | 確認済み | P11-MAIL-AUTH-01Aで確認済み |
+| SPF alignment | REAL-MAIL-CONFIRM CLOSED | Authentication-Results / smtp.mailfrom | 確認済み | PASS |
+| DKIM署名 | REAL-MAIL-CONFIRM CLOSED | DKIM-Signature / Authentication-Results | 確認済み | DKIM none。Go-Live mandatory blockerではない |
+| DKIM selector | REAL-MAIL-CONFIRM CLOSED | DKIM-Signature | 確認済み | DKIM noneのためselectorなし |
+| DMARC record | ENV-CONFIRM CLOSED | DNS確認 | 確認済み | _dmarc.dandy-g.jp NXDOMAIN |
+| DMARC result | REAL-MAIL-CONFIRM CLOSED | Authentication-Results | 確認済み | DMARC none。Go-Live mandatory blockerではない |
+| DMARC方針 | DECISION-REQUIRED | SPF alignment確認後 | Phase11後続判断 | OPTIONAL / HOLD |
+| cron PHP binary | ENV-CONFIRM CLOSED | 本番cron環境確認 | 確認済み | /usr/local/bin/php |
+| 新通知cron設置状態 | ENV-CONFIRM CLOSED | SSH read-only確認 | 確認済み | registered YES / count 1 / every 1 minute |
+| cron実行ユーザー | ENV-CONFIRM CLOSED | 本番cron環境確認 | 確認済み | `hpg-kobe` |
+| cron command上のDANDY_NOTIFICATION_CONFIG明示指定方法 | ENV-CONFIRM CLOSED | cron command設計 | 確認済み | actual config pathをcron commandで明示 |
+| canonical subscription_added Controlled Test | REAL-MAIL-CONFIRM CLOSED | 正規登録flow + received raw header | 確認済み | 2026-09-07 representative smokeでsubscription_added actual receipt PASS |
+| confirmation E2E | REAL-MAIL-CONFIRM CLOSED | pending -> verify_email -> confirmation -> active -> registration_complete | 確認済み | verify_email / registration_complete actual receipt PASS |
+| settings/unsubscribe E2E | REAL-MAIL-CONFIRM CLOSED | API / browser受入 | 確認済み | settings_link receipt、settings auth、quiet hours update PASS。unsubscribe系はPhase11 regressionとcontrolled testsで確認済み |
+| empty-mail ingress automation | ENV-CONFIRM CLOSED | .procmailrc確認 | 確認済み | permanent receive route ACTIVE / PASS |
+| create-deliveries automation | ENV-CONFIRM CLOSED | cron確認 | 確認済み | create-deliveries.php cronは不要。empty-mail flowはreceive routeでdelivery生成 |
+| send worker automation | ENV-CONFIRM CLOSED | cron確認 | 確認済み | send-deliveries.php cron registered / PASS |
+| notification feature activation | DECISION-REQUIRED CLOSED | actual config / activation手順 | 確認済み | Go-Live flags reflected / PASS |
+| public state production verification | ENV-CONFIRM CLOSED | actual config / production確認 | 確認済み | Go-Live blockerなし |
+| HTTP health | ENV-CONFIRM | accessible log確認 | final health check済み | NOT_OBSERVABLE。accessible error log候補に `/wgmailsys/` error evidence=0、access logベース5xx総数は観測不可。Go-Live blocker NO |
+| bounce mailbox health | ENV-CONFIRM | mailbox候補確認 | final health check済み | NOT_OBSERVABLE。bounce mailbox read手段未確立。actual receipt全4通確認済み、Go-Live blocker NO |
+
+============================================================
+30. Production activation blocker
+============================================================
+
+[FIXED]
+
+2026-09-07 Production Go-Live activationとrepresentative smoke、final Production health checkにより、Production activation blockerはCLOSED / FINALとする。
+
+Production activation CLOSED evidence：
+
+・production project root確認
+・production SYS_ROOT確認
+・Production actual config反映 / syntax確認 / ConfigLoader validation
+・formal Go-Live flags反映
+・production backend program deployment PASS / FINAL
+・production frontend minimal deployment PASS / FINAL
+・Production DB migration/schema PASS / FINAL
+・permanent empty-mail receive route ACTIVE / PASS
+・RFC822 wrapper Production E2E PASS
+・notification cron registered YES / count 1 / continuing YES
+・send-deliveries.php cron automatic send PASS
+・P11-MAIL-AUTH-01A Application Controlled Send PASS
+・P11-MAIL-AUTH-01A Mailbox receipt PASS
+・Return-Path = bounce@dandy-g.jp
+・実送信IP = 133.18.103.245
+・SPF = PASS
+・Authentication-Results確認
+・smtp.mailfrom = bounce@dandy-g.jp
+・SPF alignment = PASS
+・DKIM = none
+・DMARC = none
+・canonical subscription_added Controlled Test PASS
+・confirmation E2E PASS
+・settings authentication / quiet hours update PASS
+・representative smoke 4通 actual receipt PASS
+・final queue eligible=0 / stale=0
+・post-Go-Live failed delivery=0
+・post-Go-Live transport_failure=0
+・post-Go-Live send_outcome_unknown=0
+・post-Go-Live fatal_error=0
+
+Settings Go-Live blocker：
+
+旧settings mutation availabilityは、正式Go-Live flags `settings=true / delivery_create=true / send=true / dry_run=false` でmaintenanceになる問題があった。
+修正後はsettings mutation availabilityを `notification_settings_enabled && notification_delivery_create_enabled` とし、send/dry_runはworker transmission controlとして分離した。
+`SettingsAuthenticationService.php` と `SettingsLinkRequestService.php` はProduction deploy PASS、review PASS、formal runtime availability PASS、Go-Live settings auth/update PASSであり、CLOSED_IN_PRODUCTIONとする。
+
+HTTP health：
+
+final health checkでは `WGMAILSYS_HTTP_HEALTH=NOT_OBSERVABLE` とする。
+accessible error log候補に `/wgmailsys/` error evidenceは0だが、access logベースのHTTP 5xx総数は観測不可である。
+NOT_OBSERVABLEをPASSへ書き換えない。
+Go-Live blockerはNO。
+
+Bounce health：
+
+final health checkでは `BOUNCE_HEALTH=NOT_OBSERVABLE` とする。
+bounce mailbox read手段は未確立である。
+controlled emailは全4通actual receipt確認済みだが、bounce mailboxそのものを確認したとは書かない。
+Go-Live blockerはNO。
+
+Production activation blocker remaining after final health check：
+
+Critical：なし
+
+High：なし
+
+Operational Follow-Up / non-blocking：
+
+・first-day monitoring継続
+・DKIM導入検討
+・DMARC導入検討
+・cron log rotation長期運用検討
+・bounce mailbox観測方法の整理
+
+============================================================
+31. Phase11完了条件
+============================================================
+
+[FIXED]
+
+Phase11 DONEは、Phase11で必要な技術確認が完了した状態を指す。
+
+Phase11 DONE条件：
+
+1. 本番送信経路確定
+2. Return-Path / MAIL FROM確定
+3. 実送信IP確認
+4. SPF結果確認
+5. DKIM結果確認
+6. Authentication-Results確認
+7. DMARC方針確定
+8. 管理下テストアドレスへの1通実送信成功
+9. canonical subscription_added Controlled Test PASS
+
+DKIM署名が存在する場合は、DKIM selectorを確認・記録する。
+
+DKIM NONEが実環境上の正式な確認結果であり、その後の対応方針が決定している場合は、selectorが存在しないため「DKIM selector確定」をPhase11 DONE必須条件にしない。
+
+2026-08-24 production SSH read-only調査により、PHP / MTA / Postfix routing / 送信IP候補 / SPF許可範囲等のENV-CONFIRMは一部CLOSEDした。
+
+2026-08-29 P11-MAIL-AUTH-01A supplemental verify_email Production実メール確認により、以下は確認済みである。
+
+```text
+本番送信経路=確認済み
+Return-Path / MAIL FROM=bounce@dandy-g.jp
+実送信IP=133.18.103.245
+SPF=PASS
+Authentication-Results=確認済み
+SPF alignment=PASS
+DKIM=none
+DMARC=none
+管理下テストアドレスへの補助verify_email実送信=PASS
+```
+
+DKIM / DMARC noneはProduction実測事実であり、導入はOPTIONAL / HOLDとする。
+
+ただし、P11-MAIL-AUTH-01Aは補助authentication testであり、canonical subscription_added Controlled Testの完了を意味しない。
+2026-09-07 representative smokeにより、canonical subscription_added Controlled Test、confirmation E2E、settings authentication / update、permanent receive route、notification cron automation、feature activation、final queue healthはPASS / FINALである。
+
+Phase11 runtime validation：
+
+```text
+Go-Live activation=PASS
+notification cron=PASS
+verify_email cron auto-send + actual receipt=PASS
+registration_complete cron auto-send + actual receipt=PASS
+settings_link cron auto-send + actual receipt=PASS
+settings auth/update=PASS
+subscription_added cron auto-send + actual receipt=PASS
+queue clean=PASS
+runtime health=PASS
+```
+
+Phase11 DONE相当のruntime条件は満たした。
+ただし、本書更新時点ではdocs / tracker alignment後のChatGPT final freeze review前であるため、Phase11をFROZENとは記載しない。
+
+staging actual config：
+
+stagingをPhase11 real mail testまたは本番前検証に使用する場合のみ必要とする。
+
+無条件blockerにはしない。
+
+Production activation済み事項：
+
+・cron本番条件
+・cron command確定
+・cron command上のDANDY_NOTIFICATION_CONFIG明示指定方法
+・old / new cron重複防止
+・cron登録
+・恒常的notification flag切替
+・production activation判断
+・rollback最終確認
+
+============================================================
+32. FROZEN条件
+============================================================
+
+[FIXED]
+
+Phase11は、「メールが1通届いた」だけではFROZENしない。
+
+Phase11 FROZENは、Phase11 DONE後に実測結果、レビュー結果、必要な記録を仕様へ反映し、未解決blocking itemがないことを確認してPhase11仕様を固定した状態を指す。
+
+以下を完了してからFROZENする。
+
+・Phase11 DONE条件の完了確認
+・実測結果のPhase11仕様反映
+・レビュー結果整理
+・必要な記録更新
+・未解決blocking itemなし確認
+
+Phase11 FreezeとProduction activationは概念上同義ではない。
+
+初期計画段階では、cron登録と恒常的notification flag切替をFreeze後のactivation連携事項として扱う可能性があった。
+これはinitial planning / historical sequencingであり、current procedureではない。
+
+2026-09-07 actual process：
+
+```text
+Production Go-Live activation
+→ notification cron
+→ representative smoke
+→ final Production health check
+→ docs / tracker alignment
+→ ChatGPT final freeze review
+→ Phase11 FROZEN判定
+```
+
+2026-08-24 production SSH read-only調査結果、2026-08-29 P11-MAIL-AUTH-01A supplemental verify_email Production実メール確認結果、2026-09-07 Production Go-Live activation / representative smoke / final Production health check結果は本書へ反映済みである。
+
+Phase11 runtimeはPASSであり、docs / tracker alignmentは本更新でCOMPLETEとする。
+Phase11 FROZENはChatGPT final freeze review後に判定するため、本書更新時点ではREADY_FOR_FINAL_FREEZE_REVIEWとする。
+
+============================================================
+32-A. Final Production Health Check
+============================================================
+
+[FIXED]
+
+2026-09-07 final Production health check結果：
+
+```text
+WGMAILSYS_PHASE11_FINAL_PRODUCTION_HEALTH_CHECK=PASS
+FINAL_HEALTH_GO_LIVE_FLAGS=PASS
+FINAL_ELIGIBLE_UNIT_COUNT=0
+FINAL_STALE_UNIT_COUNT=0
+FINAL_QUEUE_HEALTH=PASS
+POST_GOLIVE_FAILED_DELIVERY_COUNT=0
+POST_GOLIVE_TRANSPORT_FAILURE_COUNT=0
+POST_GOLIVE_SEND_OUTCOME_UNKNOWN_COUNT=0
+POST_GOLIVE_FATAL_ERROR_COUNT=0
+CRON_HEALTH=PASS
+CRON_STDERR_HEALTH=PASS
+PERMANENT_RECEIVE_ROUTE_HEALTH=PASS
+RECEIVE_ERROR_HEALTH=PASS
+RATE_LIMIT_HEALTH=PASS
+CONTROLLED_GRAPH_FINAL_STATE=PASS
+CONTROLLED_DUPLICATE_DELIVERY=NONE
+TOKEN_NOT_FOUND_EVENT=INFORMATION
+TOKEN_NOT_FOUND_GO_LIVE_BLOCKER=NO
+PRODUCTION_SOURCE_INTEGRITY=PASS
+NEW_CRITICAL_BLOCKERS=NONE
+NEW_HIGH_BLOCKERS=NONE
+```
+
+HTTP health：
+
+```text
+WGMAILSYS_HTTP_HEALTH=NOT_OBSERVABLE
+```
+
+accessible error log候補に `/wgmailsys/` error evidenceは0。
+ただしaccess logベースのHTTP 5xx総数は観測不可であるため、NOT_OBSERVABLEをPASSへ書き換えない。
+
+Bounce health：
+
+```text
+BOUNCE_HEALTH=NOT_OBSERVABLE
+```
+
+bounce mailbox候補のmailbox read手段は未確立。
+controlled emailは全4通actual receipt確認済みであるが、bounce mailboxそのものを確認したとは記録しない。
+
+Operational Follow-Up / non-blocking：
+
+・first-day monitoring継続
+・DKIM導入検討
+・DMARC導入検討
+・cron log rotation長期運用検討
+・bounce mailbox観測方法の整理
+
+============================================================
+33. 今回変更しないもの
+============================================================
+
+[FIXED]
+
+本書作成時点で、以下は変更しない。
+
+・production code
+・test code
+・Phase8
+・Phase9
+・Phase10
+・lessons.md
+・DDL
+・DB
+・actual config
+・notification flag
+・DNS
+・SPF
+・DKIM
+・DMARC
+・cron
+・.procmailrc
+・MTA
+・SMTP
+
+実メール送信も行わない。
+
+REVIEW_FIX_TRACKERは、BE-011の事実訂正と追跡のため今回更新対象とする。
+
+============================================================
+34. 初稿自己レビュー項目
+============================================================
+
+[FIXED]
+
+本書では以下を守る。
+
+・未確認値を確定値として書かない
+・Phase8～10のFROZENを解除しない
+・Phase12責務を混ぜない
+・MTA直送 / KAGOYA relayを勝手に決めない
+・Phase10 historicalの「-fなし」記録を遡及変更しない
+・P11-MAIL-AUTH-01Aで承認済みの `-fbounce@dandy-g.jp` override以外を勝手に変更しない
+・DKIM未設定と断定しない
+・DMARC p=noneを勝手に確定しない
+・privacy_policy_urlを再導入しない
+・real mail testを大量subscriber向けにしない
+・production activation blockerとPhase11仕様策定blockerを混同しない

@@ -1,0 +1,1318 @@
+# 出勤お知らせメールシステム フェーズ8出勤変更イベント生成追加確定仕様書
+
+作成日：2026-08-12
+対象フェーズ：フェーズ8「出勤変更イベント生成」
+
+## 1. 文書目的
+
+本書は、横浜ダンディーグループ「出勤お知らせメールシステム」におけるフェーズ8「出勤変更イベント生成」の追加確定仕様書である。
+
+フェーズ8実装前調査および追加仕様案検討により、schedule状態分類、特殊状態遷移、schedule DELETE、event_type優先順位、event_key、reconciliation、event INSERT失敗時の扱い、日付timezoneについて追加仕様確定が必要と判明した。
+
+本書はそれらを正式に固定し、以後のフェーズ8実装時の最優先正本とする。
+
+本書は仕様を固定するための文書であり、PHP、Next.js、JS、TS、TSX、DDL、DB、config、cron、.procmailrcを変更するものではない。
+
+## 2. 参照優先順位
+
+フェーズ8「出勤変更イベント生成」について、既存資料と本書の内容が競合する場合は本書を優先する。
+
+参照優先順位：
+
+```text
+1. 本書（2026-08-12 フェーズ8出勤変更イベント生成追加確定仕様）
+2. 出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt
+3. 出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt
+4. backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql
+5. 現行実装
+```
+
+backup等の旧資料をフェーズ8の根拠として自動採用しない。
+
+## 3. 適用範囲
+
+本書が扱う範囲：
+
+```text
+schedule変更判定
+canonical state
+event_type判定
+event生成単位
+payload
+event_key
+feature flag
+failure isolation
+timezone
+reconciliation扱い
+mandatory test
+```
+
+本書が扱わない範囲：
+
+```text
+Phase9以降のdelivery生成
+2時間集約
+メール本文生成
+メール送信
+SMTP接続
+cron登録
+Phase7公開状態同期の実装変更
+購読者抽出
+送信可否の最終判定
+```
+
+## 4. schedule正本
+
+フェーズ8が参照するschedule正本は、既存管理画面側の以下テーブルとする。
+
+```text
+t_work_list
+```
+
+実DB上の主な性質：
+
+```text
+Engine = MyISAM
+PKなし
+UNIQUEなし
+FKなし
+```
+
+主な列：
+
+```text
+g_id
+shop_id
+win
+wout
+brin
+brout
+wuptime
+wait
+warea_row
+```
+
+`win`、`wout`、`brin`、`brout`、`wuptime` は varchar にUnix timestamp文字列として保存されている。
+
+重要制約：
+
+```text
+t_work_list = MyISAM
+t_notification_event = InnoDB
+```
+
+したがって、既存schedule保存と `t_notification_event` INSERTを単一の完全ACID transactionとして原子的にcommitすることはできない。
+
+## 5. Phase8対象更新経路
+
+フェーズ8の主対象更新経路：
+
+```text
+cp8_dandy/input_schedule.php
+→ update_work_time()
+
+cp8_dandy/input_work_calendar.php
+→ update_work_time()
+```
+
+フェーズ8 event対象外の更新経路：
+
+```text
+inc_realtime_popup.php
+→ update_real_data3()
+
+input_realtime.php
+→ update_real_data_row()
+
+girl_schedule_reset_*
+→ JSON再生成のみ
+
+cp8_dandy/input_work_calendar.php
+→ update_work_time_break()
+
+cp8_dandy/input_work_calendar.php
+→ delete_work_time()
+```
+
+休憩更新およびschedule削除は、本書で明示的にevent対象外とする。
+
+## 6. Phase8処理位置
+
+正式な概念フロー：
+
+```text
+保存前schedule snapshot取得
+↓
+既存schedule保存
+↓
+既存JSON生成
+↓
+保存後schedule snapshot取得
+↓
+Phase8判定
+↓
+event INSERT
+```
+
+既存schedule保存や既存JSON生成より前にeventを確定しない。
+
+POST値だけを正本にしない。保存前後のDB値から判定する。
+
+## 7. canonical state
+
+フェーズ8内部判定用canonical stateは以下とする。
+
+```text
+UNREGISTERED
+WORK
+OFF
+TEL
+HOLIDAY
+LAST
+OTHER_SPECIAL
+```
+
+生の秒コードをevent判定ロジックへ散在させない。
+
+既存DB表現をcanonical stateへ正規化した上で判定する。
+
+## 8. canonical state分類
+
+canonical stateの正式分類：
+
+| canonical state | DB条件・意味 | Phase8分類 |
+|---|---|---|
+| UNREGISTERED | 対象shop_id + cast_id + schedule_dateについて、通知判定対象となる勤務scheduleが存在しない状態 | 初回WORK化の候補 |
+| WORK | 通常の出勤開始・終了時刻を持つ勤務状態 | 通知判定対象 |
+| OFF | `win` 秒 `03` 届出休、または `win` 秒 `13` お休み | 休み変更対象 |
+| TEL | `win` 秒 `02` または `08` | 通知対象外 |
+| HOLIDAY | `win` 秒 `04` の公休日コード | 通知対象外 |
+| LAST | `wout` 秒 `09` | 通知対象外 |
+| OTHER_SPECIAL | `win` 秒 `05` / `11` / `12` / `14`、および現行表示上 `21`～`25` の出張中特殊状態等 | 通知対象外 |
+
+`UNREGISTERED` は単なるDB行なしだけではなく、現行保存仕様と整合する「勤務実体なし」を含めて実装時に判定する。
+
+## 9. OFF正式定義
+
+フェーズ8で `schedule_changed_to_off` / `schedule_changed_to_work` の対象となるOFFは以下のみとする。
+
+```text
+届出休：win秒 = 03
+お休み：win秒 = 13
+```
+
+したがって、OFFは以下と定義する。
+
+```text
+OFF = 届出休 + お休み
+```
+
+以下はOFFへ含めない。
+
+```text
+TEL
+公休日
+LAST
+その他特殊状態
+```
+
+## 10. TEL
+
+TELは以下とする。
+
+```text
+win秒 = 02
+win秒 = 08
+```
+
+フェーズ8では通知対象外とする。
+
+TELがbeforeまたはafterに含まれる遷移ではeventを生成しない。
+
+例：
+
+```text
+WORK → TEL   eventなし
+TEL → WORK   eventなし
+TEL → OFF    eventなし
+OFF → TEL    eventなし
+```
+
+## 11. HOLIDAY
+
+HOLIDAYは以下とする。
+
+```text
+win秒 = 04
+```
+
+フェーズ8では通知対象外とする。
+
+HOLIDAYがbeforeまたはafterに含まれる遷移ではeventを生成しない。
+
+例：
+
+```text
+WORK → HOLIDAY    eventなし
+HOLIDAY → WORK    eventなし
+HOLIDAY → OFF     eventなし
+OFF → HOLIDAY     eventなし
+```
+
+## 12. LAST
+
+LASTは以下とする。
+
+```text
+wout秒 = 09
+```
+
+フェーズ8では通知対象外とする。
+
+LASTがbeforeまたはafterの通知判定意味に関与する場合もeventを生成しない。
+
+LASTをOFF扱いしない。
+
+## 13. OTHER_SPECIAL
+
+以下等の特殊状態はOTHER_SPECIALとして扱う。
+
+```text
+win秒 = 05
+win秒 = 11
+win秒 = 12
+win秒 = 14
+win秒 = 21～25（現行表示上の出張中特殊状態）
+その他、WORK / OFF / TEL / HOLIDAY / LASTに正式分類されない特殊状態
+```
+
+OTHER_SPECIALはフェーズ8通知対象外とする。
+
+21～25は公休日そのものではなく出張中特殊状態として扱い、OFFへもHOLIDAYへも含めない。
+
+OTHER_SPECIALを含む遷移ではeventを生成しない。
+
+## 14. schedule_created
+
+正式条件：
+
+```text
+before = UNREGISTERED
+after = WORK
+```
+
+event_type：
+
+```text
+schedule_created
+```
+
+OFF → WORKは `schedule_created` にしない。
+
+```text
+OFF → WORK = schedule_changed_to_work
+```
+
+TEL / HOLIDAY / LAST / OTHER_SPECIAL → WORKはeventなしとする。
+
+## 15. schedule_start_changed
+
+正式条件：
+
+```text
+before = WORK
+after = WORK
+AND
+start_timeが変更
+```
+
+event_type：
+
+```text
+schedule_start_changed
+```
+
+終了時刻も同時に変更されていてよい。
+
+例：
+
+```text
+10:00～18:00
+↓
+11:00～19:00
+
+= schedule_start_changed
+```
+
+終了時刻だけ変更された場合はeventなしとする。
+
+例：
+
+```text
+10:00～18:00
+↓
+10:00～19:00
+
+= eventなし
+```
+
+## 16. schedule_changed_to_off
+
+正式条件：
+
+```text
+before = WORK
+after = OFF
+```
+
+event_type：
+
+```text
+schedule_changed_to_off
+```
+
+TEL、HOLIDAY、LAST、OTHER_SPECIALへの変更を `schedule_changed_to_off` へ流用しない。
+
+## 17. schedule_changed_to_work
+
+正式条件：
+
+```text
+before = OFF
+after = WORK
+```
+
+event_type：
+
+```text
+schedule_changed_to_work
+```
+
+TEL、HOLIDAY、LAST、OTHER_SPECIALからWORKへの変更を `schedule_changed_to_work` へ流用しない。
+
+## 18. event判定マトリクス
+
+正式なevent判定マトリクス：
+
+| before | after | event | 理由 |
+|---|---|---|---|
+| UNREGISTERED | WORK | schedule_created | 初回出勤登録 |
+| WORK | WORK（start変更あり） | schedule_start_changed | 出勤開始時刻変更 |
+| WORK | WORK（endのみ変更） | eventなし | 終了時刻だけの変更は対象外 |
+| WORK | WORK（同一内容） | eventなし | 同一内容再保存は対象外 |
+| WORK | OFF | schedule_changed_to_off | 休みへの変更 |
+| OFF | WORK | schedule_changed_to_work | 休みから出勤への変更 |
+| TELを含む | 任意 | eventなし | TEL確認は対象外 |
+| 任意 | TELを含む | eventなし | TEL確認は対象外 |
+| HOLIDAYを含む | 任意 | eventなし | 公休日は対象外 |
+| 任意 | HOLIDAYを含む | eventなし | 公休日は対象外 |
+| LASTを含む | 任意 | eventなし | LASTは対象外 |
+| 任意 | LASTを含む | eventなし | LASTは対象外 |
+| OTHER_SPECIALを含む | 任意 | eventなし | その他特殊状態は対象外 |
+| 任意 | OTHER_SPECIALを含む | eventなし | その他特殊状態は対象外 |
+| 任意 | 過去日 | eventなし | 過去日修正は対象外 |
+| 休憩のみ変更 | 休憩のみ変更 | eventなし | 休憩は対象外 |
+| DELETE | DELETE | eventなし | schedule削除は対象外 |
+| realtime | realtime | eventなし | リアルタイム更新は対象外 |
+
+## 19. event生成単位
+
+1保存処理におけるevent生成単位：
+
+```text
+shop_id
++
+cast_id
++
+schedule_date
+```
+
+1 schedule_dateについて、1保存につき最大1 eventとする。
+
+同一保存から複数event_typeを生成しない。
+
+## 20. event_type優先順位
+
+1回の保存で複数の差分条件に該当し得る場合の正式優先順位：
+
+```text
+1. schedule_created
+2. schedule_changed_to_off
+3. schedule_changed_to_work
+4. schedule_start_changed
+```
+
+ただし、canonical state遷移判定により、本来複数該当をできるだけ発生させない設計とする。
+
+## 21. 休憩変更
+
+`brin` / `brout` だけの変更はeventなしとする。
+
+休憩はフェーズ8通知対象外である。
+
+start_time変更と同時に休憩が変わった場合は、start_time変更判定を妨げない。
+
+## 22. schedule DELETE
+
+`delete_work_time()` によるschedule row削除はフェーズ8event対象外とする。
+
+削除を `schedule_changed_to_off` と推測しない。
+
+理由：
+
+```text
+schedule row削除
+お休み／届出休への変更
+```
+
+は業務上同義とは限らないため。
+
+現在の4 event_typeへ削除専用typeを追加しない。
+
+## 23. 過去日
+
+以下の場合はeventなしとする。
+
+```text
+schedule_date < Asia/Tokyo基準のtoday
+```
+
+過去日の修正は通知対象外である。
+
+## 24. timezone
+
+timezone責務を以下のように分離する。
+
+```text
+schedule_dateの当日判定 = Asia/Tokyo calendar date
+通知DB timestamp = UTC
+```
+
+UTC timestampの対象：
+
+```text
+occurred_at
+created_at
+available_at
+updated_at
+processed_at
+failed_at
+```
+
+フェーズ8のために以下を変更しない。
+
+```text
+GLOBAL timezone
+SESSION timezone
+```
+
+schedule_dateとDB timestampのtimezone責務を混同しない。
+
+## 25. t_notification_event
+
+正式DDLは以下とする。
+
+```text
+backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql
+```
+
+正式event_type：
+
+```text
+schedule_created
+schedule_start_changed
+schedule_changed_to_off
+schedule_changed_to_work
+```
+
+正式source_type：
+
+```text
+schedule_save
+reconciliation
+```
+
+Phase8 direct生成では以下を使用する。
+
+```text
+source_type = schedule_save
+```
+
+Phase8ではreconciliationを実装しないため、`source_type = reconciliation` は将来互換としてDDL上維持する。
+
+## 26. Phase8 payload
+
+`before_payload` / `after_payload` は、通知eventの意味を説明可能な必要最小schedule snapshotとする。
+
+canonical payloadの基本：
+
+```text
+state
+start_time
+end_time
+special_code
+```
+
+例：
+
+```json
+{
+  "state": "WORK",
+  "start_time": "10:00",
+  "end_time": "18:00",
+  "special_code": null
+}
+```
+
+payloadへ原則重複保存しない項目：
+
+```text
+shop_id
+cast_id
+shop_name
+cast_name
+schedule_date
+```
+
+これらはトップレベル列またはsnapshot列を使用する。
+
+payloadへ含めない項目：
+
+```text
+subscriber
+subscription
+email
+token
+secret
+```
+
+Unix timestamp生値より、canonical stateおよび `HH:MM` 等の正規化値を使用する。
+
+## 27. payloadのstate
+
+payloadの `state` は以下のcanonical値を使用する。
+
+```text
+UNREGISTERED
+WORK
+OFF
+TEL
+HOLIDAY
+LAST
+OTHER_SPECIAL
+```
+
+通知eventを生成しない特殊状態についても、判定内部ではcanonical state化してよい。
+
+## 28. shop_name_snapshot / cast_name_snapshot
+
+event作成時点の正式名称snapshotを保存する。
+
+取得元は既存の正式DBまたはRepository方式を使用する。
+
+Phase8独自の名称変換を作らない。
+
+## 29. feature flag
+
+Phase8正式feature flag：
+
+```text
+notification_event_enqueue_enabled
+```
+
+default：
+
+```text
+false
+```
+
+未定義：
+
+```text
+false
+```
+
+既存の `FeatureFlags::enabled(...)` 方式を使用する。
+
+旧資料の大文字表記 `NOTIFICATION_EVENT_ENQUEUE_ENABLED` は概念名または旧表記として扱い、production実装では既存lowercase keyを正本とする。
+
+## 30. feature flag OFF
+
+`notification_event_enqueue_enabled=false` の場合：
+
+```text
+Phase8 event生成なし
+既存schedule保存は通常どおり
+JSON生成通常どおり
+管理画面挙動変更なし
+t_notification_event変更なし
+```
+
+## 31. subscriptionとの責務分離
+
+Phase8はschedule event生成までを担当する。
+
+以下はPhase8で判定しない。
+
+```text
+subscriber status
+subscription status
+suppression
+delivery対象
+```
+
+active subscriptionが0件でも、通知対象schedule changeであればevent自体は生成する。
+
+Phase9が購読およびdelivery対象抽出を担当する。
+
+## 32. 公開状態との責務分離
+
+Phase7公開状態同期をPhase8へ混在させない。
+
+Phase8はschedule変更事実をevent化する。
+
+Phase8自身が以下を行わない。
+
+```text
+subscription pause
+subscription restore
+delivery cancellation
+```
+
+公開状態による最終配信可否は、Phase7、Phase9、後続senderの責務と分離する。
+
+## 33. failure isolation
+
+`t_work_list` がMyISAMであるため、schedule保存とevent INSERTを単一の完全ACID transactionにはしない。
+
+正式方針：
+
+```text
+1. 既存schedule保存
+2. 既存JSON生成
+3. Phase8 event生成
+```
+
+event INSERT失敗時：
+
+```text
+既存schedule保存成功を維持
+既存JSON成功を維持
+管理画面成功フローを阻害しない
+Phase8処理のみ失敗
+operational ERROR log
+管理画面警告UI追加なし
+```
+
+2026-08-18時点のfailure isolation確認範囲：
+
+```text
+DB-layer event INSERT failure isolation PASS
+management hook failure isolation static確認 PASS
+通常ブラウザ回帰 PASS
+forced event INSERT failure browser E2Eは未実施
+```
+
+現在のPhase8完了条件では、DB-layer isolationとstatic hook確認をPhase8 failure isolation確認として採用済みである。
+
+forced failure browser E2Eを新しいmandatory testとして追加しない。
+
+## 34. operational ERROR log
+
+event INSERT失敗時のoperational ERROR logには、最低限以下を含める方向とする。
+
+```text
+component
+request_id
+shop_id
+cast_id
+schedule_date
+event_type候補
+failure_stage
+exception/error
+timestamp
+```
+
+以下を含めない。
+
+```text
+secret
+token
+email
+不要な個人情報
+```
+
+## 35. reconciliation
+
+重要な仕様変更として、既存概要仕様にあった以下はPhase8では実装しない。
+
+```text
+イベント生成漏れを照合ジョブで補完する
+```
+
+理由：
+
+```text
+t_work_listは最新状態のみ
+schedule履歴tableなし
+変更前snapshotを後から復元できない
+wuptimeは完全なchange revisionではない
+```
+
+したがって、現在状態から過去の通知対象変更を安全に再構築できない。
+
+## 36. reconciliation保留
+
+Phase8では以下のみ実装対象とする。
+
+```text
+direct schedule event generation
+```
+
+以下は保留する。
+
+```text
+event漏れ完全復元reconciliation
+```
+
+現在状態から過去変更を推測してeventを自動生成してはならない。
+
+## 37. reconciliation将来対応
+
+将来、完全なevent reconciliationを実装する場合は、別途以下等の履歴基盤を検討する。
+
+```text
+schedule change ledger
+outbox
+revision ID
+before/after snapshot
+```
+
+ただし、本Phase8では以下とする。
+
+```text
+新table追加なし
+DDL追加なし
+```
+
+## 38. wuptime
+
+`wuptime` をPhase8の正式change revisionとして使用しない。
+
+理由：
+
+```text
+秒精度
+同一秒複数保存を区別不能
+複数日更新で同値になり得る
+DELETEには残らない
+履歴IDではない
+```
+
+event_keyの一意change identityとして `wuptime` へ依存しない。
+
+## 39. event_key
+
+event_keyのDB仕様：
+
+```text
+BINARY(32)
+SHA-256
+UNIQUE
+```
+
+既存 `NotificationEventService::eventKeyHash()` は利用可能である。
+
+ただし、現行データ構造には完全なchange revisionが存在しない。
+
+そのためPhase8 direct-only実装では、event_keyは以下を目的とする。
+
+```text
+同一保存処理内の二重event INSERT防止
+同一logical event生成処理の再呼び出し防止
+```
+
+## 40. event_keyの限界
+
+以下の例では、1回目と3回目は同一before/afterでも別の業務変更である。
+
+```text
+10:00 → 11:00
+↓
+11:00 → 10:00
+↓
+10:00 → 11:00
+```
+
+現行DBだけで、これらを完全に一意なchange revisionとして識別することはできない。
+
+したがって、以下の設計は禁止する。
+
+```text
+過去に同じbefore/afterが存在した場合も永久に同じevent_keyへする
+```
+
+一方、信頼できる永続revisionがない以上、完全な再発識別保証もPhase8では行わない。
+
+## 41. event_key request identity調査結果
+
+既存schedule保存処理には、Phase8のchange revisionとして安全にそのまま使用できる永続request identity / revision IDは存在しなかった。
+
+以下はPhase8 event_keyのchange identityとして使用しない。
+
+```text
+wuptime
+time()単独
+保存開始時刻単独
+```
+
+追加DDLは行わない。
+
+## 42. event_key最終実装
+
+Phase8ではHTTP保存request単位で `RequestId::generate()` によりrequest-scoped request_idを1つ生成する。
+
+同一HTTP保存リクエスト内では、対象cast / schedule_dateが複数でも同じPhase8 request_idを共有する。
+
+event_key canonical material：
+
+```php
+[
+    'version' => 'phase8-v1',
+    'request_id' => $phase8RequestId,
+    'shop_id' => $shopId,
+    'cast_id' => $castId,
+    'schedule_date' => $scheduleDate,
+    'event_type' => $eventType,
+    'before' => [
+        'state' => $beforeState,
+        'start_time' => $beforeStartTime,
+        'end_time' => $beforeEndTime,
+        'special_code' => $beforeSpecialCode,
+    ],
+    'after' => [
+        'state' => $afterState,
+        'start_time' => $afterStartTime,
+        'end_time' => $afterEndTime,
+        'special_code' => $afterSpecialCode,
+    ],
+]
+```
+
+SHA-256生成：
+
+```text
+NotificationEventService::eventKeyHash()
+```
+
+正式保証範囲：
+
+```text
+同一保存処理内の二重INSERT防止
+同一logical event処理の再呼び出し防止
+```
+
+保証しない範囲：
+
+```text
+完全並行した別HTTP request間のlogical duplicate完全排除
+```
+
+追加DDL：
+
+```text
+なし
+```
+
+## 43. event status
+
+event INSERT時の以下は、正式DDLおよび既存EventRepository / NotificationEventServiceの方式を使用する。
+
+```text
+status
+available_at
+attempt_count
+max_attempts
+processed_at
+failed_at
+```
+
+Phase8独自の初期値を作らない。
+
+DDL上の主な既定値：
+
+```text
+status = pending
+available_at = CURRENT_TIMESTAMP(6)
+attempt_count = 0
+max_attempts = 5
+```
+
+## 44. event生成しないケース
+
+Phase8でevent生成しないケースの正式一覧：
+
+```text
+終了時刻のみ
+同一内容再保存
+休憩のみ
+TEL関連
+公休日関連
+LAST関連
+OTHER_SPECIAL関連
+過去日
+schedule DELETE
+リアルタイム
+JSON再生成だけ
+```
+
+## 45. mandatory tests
+
+Phase8実装完了にはDB integration testを必須とする。
+
+最低限のmandatory tests：
+
+```text
+schedule_created
+schedule_start_changed
+end_only_no_event
+start_and_end_changed
+same_save_no_event
+work_to_off
+off_to_work
+TEL_to_work_no_event
+work_to_TEL_no_event
+holiday_to_work_no_event
+work_to_holiday_no_event
+LAST_no_event
+other_special_no_event
+past_date_no_event
+break_only_no_event
+delete_no_event
+realtime_no_event
+multiple_dates
+multiple_shops
+flag_off
+event duplicate protection
+event insert failure isolation
+existing JSON regression
+existing schedule regression
+cleanup residual 0
+```
+
+## 46. cleanup
+
+Phase8 DB integration testでは専用test dataを使用する。
+
+終了後、以下の残存0を確認する。
+
+```text
+t_notification_event
+t_work_list test data
+girl test data
+その他notification test data
+```
+
+既存girl / scheduleをテストのために破壊しない。
+
+## 47. browser regression
+
+Phase8正式完了前に、管理画面で最低限以下を確認する。
+
+```text
+通常出勤新規登録
+開始時間変更
+終了時間だけ変更
+休み変更
+同一内容保存
+カレンダー一括更新
+```
+
+確認事項：
+
+```text
+schedule DB正常
+JSON正常
+redirect正常
+Fatalなし
+Phase8警告UIなし
+event有無が仕様どおり
+```
+
+## 48. Phase7 regression
+
+Phase8実装でPhase7 productionコードを変更しない。
+
+Phase8完了前に、Phase7の主要DB-free / static regressionへ影響がないことを確認する。
+
+## 49. 実メール
+
+Phase8では実メール送信しない。
+
+SMTP接続しない。
+
+以下を維持する。
+
+```text
+notification_send_enabled=false
+notification_dry_run=true
+```
+
+## 50. cron
+
+Phase8ではcron登録しない。
+
+Phase8 reconciliationも実装しないため、Phase8専用reconciliation cronは存在しない。
+
+## 51. DDL
+
+Phase8 direct-only実装では追加DDLなし。
+
+禁止：
+
+```text
+ALTER TABLE
+CREATE TABLE
+CREATE INDEX
+DROP INDEX
+```
+
+現在の `t_notification_event` を使用する。
+
+## 52. Phase8完了条件
+
+以下をすべて満たした場合のみ、Phase8実装完了とする。
+
+```text
+追加確定仕様への実装完了
+schedule canonical state確認
+event判定マトリクス実装
+通知対象外遷移確認
+feature flag OFF安全性PASS
+event failure isolation PASS
+mandatory DB integration全PASS
+event duplicate protection確認
+既存schedule保存regressionなし
+既存JSON regressionなし
+Phase7 regressionなし
+cleanup後残存0
+実メール未送信
+cron未変更
+不要DDL変更なし
+```
+
+2026-08-18時点で、ローカル実装、unit/static、DB integration、cleanup residual 0、管理画面ブラウザ回帰までPASSした。
+
+ただし、これはローカル実装完了であり、production rollout、production feature flag ON、cron登録、SMTP接続、実メール送信、Phase9 delivery生成、reconciliation実装を完了したものではない。
+
+## 53. 本書作成時に変更しないもの
+
+本書作成時に以下を変更しない。
+
+```text
+PHP
+Next.js
+JS
+TS
+TSX
+DDL
+DB
+config
+cron
+.procmailrc
+```
+
+## 54. 既存仕様書への反映状態
+
+本書作成時点ではPhase8追加確定仕様書だけを新規作成した。
+
+2026-08-18時点で、Phase8ローカル実装完了状態を以下へ反映した。
+
+```text
+全体リニューアル仕様書
+フェーズ別実装手順書
+```
+
+本書は引き続きPhase8の最優先正本とする。
+
+## 55. 作成後整合性確認
+
+本書内の最低限の整合性確認項目：
+
+```text
+OFF = 届出休 + お休み
+TEL / HOLIDAY / LAST = event対象外
+DELETE = event対象外
+break only = event対象外
+start + end変更 = schedule_start_changed
+reconciliation = Phase8では保留
+event failure = 既存schedule/JSON成功維持
+timezone = schedule_date Asia/Tokyo、DB timestamp UTC
+DDL追加 = なし
+feature flag = notification_event_enqueue_enabled
+```
+
+## 56. 最終判定
+
+本書により、フェーズ8「出勤変更イベント生成」における以下を正式に固定した。
+
+```text
+何をevent化するか
+何をevent化しないか
+失敗時に何を守るか
+reconciliationをPhase8で実装しないこと
+現在状態から過去schedule変更を推測してeventを作らないこと
+MyISAM schedule保存をnotification event INSERT失敗のために壊さないこと
+```
+
+## 57. 2026-08-18 ローカル実装完了・凍結状態
+
+Phase8実装状態：
+
+```text
+ローカル実装完了
+```
+
+実装完了日：
+
+```text
+2026-08-18
+```
+
+検証状態：
+
+```text
+unit/static PASS
+DB integration PASS
+cleanup residual 0
+browser regression PASS
+```
+
+unit/static最終確認：
+
+```text
+[ok] schedule_created
+[ok] schedule_start_changed
+[ok] start_and_end_changed
+[ok] end_only_no_event
+[ok] same_save_no_event
+[ok] off_transitions
+[ok] tel_no_event
+[ok] holiday_no_event
+[ok] last_no_event
+[ok] other_special_no_event
+[ok] break_only_no_event
+[ok] past_date_no_event
+[ok] event_key_deterministic
+[ok] static_checks
+[ok] phase8_unit_tests_completed
+```
+
+DB integration最終確認：
+
+```text
+[ok] preflight
+[ok] schedule_created
+[ok] schedule_start_changed
+[ok] end_only_no_event
+[ok] start_and_end_changed
+[ok] same_save_no_event
+[ok] work_to_off_03
+[ok] work_to_off_13
+[ok] off_03_to_work
+[ok] off_13_to_work
+[ok] TEL_to_work_no_event
+[ok] work_to_TEL_no_event
+[ok] holiday_to_work_no_event
+[ok] work_to_holiday_no_event
+[ok] LAST_no_event
+[ok] OTHER_SPECIAL_no_event
+[ok] work_to_trip_special_21_no_event
+[ok] trip_special_21_to_work_no_event
+[ok] past_date_no_event
+[ok] break_only_no_event
+[ok] delete_no_event
+[ok] multiple_dates
+[ok] multiple_shop_yh-dandy
+[ok] multiple_shop_yh-clubd
+[ok] multiple_casts_shops
+[ok] flag_off
+[ok] duplicate_event_key_noop
+[ok] non_duplicate_db_error_propagates
+[ok] event_insert_failure_isolation
+[ok] cleanup_residual_0
+[ok] phase8_db_integration_tests_completed
+```
+
+cleanup：
+
+```text
+event = 12
+work = 26
+girl = 26
+residual = 0
+```
+
+DB preflight確認済み：
+
+```text
+t_work_list = MyISAM
+t_notification_event = InnoDB
+required columns
+event_key UNIQUE
+before_payload nullable
+after_payload NOT NULL
+event_type CHECK
+source_type CHECK
+status CHECK
+3店舗存在
+```
+
+管理画面ブラウザ回帰確認済み：
+
+```text
+input_schedule.php:
+UNREGISTERED → WORK = schedule_created
+WORK → WORK start_time変更 = schedule_start_changed
+WORK → WORK end_timeのみ変更 = eventなし
+同一内容再保存 = eventなし
+WORK → OFF(13) = schedule_changed_to_off
+OFF(13) → WORK = schedule_changed_to_work
+WORK → HOLIDAY(04) = eventなし
+
+input_work_calendar.php:
+複数日一括登録 = 日付ごとにschedule_created
+```
+
+feature flag：
+
+```text
+notification_event_enqueue_enabled
+default = false
+通常運用 = false
+production rollout = 未実施
+```
+
+未実施のまま維持するもの：
+
+```text
+production feature flag ON
+production rollout
+cron登録
+SMTP接続
+実メール送信
+Phase9 delivery生成
+reconciliation実装
+```
+
+Phase8 local implementation：
+
+```text
+FROZEN
+```
+
+次工程：
+
+```text
+Phase9
+```

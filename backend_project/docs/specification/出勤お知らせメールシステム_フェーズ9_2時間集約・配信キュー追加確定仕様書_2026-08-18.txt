@@ -1,0 +1,1630 @@
+# 出勤お知らせメールシステム フェーズ9 2時間集約・配信キュー追加確定仕様書
+
+作成日：2026-08-18
+対象フェーズ：フェーズ9「2時間集約・配信キュー」
+
+## 1. 文書目的
+
+本書は、横浜ダンディーグループ「出勤お知らせメールシステム」におけるフェーズ9「2時間集約・配信キュー」の追加確定仕様書である。
+
+フェーズ9実装前調査、第三者レビュー、採用可否判断、最終アーキテクチャ確認により、transaction単位、message_group_keyの意味、snapshot粒度、同一キャスト複数eventの表示集約、quiet-hours、次回出勤3件、batch failure、poison event隔離について追加仕様確定が必要と判明した。
+
+本書はそれらを正式に固定し、以後のフェーズ9保守、検証、Phase10連携確認時の最優先正本とする。
+
+本書は仕様を固定するための文書であり、PHP、Next.js、JS、TS、TSX、DDL、DB、config、cron、.procmailrcを変更するものではない。
+
+2026-08-19 close反映時点のフェーズ9状態は以下である。
+
+```text
+仕様確定完了
+local implementation ACCEPT
+unit/static PASS
+DB integration PASS
+Phase9 local implementation FROZEN
+```
+
+この状態を本番稼働、production feature flag ON、cron稼働、SMTP接続、実メール送信完了として扱わない。
+
+## 2. 参照優先順位
+
+フェーズ9「2時間集約・配信キュー」について、既存資料と本書の内容が競合する場合は本書を優先する。
+
+参照優先順位：
+
+```text
+1. 本書（2026-08-18 フェーズ9 2時間集約・配信キュー追加確定仕様）
+2. 出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt
+3. 出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt
+4. backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql
+5. 現行実装
+```
+
+backup等の旧資料をフェーズ9の根拠として自動採用しない。
+
+## 3. 適用範囲
+
+本書が扱う範囲：
+
+```text
+pending schedule eventの取得
+delivery queue生成
+message_group_key
+2時間集約
+subscriber / subscription / suppression対象判定
+quiet-hours
+available_at
+配信予定基準日
+次回出勤日最大3件snapshot
+template_data_snapshot
+same cast multiple eventの表示集約
+batch transaction
+batch failure
+poison event隔離
+feature flag
+batch size
+mandatory test
+```
+
+本書が扱わない範囲：
+
+```text
+Phase8 event生成ロジック変更
+ScheduleEventService変更
+ScheduleEventDecisionService変更
+input_schedule.php変更
+input_work_calendar.php変更
+Phase10メール本文テンプレート最終文言
+Phase10送信ワーカーのretry詳細
+SMTP接続
+実メール送信
+cron登録
+DB migration
+DDL追加
+```
+
+## 4. Phase8との境界
+
+フェーズ8はproducer、フェーズ9はconsumerである。
+
+フェーズ8：
+
+```text
+t_notification_eventへ通知対象schedule eventを生成する。
+```
+
+フェーズ9：
+
+```text
+t_notification_eventのpending eventを読み取り、
+現在有効なsubscriber / subscriptionを抽出し、
+suppressionを確認し、
+t_notification_deliveryへschedule_update deliveryを作成する。
+```
+
+フェーズ9実装では、フェーズ8の以下を変更しない。
+
+```text
+ScheduleEventService
+ScheduleEventDecisionService
+cp8_dandy/input_schedule.php
+cp8_dandy/input_work_calendar.php
+```
+
+`ScheduleEventDecisionService::canonicalize()` は、フェーズ9からread-only dependencyとして再利用してよい。
+
+Phase8 local implementation = FROZEN の判定は維持する。
+
+## 5. 使用table
+
+フェーズ9で使用するtable：
+
+```text
+t_notification_event
+t_notification_subscriber
+t_notification_subscription
+t_notification_delivery
+t_notification_suppression
+t_work_list
+```
+
+必要に応じて参照可能な既存master：
+
+```text
+t_shop_master
+t_girl_master2
+```
+
+ただし、名称snapshotについては `t_notification_event` 側の既存snapshotを優先できる場合、不要なmaster再取得を増やさない。
+
+## 6. 追加DDL
+
+フェーズ9で追加DDLは行わない。
+
+使用する既存DDL：
+
+```text
+t_notification_event.status
+t_notification_event.attempt_count
+t_notification_event.max_attempts
+t_notification_event.locked_at
+t_notification_event.locked_by
+t_notification_event.processed_at
+t_notification_event.failed_at
+t_notification_event.last_error
+t_notification_delivery.message_group_key
+t_notification_delivery.template_data_snapshot
+t_notification_delivery.recipient_email_snapshot
+UNIQUE(event_id, subscription_id)
+idx_tndl_group
+```
+
+フェーズ9では以下を行わない。
+
+```text
+ALTER TABLE
+CREATE TABLE
+CREATE INDEX
+DROP
+```
+
+## 7. delivery正式単位
+
+schedule_update deliveryの正式単位：
+
+```text
+1 row = 1 event × 1 subscription
+```
+
+これは既存DDLの以下と整合する。
+
+```text
+UNIQUE(event_id, subscription_id)
+```
+
+schedule_updateでは以下を正本とする。
+
+```text
+event_id IS NOT NULL
+subscription_id IS NOT NULL
+```
+
+同一メールにまとめる場合でも、eventごとのdelivery rowは全件作成する。
+
+## 8. message_group_key
+
+`message_group_key` の正式役割：
+
+```text
+同一message_group_key = Phase10 senderが1通として送信するschedule_update delivery群
+```
+
+mail-group専用tableは追加しない。
+
+`message_group_key` は `BINARY(16)` とし、フェーズ9で以下により生成する。
+
+```text
+random_bytes(16)
+```
+
+UUID文字列をそのまま保存しない。hash truncationも不要とする。
+
+## 9. message_group_key生成単位
+
+正式単位：
+
+```text
+1回のPhase9 claimed batchで処理するevent集合のうち、
+同一subscriberへ展開されるschedule_update delivery群
+```
+
+つまり以下の組み合わせごとに1つの `message_group_key` を生成する。
+
+```text
+Phase9 claimed batch
++
+subscriber
+```
+
+固定2時間wall-clock window IDにはしない。
+
+cron停止後に回収された古いpending eventも、そのPhase9 batchでclaimされた場合は、そのbatchのsubscriber groupへ含める。
+
+次回batchへ回ったeventは、同じsubscriberであっても別 `message_group_key` とする。
+
+## 10. group invariant
+
+同一 `message_group_key` 内では以下を同一とする。
+
+```text
+subscriber_id
+recipient_email_snapshot
+mail_type = schedule_update
+available_at
+```
+
+Phase10では以下として扱う。
+
+```text
+1 message_group_key = 1通
+```
+
+フェーズ9では、不完全groupを正常commitしない。
+
+## 11. 2時間集約の意味
+
+「2時間」はcron実行間隔を意味する。
+
+event抽出を直近2時間だけに限定しない。
+
+```text
+直近2時間だけの検索
+```
+
+cron停止や一時障害があっても、未処理pending eventを次回実行で回収する。
+
+固定2時間wall-clock windowを `message_group_key` へ使用しない。
+
+## 12. cron
+
+フェーズ9正式想定時刻：
+
+```text
+00:10
+02:10
+04:10
+06:10
+08:10
+10:10
+12:10
+14:10
+16:10
+18:10
+20:10
+22:10
+```
+
+cron式：
+
+```text
+10 0-23/2 * * *
+```
+
+ただし、2026-08-19 close反映時点ではcron登録しない。
+
+フェーズ9実装・検証完了後も、本番rollout工程までcron登録しない。
+
+## 13. feature flag
+
+概念名／旧表記：
+
+```text
+NOTIFICATION_DELIVERY_CREATE_ENABLED
+```
+
+現行actual key：
+
+```text
+notification_delivery_create_enabled
+```
+
+default：
+
+```text
+false
+```
+
+未定義：
+
+```text
+false
+```
+
+フェーズ9実装時もdefault falseを維持する。
+
+production ONは2026-08-19 close反映時点では行わない。
+
+## 14. dry-run
+
+以下の場合でもdelivery queueは作成する。
+
+```text
+notification_delivery_create_enabled = true
+notification_dry_run = true
+```
+
+`notification_dry_run` はフェーズ9 delivery生成を止めない。
+
+実メール送信は以下によりPhase10側で抑止する。
+
+```text
+notification_send_enabled = false
+または
+notification_dry_run = true
+```
+
+## 15. Phase9 transaction
+
+正式transaction単位：
+
+```text
+claimed batch単位transaction
+```
+
+P9-03正式仕様として、以下を同一単位に固定する。
+
+```text
+1 Phase9 CLI invocation
+= 1 claimed batch
+= 1 notification InnoDB transaction
+```
+
+一度のCLI invocationで複数claimed batchを連続drainしない。
+
+個別eventごとのcommit方式は採用しない。
+
+理由：
+
+```text
+同一subscriberに複数eventが存在する場合、
+個別eventごとのcommit方式では同じmessage_group_keyの一部deliveryだけがcommitされた
+不完全groupが残り得るため。
+```
+
+## 16. 正式フロー
+
+概念フロー：
+
+```text
+feature flag確認
+↓
+DB preflight
+↓
+advisory lock取得
+↓
+pending event batch選定
+↓
+BEGIN
+↓
+対象event claim
+↓
+現在有効なsubscriber / subscription抽出
+↓
+suppression確認
+↓
+subscriber単位group確定
+↓
+quiet-hours / available_at確定
+↓
+配信予定基準日確定
+↓
+next schedules snapshot取得
+↓
+表示用summary生成
+↓
+message_group_key生成
+↓
+delivery INSERT
+↓
+対象event processed化
+↓
+COMMIT
+↓
+summary log / CLI result
+```
+
+feature flag OFF時はDB batch処理を行わず正常skipする。
+
+途中失敗時はROLLBACKし、不完全delivery groupをcommitしない。
+
+## 17. event lifecycle
+
+既存DDLの状態値を正本とする。
+
+```text
+pending
+processing
+processed
+failed
+cancelled
+```
+
+`pending`：
+
+Phase8生成直後。Phase9対象。
+
+`processing`：
+
+Phase9 claimed batch transaction内での処理中状態。
+
+`processed`：
+
+Phase9 delivery展開完了。対象delivery 0件の場合もprocessed。
+
+`failed`：
+
+Phase9処理が規定回数失敗し、max_attemptsへ到達したevent。
+
+`cancelled`：
+
+Phase9通常処理では原則使用しない。既存DDL上の予約／取消用途を維持する。
+
+## 18. processing / lock列
+
+Phase9では既存event worker系columnを利用可能な範囲で使用してよい。
+
+ただしP0では以下を主機構とする。
+
+```text
+advisory lockによるCLI単一起動
++
+claimed batch transaction
+```
+
+processing状態を長時間commitしたまま外部処理する設計にはしない。
+
+`locked_at`、`locked_by` はclaim識別／運用情報として利用可能だが、P0でstale processing recoveryの必須正本にはしない。
+
+transaction rollback時にはclaim変更もrollbackする。
+
+## 19. batch failure
+
+batch処理途中で例外が発生した場合はROLLBACKする。
+
+以下はcommitしない。
+
+```text
+部分delivery
+event processed
+不完全message group
+```
+
+「batch全体失敗」とは、batch transaction全体をROLLBACKするという意味である。
+
+batch内event全件をfailed状態へ変更する意味ではない。
+
+## 20. poison event
+
+1 eventの異常で同じbatchの正常eventが永久停止しないようにする。
+
+正式方針：
+
+原因eventが明確に特定できる場合：
+
+```text
+main batch rollback後、
+そのeventだけfailure attemptを別transactionで更新する。
+```
+
+原因eventが特定できない場合：
+
+```text
+batch全件を失敗扱いにしない。
+event単位または縮小sub-batchで再評価し、
+原因eventを隔離する。
+単一event処理でも再現したeventについてのみfailure attemptを更新する。
+正常eventは後続の安全なbatchで処理可能にする。
+```
+
+## 21. failure attempt
+
+既存DDLの以下を使用する。
+
+```text
+attempt_count
+max_attempts
+failed_at
+last_error
+status
+```
+
+存在しないcolumnを仕様へ追加しない。
+
+失敗記録は、main batch rollback後の別transactionで行う。
+
+```text
+attempt_count < max_attempts：
+status = pendingへ戻し、再試行可能な状態
+
+max_attempts到達：
+status = failed
+```
+
+`last_error` へ個人情報、メールアドレス全文、生token、session ID、secret等を記録しない。
+
+Phase9 P0では、event展開retry用の独自backoffは設けない。
+
+failure attempt更新後、max_attempts未満なら `status = pending` へ戻す。
+
+Phase9 failure retry目的では `event.available_at` を変更しない。
+
+次回Phase9 runで、再度pending eventとして処理する。
+
+max_attempts到達時は `status = failed` とし、通常pending抽出対象外とする。
+
+Phase9 event展開retryと、Phase10 delivery送信retryは別責務である。
+
+将来的なPhase9 retry backoffはP2改善候補に留め、P0では実装しない。
+
+## 21.1 P9-06 failure owner model
+
+Phase9 deterministic failureは責任主体を以下に分類する。
+
+```text
+EVENT
+TARGET
+SYSTEM
+WORK_DATA
+INVARIANT / PROGRAMMING
+UNKNOWN
+```
+
+EVENT / TARGET / SYSTEM等へ安全に分類できないfailureはUNKNOWNとし、batch rollback、failure_not_attributed、event attempt不消費とする。
+
+## 21.2 EVENT owner
+
+EVENTは、event row / event snapshot固有のdeterministic failureである。
+
+例：
+
+```text
+unsupported schedule event type
+event snapshot validation failure
+```
+
+EVENT failureは `EventDataValidationException` として明示的に識別する。
+
+EVENTのみpoison event isolation対象、`recordFailureAttempt`対象、`attempt_count`増加対象とする。
+
+増加後：
+
+```text
+attempt_count < max_attempts
+→ pending
+
+attempt_count >= max_attempts
+→ failed
+```
+
+Phase9固有retry backoffは設けない。
+
+event.available_atはfailure retry目的では変更しない。
+
+raw `ValidationException` を一律EVENT扱いしない。
+
+理由：
+
+```text
+ValidationExceptionの原因はEVENT、WORK_DATA、INVARIANT / PROGRAMMING等にまたがるため。
+```
+
+event ownerを明示できるvalidationのみ `EventDataValidationException` へ変換する。
+
+EVENT validation scope：
+
+```text
+schedule_update template_dataのevents[]部分に対するevent固有validationのみ
+```
+
+以下のようなinternal generated field由来failureを一律EVENTへ帰責しない。
+
+```text
+summary
+next_schedules
+request_id
+message_group_key
+created_at
+available_at
+delivery_base_date
+その他internal generated field
+```
+
+## 21.3 TARGET owner
+
+TARGETはdelivery target固有のdeterministic failureである。
+
+P0対象：
+
+```text
+invalid_timezone
+invalid_quiet_hours
+```
+
+TARGET failureは `TargetPlanningException` により明示する。
+
+category：
+
+```text
+invalid_timezone
+invalid_quiet_hours
+```
+
+TARGET failure時：
+
+```text
+当該targetだけskip
+正常targetは処理継続
+batch全体rollbackしない
+event attempt_countは変更しない
+eventは正常にPhase9展開完了後processed
+```
+
+以下は行わない。
+
+```text
+timezone fallback
+subscriber自動修正
+subscriber status自動変更
+subscription pause
+suppression自動追加
+target retry table追加
+```
+
+timezone / quiet-hoursはsubscriber単位設定である。
+
+同一claimed batch中に1 subscriberがTARGET failureとなった場合、以後同subscriberについて同じTARGET validationを再実行せずskip可能とする。
+
+invalid subscriber setはbatch内一時状態であり、DBへ保存しない。
+
+TARGET failure例：
+
+```text
+event A
+
+subscriber A：valid
+subscriber B：invalid timezone
+subscriber C：valid
+
+結果：
+
+A delivery生成
+B skip
+C delivery生成
+event A processed
+attempt_count不変
+batch COMMIT
+```
+
+TARGET only：
+
+```text
+eligible targetは存在するが全targetがTARGET failureの場合、
+delivery 0
+event processed
+attempt_count不変
+次回Phase9で再claimしない
+```
+
+target data修復後も、processed済みeventについてPhase9が自動遡及delivery生成しない。
+
+zero-targetとの区別：
+
+```text
+event_zero_target：
+eligible/current target自体が最初から0件
+
+event_all_targets_invalid：
+eligible targetは1件以上存在したが全件TARGET failureでskip
+```
+
+TARGET counters：
+
+```text
+target_invalid_skipped：
+TARGET failureによりskipしたevent × subscription target件数
+
+event_all_targets_invalid：
+eligible targetが存在したeventのうち、
+valid targetが0でTARGET failureによるskipが1件以上存在したevent件数
+
+event_zero_target：
+既存意味を変更しない
+```
+
+TARGET diagnostics：
+
+```text
+最大20samples
+
+fields：
+event_id
+subscriber_id
+subscription_id
+shop_id
+cast_id
+error_category
+```
+
+以下はdiagnosticへ含めない。
+
+```text
+email全文
+token
+secret
+session ID
+```
+
+TARGET skipのみでbatch自体が正常COMMITした場合：
+
+```text
+success = true
+error_count = 0
+exit_code = 0
+```
+
+TARGET failure自体をCLI fatal errorとはしない。
+
+counter / diagnosticで運用検知可能にする。
+
+## 21.4 SYSTEM / WORK_DATA / INVARIANT / UNKNOWN
+
+SYSTEM：
+
+```text
+PDOException
+batch rollback
+event attempt不消費
+failure_event_idなし
+failure_not_attributed
+```
+
+`isSystemLevelFailure` はPDOExceptionかどうかで判定し、SQLSTATE個別判定には依存しない。
+
+WORK_DATA：
+
+```text
+t_work_list等の参照schedule data由来の異常。
+eventへ自動帰責しない。
+P0ではWORK_DATA固有skip/retry機構を追加しない。
+安全に処理できない場合はbatch rollback、failure_not_attributed、event attempt不消費。
+```
+
+INVARIANT / PROGRAMMING：
+
+```text
+内部生成値やapplication invariant異常。
+eventへ自動帰責しない。
+```
+
+UNKNOWN：
+
+```text
+EVENT / TARGET / SYSTEM等へ安全に分類できないfailure。
+batch rollback。
+failure_not_attributed。
+event attempt不消費。
+勝手にTARGET skipしない。
+勝手にevent failed化しない。
+```
+
+poison isolationでは、batch rollback後、SYSTEMでなければ各eventを単独で再評価し、EVENT owner failureを再現できたeventのみfailure attempt対象とする。
+
+現在処理中だったevent IDをそのまま犯人として信用しない。
+
+## 21.5 P9-06 DB integration evidence
+
+2026-08-19時点で、Phase9 P9-06のローカルDB integrationはPASS済みである。
+
+CASE1：
+
+```text
+valid / invalid / valid
+正常delivery 2
+invalid delivery 0
+target_invalid_skipped 1
+event processed
+attempt 0
+PASS
+```
+
+CASE2：
+
+```text
+invalid target only
+delivery 0
+event processed
+attempt 0
+event_all_targets_invalid 1
+event_zero_target 0
+次回claimなし
+PASS
+```
+
+CASE3：
+
+```text
+同一invalid subscriber × multiple events
+全event processed
+正常deliveryあり
+invalid deliveryなし
+attempt 0
+PASS
+```
+
+既存regression：
+
+```text
+event-specific retry PASS
+max_attempts failed PASS
+system lock wait timeout PASS
+multi-event claimed batch rollback PASS
+cross-shop same subscriber group invariant PASS
+P9-05 known group split再現 PASS
+cleanup residual 0 PASS
+```
+
+## 21.6 markProcessed test limitation
+
+markProcessed failureはsafe fault injection手段がないため、DB integrationで強制failureを直接再現していない。
+
+ただし、以下によりPhase9 close blockerではないtest limitationとして扱う。
+
+```text
+markProcessedはRepositoryのDB UPDATE
+PDO failureはSYSTEM扱い
+markProcessed直前にeventへの直接帰責を行わない設計
+unit/static確認済み
+SYSTEM PDO regression確認済み
+claimed batch rollback確認済み
+```
+
+## 21.7 event14〜19 protection
+
+以前のローカルDBには、Phase8 browser/manual regression由来のevent_id 14〜19 pending 6件が存在していた。
+
+その後、ローカルMariaDB破損とdandy_g_db02再構築により、現在のDBにはevent 14〜19は存在しない。
+
+今回のPhase9 DB integration結果：
+
+```text
+pre-existing pending開始前 0
+終了後 0
+fixture residual 0
+```
+
+event14〜19 protectionはN/Aとする。
+
+理由：
+
+```text
+DB再構築により検証対象実データ自体が存在しないため。
+```
+
+これはPhase9 regression FAILではない。
+
+P2 rollout note：
+
+```text
+production rollout前の運用確認事項として、
+Phase8由来pending eventが実際に存在する環境で、
+Phase9 DB integrationと同等のpre-existing pending snapshot-diff、
+または安全なread-only / controlled確認により、
+既存pending eventへの非干渉を一度実証することを推奨する。
+```
+
+本番DBへテストfixtureを勝手に投入する意味ではない。
+
+## 22. concurrency
+
+Phase9 P0：
+
+```text
+single worker
+advisory lock採用
+```
+
+Phase7 CLI precedentを参考にし、Phase9専用lock nameを使用する。
+
+multi-workerはPhase9 P0対象外とする。
+
+`FOR UPDATE SKIP LOCKED` はPhase9 P0では使用しない。
+
+`FOR UPDATE SKIP LOCKED` はPhase10 senderまたは将来のPhase9 multi-worker化時の候補に留める。
+
+## 23. 対象delivery 0件
+
+正式仕様：
+
+```text
+processed
+```
+
+理由：
+
+```text
+event発生後、Phase9処理時点で有効な購読が0件なら、
+そのeventのdelivery展開は完了とみなす。
+後日新規subscriptionが追加されても、過去eventを遡及deliveryしない。
+eventを永久pendingにしない。
+```
+
+## 24. 対象判定時点
+
+Phase9実行時点の現在状態を正本とする。
+
+対象：
+
+```text
+subscriber.status = active
+subscription.status = active
+active suppressionなし
+```
+
+対象外：
+
+```text
+subscriber.status != active
+subscription.status != active
+active suppressionあり
+```
+
+例：
+
+```text
+10:00 event発生
+10:30 unsubscribe
+12:10 Phase9
+```
+
+Phase9実行時点でsubscriptionがactiveでなければ対象外とし、過去eventを送らない。
+
+## 25. cast_hidden
+
+Phase7により以下の状態ならPhase9対象外とする。
+
+```text
+subscription.status = paused
+pause_reason = cast_hidden
+```
+
+Phase9自身がview同期を実装しない。
+
+Phase9はPhase7の結果を利用する。
+
+## 26. suppression
+
+Phase9実行時点で有効なsuppressionが存在すれば対象外とする。
+
+既存DDLの以下を正本とする。
+
+```text
+t_notification_suppression.status
+t_notification_suppression.expires_at
+```
+
+有効条件は、現行RepositoryとDDLに従う。
+
+```text
+status = active
+かつ
+expires_at IS NULL OR expires_at > UTC_TIMESTAMP(6)
+```
+
+## 27. quiet-hours
+
+subscriberの以下を使用する。
+
+```text
+quiet_hours_enabled
+quiet_start_minute
+quiet_end_minute
+timezone
+```
+
+判定timezone：
+
+```text
+subscriber.timezone
+```
+
+default：
+
+```text
+Asia/Tokyo
+```
+
+IANA timezoneとして扱う。
+
+## 28. quiet-hours計算
+
+正式計算：
+
+```text
+subscriber local current datetime
+↓
+quiet interval判定
+↓
+quiet-hours中ならquiet終了local datetime
+↓
+UTC変換
+↓
+delivery.available_at
+```
+
+quiet-hours外：
+
+```text
+delivery.available_at = Phase9 queue作成時UTC
+```
+
+quiet-hours無効：
+
+```text
+delivery.available_at = Phase9 queue作成時UTC
+```
+
+日跨ぎに対応する。
+
+`DateTimeImmutable` + `DateTimeZone` によるDST対応を前提とする。
+
+## 29. group available_at
+
+同一subscriberの同一 `message_group_key` 内は、同一 `available_at` とする。
+
+理由：
+
+```text
+1メールgroup内deliveryが別時刻に送信可能になる状態を作らないため。
+```
+
+## 30. 配信予定基準日
+
+旧仕様の曖昧な送信日基準表現をPhase9 snapshotでは直接使用しない。
+
+Phase9正式用語：
+
+```text
+配信予定基準日
+```
+
+正式定義：
+
+```text
+delivery.available_atをsubscriber.timezoneへ変換したcalendar date
+```
+
+## 31. 次回出勤日最大3件
+
+次回出勤日最大3件はPhase9でsnapshot固定する。
+
+条件：
+
+```text
+schedule_date >= 配信予定基準日
+かつ
+canonical state = WORK
+```
+
+並び順：
+
+```text
+schedule_date ASC
+```
+
+件数：
+
+```text
+最大3件
+```
+
+calendar dateごとに最大1件とする。
+
+通常運用では、同一cast / 同一calendar dateに複数source rowが存在することは想定しない。
+
+ただし異常・例外データとして同一calendar dateに複数rowが存在した場合：
+
+```text
+ORDER BY win ASC
+```
+
+の最初のrowを、そのcalendar dateの代表rowとする。
+
+代表rowをcanonicalizeする。
+
+```text
+canonical WORK：
+next_schedulesへ追加
+
+WORK以外：
+そのcalendar dateはnext_schedulesへ追加しない
+```
+
+同日の後続rowは採用しない。
+
+これは正常データモデルとして同日複数rowを許容する仕様ではなく、異常データに対するP0 deterministic fallbackである。
+
+除外：
+
+```text
+UNREGISTERED
+OFF
+TEL
+HOLIDAY
+LAST
+OTHER_SPECIAL
+```
+
+Phase9は `ScheduleEventDecisionService::canonicalize()` をread-only再利用してよい。
+
+## 32. Phase10遅延
+
+Phase10 actual sendが `available_at` より遅れ、実際の送信calendar dateが変わっても、`next_schedules` を再計算しない。
+
+Phase9で固定したsnapshotを使用する。
+
+Phase10実送信日を次回出勤日最大3件の基準にはしない。
+
+## 33. MyISAM t_work_list
+
+`t_work_list` はMyISAMである。
+
+notification tableはInnoDBである。
+
+したがって、Phase9 transaction内で `t_work_list` をread-only参照しても、InnoDB側と完全な同一snapshot isolationは保証されない。
+
+正式方針：
+
+```text
+t_work_listはPhase9 queue生成時点で取得できた最新schedule状態を
+best-effort snapshotとして使用する。
+```
+
+Phase9のために `t_work_list` へlockやDDLを追加しない。
+
+既存schedule保存を阻害しない。
+
+## 34. snapshot責務
+
+Phase9：
+
+```text
+recipient_email_snapshot
+template_data_snapshot
+```
+
+をqueue作成時点で固定する。
+
+Phase10：
+
+```text
+message_group_key配下のdelivery snapshotから本文生成する。
+```
+
+Phase10はschedule本文生成のために `t_work_list` を再取得しない。
+
+Phase10はdisplay reasonを再判定しない。
+
+## 35. template_data_snapshot粒度
+
+正式採用：
+
+```text
+C案
+```
+
+1 delivery rowへ以下を保存する。
+
+```text
+event固有snapshot
+Phase9で確定した表示用summary
+next_schedules
+必要なgroup表示情報
+```
+
+group全体snapshotを全rowへ完全複製しない。
+
+Phase10へ業務再計算を残さない。
+
+## 36. event固有snapshot
+
+最低限の概念：
+
+```text
+event_id
+event_type
+shop_id
+cast_id
+shop_name
+cast_name
+schedule_date
+before
+after
+```
+
+既存event snapshotを活用する。
+
+## 37. same cast multiple event
+
+同一Phase9 claimed batchで以下が重複する複数eventがある場合：
+
+```text
+同一subscriber
+同一shop_id
+同一cast_id
+同一schedule_date
+```
+
+DB保持：
+
+```text
+event row：全件保持
+delivery row：eventごとに全件作成
+```
+
+メール表示：
+
+```text
+1 cast / schedule_date entryへcollapse
+```
+
+最新eventだけをDBに残すのではない。
+
+全event / deliveryを保持し、collapseするのはメール表示用summaryだけとする。
+
+## 38. display summary
+
+表示理由の正式代表event：
+
+```text
+同一shop_id + cast_id + schedule_dateについて、
+occurred_at ASC
+event_id ASC
+で並べた最後のevent
+```
+
+つまり最新eventをdisplay代表とする。
+
+event_idをtie-breakerに使用する。
+
+表示用snapshotには以下を保持可能とする。
+
+```text
+display_event_type
+display_reason
+latest_event_id
+event_count
+event_types
+```
+
+実際のJSON keyはPhase9実装で `TemplateDataValidator` と整合済みである。
+
+意味は本仕様を維持する。
+
+## 39. display reason
+
+display reasonはPhase9で確定する。
+
+mapping：
+
+```text
+schedule_created：
+出勤予定が決まりました
+
+schedule_start_changed：
+出勤開始時刻が変更されました
+
+schedule_changed_to_off：
+出勤予定がお休みに変更されました
+
+schedule_changed_to_work：
+お休みから出勤へ変更されました
+```
+
+Phase10で業務ロジックを再判定しない。
+
+## 40. TemplateDataValidator
+
+Phase9実装で `schedule_update` schema拡張済みである。
+
+追加概念候補：
+
+```text
+event_id
+event_type
+display_event_type
+display_reason
+latest_event_id
+event_count
+event_types
+next_schedules
+summary
+schedule_date
+available_at
+```
+
+実際の既存schemaを確認し、重複keyは再作成しない。
+
+これはコード変更であり、DDL変更ではない。
+
+2026-08-19 close反映時点で、Phase9 local implementationとしてコード実装・unit/static・DB integration確認済みである。
+
+## 41. batch size
+
+Phase9正式config key：
+
+```text
+notification_delivery_create_batch_size
+```
+
+初期値：
+
+```text
+100
+```
+
+上限：
+
+```text
+500
+```
+
+既存 `EventRepository::findPendingBatch()` のlimit上限500と整合させる。
+
+実装時：
+
+```text
+未定義 / 不正値 → 100
+1未満 → 安全側defaultまたはminimumへ正規化
+500超 → 500
+```
+
+このkeyはPhase9で新たに正式化するconfig keyである。
+
+2026-08-19 close反映時点ではactual configへ追加しない。
+
+## 42. batch sizeの意味
+
+batch sizeは、1 Phase9 transactionでclaimする最大event数である。
+
+delivery行数ではない。
+
+subscription数が多い場合、delivery INSERT数はevent数より多くなり得る。
+
+batch上限を超えたpending eventは、次回Phase9 cron executionで回収する。
+
+Phase9はpending backlogをavailable_at順に回収する。
+
+「2時間」はevent発生から直近2時間だけを固定windowで取得する意味ではなく、cron実行間隔が2時間ごとであることを意味する。
+
+## 42.1 P9-05 known inconsistent state
+
+以下をKNOWN INCONSISTENT-STATE BEHAVIORとして記録する。
+
+異常状態：
+
+```text
+t_notification_event.status = pending
+かつ
+同一(event_id, subscription_id)のt_notification_deliveryが既に存在する
+```
+
+この場合：
+
+```text
+既存deliveryは既存message_group_keyを維持する。
+
+同一subscriberの別event / 別subscriptionに対して
+今回新規deliveryが生成されると、
+preexisting deliveryとnew deliveryでmessage_group_keyが分かれる場合がある。
+```
+
+これは正常Phase9 flowでは生成されない。
+
+正常Phase9では、delivery INSERTとevent processed化を同一claimed batch transactionでcommitする。
+
+したがって、pending event + 既存delivery は以下によってのみ発生し得る異常状態として扱う。
+
+```text
+manual DB modification
+不完全な手動補修
+その他DB inconsistent state
+```
+
+P9-05 P0方針：
+
+```text
+auto repairしない
+既存deliveryのgroup変更禁止
+既存delivery削除禁止
+pending event自動再構築禁止
+新DDL禁止
+production code変更不要
+運用上の既知異常として記録
+```
+
+## 43. CLI
+
+entry point：
+
+```text
+public/sys/cli/create-deliveries.php
+```
+
+2026-08-19 close反映時点で作成済み。
+
+既存の以下を再利用する方向とする。
+
+```text
+Bootstrap
+ApplicationContext
+RequestId
+JsonLogger
+RepositorySet
+ServiceSet
+```
+
+Phase7 CLIの以下のpatternを参考にする。
+
+```text
+advisory lock
+preflight
+summary
+```
+
+## 44. CLI summary
+
+2026-08-19 close反映時点で確認済みの項目：
+
+```text
+request_id
+batch count
+event claimed
+event processed
+event zero-target
+delivery created
+subscriber groups
+event failed
+event retried
+target_invalid_skipped
+event_all_targets_invalid
+target_invalid_samples
+duration
+exit_code
+```
+
+個人情報全文、メールアドレス全文、生token、session ID、secret等を出力しない。
+
+## 45. mandatory tests
+
+Phase9ではDB integration testを必須とする。
+
+最低限の候補：
+
+```text
+single event / single subscriber
+single event / multiple subscribers
+multiple events / same subscriber
+multiple shops
+multiple casts
+same cast multiple events
+subscriber inactive excluded
+subscription paused excluded
+subscription unsubscribed excluded
+cast_hidden excluded
+suppression excluded
+zero-target event processed
+quiet-hours disabled
+quiet-hours same-day interval
+quiet-hours overnight
+subscriber timezone
+available_at UTC
+delivery planned base date
+next schedules 3件
+next schedules 1件
+next schedules 0件
+OFF/TEL/HOLIDAY/LAST/OTHER_SPECIAL除外
+duplicate run
+UNIQUE(event_id, subscription_id)
+batch rollback
+incomplete groupなし
+poison event isolation
+attempt retry
+max_attempts failed
+target invalid timezone skip
+target invalid quiet-hours skip
+target invalid only event processed
+event_all_targets_invalid
+target_invalid_skipped
+raw ValidationException非EVENT誤帰責
+EventDataValidationException経路
+TargetPlanningException経路
+system lock wait timeout
+feature flag off
+dry_runでもdelivery生成
+cron-gap recovery相当
+batch size boundary
+cleanup residual 0
+Phase8 regression
+```
+
+## 46. Phase9完了条件
+
+2026-08-19 close反映時点で、Phase9 local implementationの完了条件は達成済みである。
+
+達成済み条件：
+
+```text
+追加確定仕様実装
+unit/static PASS
+DB integration PASS
+group invariant確認
+batch rollback PASS
+zero-target processed PASS
+quiet-hours PASS
+next3 snapshot PASS
+same-cast summary PASS
+feature flag OFF安全性 PASS
+dry-run安全性 PASS
+duplicate protection PASS
+Phase8 regressionなし
+cleanup residual 0
+実メール未送信
+cron未登録
+SMTP未接続
+追加DDLなし
+```
+
+ただし、production rollout、production feature flag ON、cron登録、SMTP接続、実メール送信は未実施である。
+
+## 47. Phase10 interface
+
+Phase9からPhase10へ渡すinterface：
+
+```text
+message_group_key = 1通
+Phase10はsnapshotから本文生成
+Phase10はt_work_list再取得なし
+Phase10はdisplay reason再判定なし
+```
+
+Phase10 retry等の詳細仕様はPhase10実装前に別途確定する。
+
+Phase10開始前確認事項：
+
+```text
+1 message_group_key = 1 mail を壊さない。
+Phase10 workerの「100件単位」がdelivery rows / message groupsのどちらを意味するか正式確認する。
+同一message_group_keyを複数workerへ分割しない。
+```
+
+これはPhase9 close blockerではない。
+
+## 48. 禁止事項
+
+フェーズ9実装時を含め、明示指示なしに以下を行わない。
+
+```text
+Phase8変更
+DDL変更
+DB schema変更
+cron登録
+.procmailrc変更
+SMTP接続
+実メール送信
+mail-group専用table追加
+固定2時間wall-clock window ID採用
+個別eventごとのcommit方式採用
+不完全groupをcommitする設計
+対象0件eventの永久pending化
+Phase10でのschedule再取得
+Phase10の実送信日を基準にしたnext3再計算
+```
+
+## 49. 本書作成後の状態
+
+2026-08-19 close反映後のフェーズ9状態：
+
+```text
+仕様確定完了
+local implementation ACCEPT
+unit/static PASS
+DB integration PASS
+Claude最終第三者レビュー完了
+blockingなし
+Phase9 local implementation FROZEN
+```
+
+次工程：
+
+```text
+Phase10実装前仕様確認
+```

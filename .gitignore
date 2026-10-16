@@ -41,6 +41,7 @@ next-env.d.ts
 
 # generated / imported runtime data
 public/db/*
+public/backend/
 
 cp_log/
 env.download
@@ -52,6 +53,4 @@ google*.html
 .vscode/settings.json
 
 # sakaguchi local
-docs/specification/
-public/sys/
 tests/

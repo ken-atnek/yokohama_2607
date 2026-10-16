@@ -106,14 +106,11 @@ const Header = ({ title, navMenu, selectedNavIds }: HeaderProps) => {
   useEffect(() => {
     const fetchTelopData = async () => {
       try {
-        // 開発環境でのみキャッシュバスティング
-        const timestamp =
-          process.env.NODE_ENV === 'development' ? Date.now() : '';
-        const dataPath = `/db/contents/${shop}/TopTelop.json${
-          timestamp ? `?t=${timestamp}` : ''
-        }`;
+        // キャッシュバスティング用のタイムスタンプを追加
+        const timestamp = Date.now();
+        const dataPath = `/db/contents/${shop}/TopTelop.json?t=${timestamp}`;
 
-        const response = await fetch(dataPath);
+        const response = await fetch(dataPath, { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

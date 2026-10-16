@@ -1,0 +1,1098 @@
+# 出勤お知らせメールシステム フェーズ6追加確定仕様書
+
+作成日：2026-08-10
+対象フェーズ：フェーズ6「設定リンク・設定・解除」
+
+## 1. 文書目的
+
+本書は、
+「出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版」
+および
+「出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版」
+に対する、フェーズ6の追加確定仕様書である。
+
+既存仕様と本書の内容がフェーズ6について競合する場合は、
+2026-08-10付の本書を優先する。
+
+本書は、フェーズ6実装前調査で未確定とされた事項を正式に確定するための文書であり、DDLそのものを変更する文書ではない。
+
+## 2. 適用範囲
+
+本書は、横浜ダンディーグループ「出勤お知らせメールシステム」のフェーズ6に適用する。
+
+対象プロジェクト：
+
+```text
+E:\web_data\hot_point_kobe\public_html\dandy\yokohama_2607
+```
+
+管理画面側の `cp8_dandy` は対象外とする。
+
+## 3. 既存仕様との優先順位
+
+参照優先順位は以下とする。
+
+```text
+1. 本書（2026-08-10 フェーズ6追加確定仕様）
+2. 出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版
+3. 出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版
+4. backend_project/docs/specification/DDL/fase1_DB_table_DDL_2026-08-03.sql
+5. 現在のフェーズ0～5実装
+6. 旧仕様・旧システム
+```
+
+本書はフェーズ6の追加確定事項だけを扱う。フェーズ6以外の既存仕様を置き換えるものではない。
+
+## 4. フェーズ6対象機能
+
+フェーズ6の正式対象は以下とする。
+
+```text
+・設定リンク要求
+・設定リンク認証
+・設定用PHPセッション
+・登録女の子一覧表示
+・受信停止時間確認
+・受信停止時間変更
+・女の子単位解除
+・全解除
+・解除完了delivery作成
+・監査ログ
+```
+
+## 5. フェーズ6対象外
+
+以下はフェーズ6対象外とする。
+
+```text
+・公開状態同期
+・出勤イベント生成
+・通知delivery生成
+・実メール送信ワーカー
+・SMTP/MTA本番設定
+・バウンス処理
+・旧DB移行
+・cron切替
+・.procmailrc切替
+```
+
+公開状態同期はフェーズ7以降で扱う。
+
+## 6. 画面構成
+
+フェーズ6の正式画面URLは以下とする。
+
+```text
+/dandy/wgmailsys/settings-request/
+/dandy/wgmailsys/settings/
+/dandy/wgmailsys/unsubscribe/
+/dandy/wgmailsys/unsubscribe-all/
+```
+
+想定Next.jsファイルは以下とする。
+
+```text
+src/app/dandy/wgmailsys/settings-request/page.tsx
+src/app/dandy/wgmailsys/settings/page.tsx
+src/app/dandy/wgmailsys/unsubscribe/page.tsx
+src/app/dandy/wgmailsys/unsubscribe-all/page.tsx
+```
+
+`unsubscribe` と `unsubscribe-all` は、フェーズ6では有効なsettings sessionから遷移する確認画面として扱う。
+メール内の直接解除token導線はフェーズ6では有効化しない。
+
+## 7. API構成
+
+フェーズ6で必要となるAPI候補は以下とする。
+
+```text
+/sys/api/settings-link-request.php
+/sys/api/settings.php
+/sys/api/unsubscribe.php
+/sys/api/unsubscribe-all.php
+```
+
+HTTP action構成の詳細は実装設計で最終化する。
+
+基本セキュリティ原則はフェーズ5の `confirmation.php` を踏襲する。
+
+```text
+・状態変更はPOST
+・CSRF
+・Origin完全一致
+・CORS許可なし
+・application/x-www-form-urlencoded
+・scalar値のみ
+・未知キー拒否
+・no-store
+・機密値をレスポンスへ含めない
+```
+
+## 8. 設定リンク要求
+
+`settings-link-request` の入力はメールアドレスのみとする。
+
+正規化には既存の `EmailAddress::normalize()` 相当を再利用する。
+
+設定リンク要求画面は新規登録画面ではない。登録済み利用者が設定リンクを要求するための入口である。
+
+## 9. ユーザー列挙対策
+
+以下の状態で外部レスポンスを変えない。
+
+```text
+・登録済み
+・未登録
+・pending
+・active
+・unsubscribed
+・suppressed
+```
+
+外部レスポンス文言の趣旨は以下とする。
+
+```text
+入力されたメールアドレスの登録状況を確認し、
+対象の場合は設定用メールを送信します。
+```
+
+「登録されています」「登録されていません」等、登録状況を推測できるレスポンスは返さない。
+
+内部audit/logでは `reason_code` 等で実際の理由を区別してよい。ただしメールアドレス全文、raw token、設定URLは記録しない。
+
+## 10. manage_settings token
+
+フェーズ6の設定認証token purposeは以下とする。
+
+```text
+manage_settings
+```
+
+raw tokenは以下で生成する。
+
+```text
+random_bytes(32)
+↓
+64文字小文字hex
+```
+
+DBには生tokenを保存しない。`t_notification_token.token_hash` には以下のみ保存する。
+
+```text
+SHA-256 binary hash
+```
+
+保存禁止：
+
+```text
+・raw token DB保存
+・raw token session保存
+・raw token log保存
+・raw token audit保存
+・raw token template_data_snapshot保存
+```
+
+## 11. token TTL
+
+`manage_settings` token TTLは正式に以下とする。
+
+```text
+1時間
+```
+
+これは設定リンクtoken有効期限である。
+
+以下とは別である。
+
+```text
+設定認証成功後のsettings session有効期限 = 24時間
+```
+
+旧仕様にある30分は採用しない。
+
+## 12. token再発行
+
+設定リンクは何度でも要求できる。
+
+新token発行時に、それ以前の未使用 `manage_settings` tokenを自動revokeしない。
+
+同一subscriberについて、複数の未使用 `manage_settings` tokenが同時に存在可能とする。
+
+各tokenは以下の性質を持つ。
+
+```text
+・独立した有効期限
+・1回使用
+```
+
+この仕様により複数端末利用を成立させる。
+
+## 13. 複数端末
+
+複数端末利用を正式に許可する。
+
+例：
+
+```text
+端末A
+token A
+session A
+
+端末B
+token B
+session B
+```
+
+一方のtoken使用によって、他の有効なtokenやsettings sessionを無効化しない。
+
+ただし全解除時は、DB上のsubscriber状態確認により既存sessionを実質無効化する。
+
+## 14. token消費タイミング
+
+GETアクセスだけではtokenを使用済みにしない。
+
+メールセキュリティ製品等によるURL自動アクセスを考慮し、フェーズ5と同じ「GETだけでは重要な状態変更をしない」原則を踏襲する。
+
+原則フロー：
+
+```text
+設定リンクアクセス
+↓
+token preview
+↓
+画面表示
+↓
+利用者による明示的操作
+↓
+CSRF付きPOST
+↓
+tokenを再検証
+↓
+token.used_at設定
+↓
+settings session発行
+```
+
+GETまたはpreviewだけでは `token.used_at` を更新しない。
+
+## 15. settings session
+
+token認証成功後、24時間有効なPHP sessionを発行する。
+
+認証成功時は以下を実行する。
+
+```text
+session_regenerate_id(true)
+```
+
+sessionへ保持する基本情報：
+
+```text
+subscriber_id
+authenticated_at
+expires_at
+```
+
+保存禁止：
+
+```text
+raw manage_settings token
+メールアドレス全文
+不要なsubscription一覧
+```
+
+CSRFは既存方式を踏襲し、生CSRFではなくSHA-256値をsession保存する。
+
+## 16. Cookie
+
+production：
+
+```text
+Domain=dandy-g.jp
+Path=/
+Secure=true
+HttpOnly=true
+SameSite=Lax
+Max-Age=86400
+```
+
+staging / demo：
+
+```text
+host-only
+Domain=''
+Secure=true
+HttpOnly=true
+SameSite=Lax
+Max-Age=86400
+```
+
+local：
+
+```text
+host-only
+Domain=''
+Secure=false
+HttpOnly=true
+SameSite=Lax
+Max-Age=86400
+```
+
+フェーズ5の環境別Cookie方針と統一する。
+
+## 17. suppressed利用者
+
+`settings-link-request` では、suppressed状態でも外部レスポンスは通常と同じ共通レスポンスにする。
+
+ただしsuppressed状態では、新しい `settings_link` deliveryを作成しない。
+
+有効な既存settings sessionがある場合、以下を許可する。
+
+```text
+・設定内容参照
+・個別解除
+・全解除
+```
+
+以下は許可しない。
+
+```text
+通知再開につながる操作
+```
+
+解除はsuppression状態でも可能とする。
+
+## 18. settings一覧
+
+settings画面では、登録女の子一覧、店舗名、女の子名、受信停止時間、女の子単位解除、全解除、最終更新日時を扱う。
+
+subscription状態別の表示仕様は以下とする。
+
+```text
+active：表示。通知中相当。
+paused / cast_hidden：表示。通知停止中相当。
+paused / user_paused：表示。
+paused / admin_paused：表示。ただし利用者操作で勝手にactiveへ戻さない。
+pending：基本表示しない。
+unsubscribed：表示しない。
+```
+
+公開状態同期そのものはフェーズ7で処理する。
+
+## 19. quiet hours
+
+現行DDLの以下を正式に使用する。
+
+```text
+quiet_hours_enabled
+quiet_start_minute
+quiet_end_minute
+```
+
+有効時：
+
+```text
+quiet_hours_enabled = 1
+quiet_start_minute = 0～1439
+quiet_end_minute   = 0～1439
+```
+
+無効時：
+
+```text
+quiet_hours_enabled = 0
+quiet_start_minute = NULL
+quiet_end_minute   = NULL
+```
+
+保存単位は分とする。
+
+```text
+00:00 = 0
+01:00 = 60
+23:00 = 1380
+```
+
+旧データ移行時の `0 / 0` は受信停止無効、`24` は0分へ変換する。
+
+`quiet_start_minute == quiet_end_minute` は禁止する。入力エラーであり、24時間受信停止を意味しない。
+
+日跨ぎ設定は許可する。
+
+例：
+
+```text
+23:00～06:00
+```
+
+判定原則：
+
+```text
+now >= start
+OR
+now < end
+```
+
+実際の通知送信時のquiet-hours判定は後続フェーズで利用する。フェーズ6では設定保存までを扱う。
+
+## 20. 個別解除
+
+個別解除は重要な状態変更のため、GETだけでは解除しない。
+
+フロー：
+
+```text
+settings session
+↓
+解除確認画面
+↓
+CSRF付きPOST
+↓
+Origin検証
+↓
+subscription ownership確認
+↓
+FOR UPDATE
+↓
+解除
+```
+
+対象subscriptionは以下へ更新する。
+
+```text
+status = 'unsubscribed'
+unsubscribed_at = UTC_TIMESTAMP(6)
+pause_reason = NULL
+paused_at = NULL
+```
+
+同じsubscriptionを2回解除しても安全に処理する。
+
+```text
+1回目：解除成功
+2回目：既に解除済み
+```
+
+2回目で `subscription_removed` deliveryやauditを重複作成しない。
+
+## 21. ownership
+
+個別解除では以下で必ず取得する。
+
+```text
+subscription_id
+AND
+subscriber_id = settings session subscriber_id
+```
+
+Repositoryには所有者付き `FOR UPDATE` 取得メソッドを追加する前提とする。
+
+IDを知っているだけでは解除できない構造にする。
+
+settings APIでは、有効なsettings sessionだけでなく、各API呼出し時にDB上のsubscriber状態も再確認する。
+
+最低限確認する項目：
+
+```text
+subscriber存在
+session subscriber_id一致
+session期限内
+subscriber.status
+suppression
+```
+
+これにより他端末で全解除された場合も、既存sessionを実質無効化できる。
+
+## 22. 個別解除時delivery
+
+個別解除成功時、以下のdeliveryを作成する。
+
+```text
+mail_type = subscription_removed
+```
+
+実メール送信はフェーズ6では行わない。
+
+既存TemplateDataValidatorの `subscription_removed` schemaを利用する。
+
+個別解除時、対象subscriptionに属する以下のdeliveryを `cancelled` へ変更する。
+
+```text
+queued
+deferred
+```
+
+`skipped` は追加しない。既存DDLの `cancelled` を使用する。
+
+以下は解除処理側では変更しない。
+
+```text
+sending
+failed
+```
+
+後続の送信／再送処理では、送信直前にsubscription状態を再確認する設計とする。
+
+## 23. 全解除
+
+全解除成功時、subscriberを以下へ更新する。
+
+```text
+status = 'unsubscribed'
+unsubscribed_at = UTC_TIMESTAMP(6)
+```
+
+全subscriptionを以下へ更新する。
+
+```text
+status = 'unsubscribed'
+unsubscribed_at = UTC_TIMESTAMP(6)
+pause_reason = NULL
+paused_at = NULL
+```
+
+全解除成功時、以下のdeliveryを作成する。
+
+```text
+mail_type = unsubscribe_all
+```
+
+実メール送信はフェーズ6では行わない。
+
+## 24. 全解除token revoke
+
+全解除時は、対象subscriberに属する以下のtokenをpurposeを限定せず全てrevokeする。
+
+```text
+used_at IS NULL
+revoked_at IS NULL
+```
+
+対象例：
+
+```text
+verify_email
+manage_settings
+unsubscribe_subscription
+unsubscribe_all
+```
+
+将来追加されたpurposeについても、subscriber全解除の意味上、未使用tokenは利用不可とする。
+
+## 25. 全解除時delivery
+
+全解除時、対象subscriberの以下のdeliveryを `cancelled` へ変更する。
+
+```text
+queued
+deferred
+```
+
+以下は解除transactionでは変更しない。
+
+```text
+sending
+failed
+```
+
+後続送信／再送ワーカー側でもsubscriber状態を再確認する必要がある。
+
+## 26. 全解除後session
+
+全解除transaction成功後、現在のsettings sessionを破棄する。
+
+現在端末は即時ログアウト相当とする。
+
+他端末のsettings sessionについて、sessionストレージを直接探索・削除しない。
+
+代わりに各APIで `subscriber.status` を必ず確認し、`unsubscribed` になった時点で利用不可とする。
+
+## 27. unsubscribe系token
+
+DDLには以下を維持する。
+
+```text
+purpose='unsubscribe_subscription'
+purpose='unsubscribe_all'
+```
+
+ただしフェーズ6では、直接解除リンク用途として有効化しない。
+
+フェーズ6の個別解除は以下で実行する。
+
+```text
+settings session
+↓
+解除確認
+↓
+POST
+```
+
+フェーズ6の全解除もsettings sessionから行う。
+
+`unsubscribe_subscription` tokenおよび `unsubscribe_all` tokenの実利用は、通知メールテンプレート／送信ワーカーを実装する後続フェーズで正式化する。
+
+## 28. settings_link delivery
+
+`settings-link-request` では、`settings_link` delivery要求をqueuedとしてDBへ登録する。
+
+この時点ではraw `manage_settings` tokenを生成しない。
+
+また、設定リンクURLも生成しない。
+
+settings-link-requestで作成するdeliveryは、既存DDL／TemplateDataValidatorの以下schemaを使用する。
+
+```text
+settings_link
+```
+
+実装時の確定schemaは以下とする。
+
+```text
+request_id
+token_ttl_seconds
+```
+
+旧案の `expires_at` は、送信直前生成tokenの有効期限と混同するため、delivery snapshotには保存しない。
+
+raw token・URLはsnapshotに含めない。
+
+必要template_dataは既存schemaを優先する。不足がある場合は実装時に再確認し、個人情報やtokenを勝手に追加しない。
+
+## 29. token生成責務
+
+正式な `manage_settings` tokenは、後続のメール送信ワーカーが実際に送信対象deliveryを処理する直前に生成する。
+
+フロー：
+
+```text
+settings-link-request
+↓
+settings_link delivery queued
+↓
+COMMIT
+
+------------------------------
+後続メール送信フェーズ
+------------------------------
+
+queued delivery取得
+↓
+random_bytes(32)
+↓
+raw manage_settings token生成
+↓
+SHA-256 hashをDB保存
+↓
+raw tokenから設定URL生成
+↓
+メール本文生成
+↓
+送信
+↓
+raw token破棄
+```
+
+これにより以下の原則を維持する。
+
+```text
+raw tokenをDBへ保存しない
+raw tokenをdelivery snapshotへ保存しない
+```
+
+フェーズ6のDB／HTTP結合テストでは、実メールワーカーがまだ存在しないため、テストコード内でのみ以下を許可する。
+
+```text
+テストコード内
+↓
+random_bytes
+↓
+raw token生成
+↓
+DBにはSHA-256 hashだけINSERT
+↓
+raw tokenをHTTPテスト入力として使用
+```
+
+テスト終了後にtokenを含むテストデータを完全cleanupする。
+
+本番業務コードの `settings-link-request` 内でraw tokenを生成してはいけない。
+
+## 30. Audit
+
+フェーズ6では以下を監査対象とする。
+
+```text
+設定リンク要求受付
+設定認証成功
+設定認証失敗
+quiet hours変更
+個別解除
+全解除
+```
+
+actor_typeは原則として以下を使用する。
+
+```text
+user
+```
+
+具体的なaction文字列は実装前に既存命名規則を確認して確定する。
+
+監査ログには以下を保存しない。
+
+```text
+raw token
+token hash
+CSRF
+session ID
+メールアドレス全文
+設定URL
+```
+
+quiet hours変更時は、subscriber quiet-hours更新とaudit logを同一DB transactionとする。
+
+audit保存に失敗した場合、quiet-hours更新もrollbackする。
+
+## 31. Service構成
+
+フェーズ6では、現在の `SettingsService` へ全責務を集中させない。
+
+実装時の責務候補：
+
+```text
+SettingsAuthenticationService
+NotificationSettingsService
+UnsubscribeService
+```
+
+既存 `SettingsService` はSession／CSRF共通処理として再利用可能である。
+
+最終クラス名は実装前のコード構成確認で決める。
+
+## 32. Repository構成
+
+フェーズ6で不足しているRepository機能は追加する。
+
+SubscriberRepository候補：
+
+```text
+・settings認証用取得
+・quiet hours更新
+・全解除
+```
+
+SubscriptionRepository候補：
+
+```text
+・settings一覧
+・subscriber所有者付き取得
+・FOR UPDATE取得
+・個別解除
+・全解除
+```
+
+TokenRepository候補：
+
+```text
+・manage_settings検索
+・manage_settings FOR UPDATE
+・used更新
+・subscriber単位unused token revoke
+```
+
+DeliveryRepository候補：
+
+```text
+・subscriber単位queued/deferred取消
+・subscription単位queued/deferred取消
+```
+
+各RepositoryのSQLには業務条件を明示し、APIファイルへ直接SQLを書かない。
+
+## 33. Config
+
+フェーズ6実装時に以下を設定化する。
+
+```text
+settings session lifetime = 86400
+manage_settings token TTL = 3600
+```
+
+URLについても必要な場合は設定化する。
+
+本番ドメイン等をAPI／Serviceへ直接ハードコードしない。
+
+## 34. Feature Flag
+
+既存の以下をフェーズ6全体の主要ロールバックフラグとして使用する。
+
+```text
+notification_settings_enabled
+```
+
+OFF時は以下を利用不可にする。
+
+```text
+設定リンク要求
+設定認証
+設定変更
+個別解除
+全解除
+```
+
+フェーズ5の `notification_confirmation_enabled` とは独立させる。
+
+## 35. transaction
+
+フェーズ6でも以下を可能な限り同一transactionに含める。
+
+```text
+DB状態変更
+delivery作成
+audit
+```
+
+外部メール送信はtransaction内で行わない。
+
+全解除では以下を原則同一transactionとする。
+
+```text
+subscriber更新
+全subscription更新
+unused token revoke
+未送信delivery cancellation
+unsubscribe_all delivery作成
+audit log
+```
+
+途中失敗時は全てrollbackする。
+
+## 36. concurrency
+
+実装時は以下の競合を考慮する。
+
+```text
+同一manage_settings tokenの同時認証
+同一subscriptionの同時解除
+個別解除と全解除の競合
+quiet hours更新と全解除の競合
+複数端末からの設定変更
+```
+
+必要に応じて以下を使用する。
+
+```text
+FOR UPDATE
+transaction
+rowCount === 1
+状態再検証
+```
+
+## 37. セキュリティ
+
+フェーズ0～5から以下を継承する。
+
+```text
+・GETだけで重要状態変更をしない
+・生tokenをDBへ保存しない
+・生tokenをsessionへ保存しない
+・生CSRFをsessionへ保存しない
+・メールアドレスをURLへ含めない
+・登録有無を外部へ公開しない
+・CSRF検証
+・Origin検証
+・ownership検証
+・DB再検証
+・FOR UPDATE
+・transaction
+・no-store
+・CORS許可なし
+・ログ秘匿
+```
+
+## 38. DDL
+
+今回のフェーズ6追加仕様は、現行DDLで実装可能とする。
+
+新たな `skipped` delivery statusは作らない。
+
+既存の以下を使用する。
+
+```text
+cancelled
+```
+
+フェーズ6のためのDDL変更は行わない。
+
+## 39. テスト方針
+
+フェーズ6実装時は少なくとも以下を確認する。
+
+```text
+・settings-link-request共通レスポンス
+・未登録、pending、active、unsubscribed、suppressedの列挙対策
+・suppressedではsettings_link deliveryを作成しない
+・manage_settings token正常、期限切れ、使用済み、revoked、改ざん
+・GET/previewだけではused_atを更新しない
+・明示POST成功時のみused_atを更新する
+・複数未使用token
+・複数端末session
+・24時間session
+・session fixation対策
+・CSRF正常、不正
+・Originなし、不一致
+・settings一覧の状態別表示
+・quiet hours有効、無効、日跨ぎ
+・quiet_start_minute == quiet_end_minute の拒否
+・他subscriber subscription_idの拒否
+・個別解除二重POST
+・個別解除時 queued/deferred delivery cancelled
+・全解除時 unused token 全purpose revoke
+・全解除時 queued/deferred delivery cancelled
+・全解除後現在session破棄
+・他端末sessionのDB再検証
+・delivery作成失敗時rollback
+・audit作成失敗時rollback
+・cleanup残存0
+```
+
+実メール送信はフェーズ6テスト対象外とする。
+
+## 40. 後続フェーズへ残す事項
+
+以下は今回確定してもフェーズ6では実装しない。
+
+```text
+・view='0'による自動paused/cast_hidden同期
+・view='1'復帰時の自動再開
+・出勤イベント生成
+・通知delivery生成
+・quiet hoursの実送信判定
+・実メール送信
+・直接unsubscribe tokenリンク
+・unsubscribe_all直接tokenリンク
+・バウンス
+・旧DB移行
+・cron
+```
+
+今回の追加確定によって、以下はフェーズ6実装上の未確定事項から外す。
+
+```text
+・manage_settings token TTL
+・token消費タイミング
+・再発行時の既存token
+・複数token
+・複数端末
+・settings session TTL
+・demo/local Cookie
+・suppressed利用者
+・subscription一覧表示
+・同一quiet hours
+・個別解除未送信delivery
+・全解除unused token
+・全解除未送信delivery
+・全解除後session
+・unsubscribe tokenのフェーズ6用途
+・settings_link token生成責務
+```
+
+後続フェーズで最終決定する事項：
+
+```text
+・unsubscribe_subscription tokenを使ったメール直接解除
+・unsubscribe_all tokenを使ったメール直接全解除
+・実メール送信ワーカー詳細
+・sending中deliveryの競合処理
+・failed deliveryの再送ポリシー
+・フェーズ7公開状態同期
+```
+
+## 41. フェーズ6実装確定事項一覧
+
+```text
+manage_settings token TTL：1時間
+
+settings session TTL：24時間
+
+複数未使用manage_settings token：許可
+
+複数端末：許可
+
+新token発行時の既存token revoke：しない
+
+token used_at：
+GET/previewでは更新しない
+明示POST成功時に更新
+
+production Cookie：
+Domain=dandy-g.jp
+
+demo/local Cookie：
+host-only
+
+suppressed：
+新規settings_link送信なし
+既存sessionから参照・解除可
+
+pending subscription：
+settings一覧非表示
+
+unsubscribed subscription：
+settings一覧非表示
+
+cast_hidden：
+表示・通知停止中
+
+quiet hours start=end：
+入力エラー
+
+個別解除未送信delivery：
+queued/deferred → cancelled
+
+全解除unused token：
+全purpose revoke
+
+全解除未送信delivery：
+queued/deferred → cancelled
+
+全解除後settings session：
+破棄
+
+unsubscribe_subscription token：
+フェーズ6直接利用なし
+
+unsubscribe_all token：
+フェーズ6直接利用なし
+
+settings-link-request時raw token生成：
+しない
+
+manage_settings raw token：
+送信ワーカーの送信直前生成
+
+フェーズ6DDL変更：
+なし
+
+実メール送信：
+なし
+```
+
+## 42. 既存資料との要更新箇所
+
+今回追加仕様と既存資料を照合した結果、フェーズ6実装前または実装時に以下の反映が必要である。
+
+| ファイル | 該当内容 | 現在記載 | 今回確定内容 | 後続更新必要 |
+| --- | --- | --- | --- | --- |
+| `backend_project/docs/specification/出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt` | `manage_settings` token TTL | 明示なし | 1時間 | 必要 |
+| `backend_project/docs/specification/出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt` | `manage_settings` token TTL | 明示なし | 1時間 | 必要 |
+| `backend_project/docs/specification/config/notification_config.example.php` | settings session lifetime / manage_settings token TTL | 専用設定なし | `86400` / `3600` を設定化 | 必要 |
+| `backend_project/docs/specification/config/notification_config.example.php` | staging/demo Cookie | local/productionコメント中心 | staging/demoはhost-only、Secure=true | 必要 |
+| `backend_project/docs/specification/出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt` | settings_link token生成責務 | 送信直前生成のDDL方針と整合する詳細手順は未記載 | settings-link-requestではtoken/URLを生成せず、送信ワーカー直前に生成 | 必要 |
+| `backend_project/docs/specification/出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt` | unsubscribe系tokenのフェーズ6用途 | token purposeは定義済み、フェーズ6での直接導線は未明確 | フェーズ6では直接解除token導線を有効化しない | 必要 |
+| `backend_project/docs/specification/出勤お知らせメールシステム_フェーズ別実装手順書_2026-08-01_確定仕様反映版.txt` | delivery停止status | `skipped`の採用記載は確認されず、DDLは`cancelled` | queued/deferredは`cancelled`を使用し、`skipped`は追加しない | 必要に応じて明記 |
+| `backend_project/docs/specification/出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt` | suppressed利用者 | データ状態は定義済み、フェーズ6操作可否は未明確 | 新規settings_link deliveryなし、既存sessionから参照・解除可 | 必要 |
+| `backend_project/docs/specification/出勤お知らせメールシステム_リニューアル仕様書_2026-08-01_確定仕様反映版.txt` | settings一覧のsubscription状態別表示 | 詳細未確定 | active/paused表示、pending/unsubscribed非表示 | 必要 |
+
+重大な矛盾により本書を確定できない箇所は確認されなかった。
